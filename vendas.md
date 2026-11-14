@@ -34,7 +34,7 @@ _Números do Twenty em 14/11/2026, só agregados._
   FU1 D+3, FU2 D+7, depois PERDIDO "sem resposta após 3 e-mails".
 - **Pergunta de preço:** texto fechado do playbook. ⚠️ O playbook diz **R$ 440 / R$ 1.540**;
   o site novo (na `main`) diz **R$ 599 / R$ 1.999 em até 12x**, e o playbook proíbe falar
-  de parcelamento. Alinhar quando decidir a oferta (`pendencias.md`).
+  de parcelamento. **Decisão do Felipe (14/11): vale R$ 599 / R$ 1.999, até 12x.** O playbook do Dylan precisa ser atualizado.
 - **Interesse:** pede nome como assina, CRP e modalidade → `RESPONDEU`, `responsavel FELIPE`.
 - **Fila:** e-mail gratuito só com nome/@ batendo e no máximo 6 por conta/dia. Em 13/11 só
   18 elegíveis, todos gratuitos → fila acaba em poucos dias sem a Quinn repor.

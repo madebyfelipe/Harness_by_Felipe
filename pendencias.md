@@ -4,7 +4,7 @@ _Encontrado durante a coleta de 14/11/2026. Ordem: o que custa venda primeiro._
 
 ## Precisa de decisão sua
 
-1. **Oferta nova fora do ar.** Preços (R$ 599 / R$ 1.999, 12x) e formato da imersão
+1. ✅ **Decidido 14/11: R$ 599 / R$ 1.999 prevalece.** Falta publicar na `beta` e atualizar o `EMAIL-PLAYBOOK.md` do Dylan (hoje diz R$ 440 / R$ 1.540 e proíbe falar de parcelamento). Contexto anterior: **Oferta nova fora do ar.** Preços (R$ 599 / R$ 1.999, 12x) e formato da imersão
    (2 encontros de 1h30, até 30 dias com site) estão na `main` (`bc32cc3`, `e40f43e`), mas a
    produção publica da **`beta`**, que ainda mostra R$ 440 / R$ 1.550 e "2 dias / 45 dias".
    A sessão de 14/11 parou perguntando se leva os dois commits para a `beta`.

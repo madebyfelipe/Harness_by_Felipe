@@ -82,6 +82,9 @@ psicologia (ago/2026) → recorte em neurodivergência (out/2026). **Não voltar
 
 ### 2. Site (produto de entrada e promoção de caixa) — **único preço público do site**
 
+> Decisão do Felipe (14/11/2026): **R$ 599 / R$ 1.999 prevalece** sobre os R$ 440 / R$ 1.540
+> que ainda estão no roteiro do Dylan.
+
 | plano | preço | inclui |
 |---|---|---|
 | Página única | **R$ 599** | site no ar, Perfil da Empresa no Google configurado, conteúdo revisado pelas normas do CFP |

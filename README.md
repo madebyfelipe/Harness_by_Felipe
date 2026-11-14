@@ -20,6 +20,7 @@ focado em **vendas** e **manutenção do site** `www.madebyfelipe.com.br`.
 | [`dashboard.md`](dashboard.md) | Especificação da UI própria: chat, modo Contexto, navegador por bot, cofre, rotinas, fases |
 | [`agents/`](agents/) | Definições prontas: `orquestrador`, `pesquisador-leads`, `enriquecedor`, `redator-vendas`, `analista-mercado`, `programador`, `qa-site`, `guardiao` (formato de subagente do Claude Code) |
 | [`openbot/`](openbot/) | Levantamento do Harbinger no OpenBot (14/11): agentes, rotinas, skills, cold mail, blog, infraestrutura, pendências. **Complementa** os arquivos acima |
+| [`prompts/`](prompts/) | `construir-ui.md`: prompt pronto para a sessão que vai construir a Central (UI) |
 | [`skills/`](skills/) | `pesquisa-de-preco`, `validacao-de-oferta`, `email-personalizado` (formato SKILL.md) |
 
 ## De onde veio cada informação
