@@ -19,6 +19,7 @@ focado em **vendas** e **manutenção do site** `www.madebyfelipe.com.br`.
 | [`subagentes.md`](subagentes.md) | **Proposta de arquitetura**: orquestrador + subagentes, escada de modelos, contrato de delegação, janelas de uso |
 | [`dashboard.md`](dashboard.md) | Especificação da UI própria: chat, modo Contexto, navegador por bot, cofre, rotinas, fases |
 | [`agents/`](agents/) | Definições prontas: `orquestrador`, `pesquisador-leads`, `enriquecedor`, `redator-vendas`, `analista-mercado`, `programador`, `qa-site`, `guardiao` (formato de subagente do Claude Code) |
+| [`openbot/`](openbot/) | Levantamento do Harbinger no OpenBot (14/11): agentes, rotinas, skills, cold mail, blog, infraestrutura, pendências. **Complementa** os arquivos acima |
 | [`skills/`](skills/) | `pesquisa-de-preco`, `validacao-de-oferta`, `email-personalizado` (formato SKILL.md) |
 
 ## De onde veio cada informação
@@ -31,9 +32,9 @@ focado em **vendas** e **manutenção do site** `www.madebyfelipe.com.br`.
   algumas notas operacionais. **Nenhum nome ou contato de lead foi copiado** para cá.
 - **Google Agenda** (`alo@`), **Google Drive** (arquivos recentes), **ClickUp** (2
   espaços), **Trello** (1 quadro), lista de **skills, conectores e plugins** da conta.
+- **OpenBot**: levantamento feito pelo Harbinger na VPS (zip no Drive), guardado em `openbot/`.
 - **Não lidos**: Gmail (o conector respondeu "Mail service not enabled" para esta conta),
-  OpenSEO e Postiz (pedem reconexão), servidor do OpenBot (`/data/OpenBot/...` não está
-  acessível daqui).
+  OpenSEO e Postiz (pedem reconexão).
 
 ## Como usar no harness
 
@@ -44,6 +45,5 @@ focado em **vendas** e **manutenção do site** `www.madebyfelipe.com.br`.
    da verdade técnica — este harness resume, não substitui).
 4. Orquestrador / rotinas: + `rotinas.md`, `equipe-e-agentes.md`, `pendencias.md`.
 
-> **Atenção:** o repositório é **público**. Estes arquivos têm números do CRM, nomes de
-> clientes recorrentes e detalhes de operação. Não foram commitados. Guarde-os num
-> repositório privado, no Drive ou no servidor do OpenBot.
+> Repositório **privado** (`madebyfelipe/Harness_by_Felipe`): tem números do CRM, clientes e
+> detalhes de operação. Nenhuma senha ou chave entra aqui; segredos ficam no cofre.

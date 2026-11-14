@@ -22,6 +22,18 @@ _Encontrado durante a coleta de 14/11/2026. Ordem: o que custa venda primeiro._
    "pedido explícito vai direto para o site" ficar simples, troque a branch de produção da
    Vercel de volta para a `main` (e aposente a `beta`). Até lá, os agentes mandam para as duas.
 
+## Complemento: pendências levantadas pelo Harbinger (íntegra em `openbot/decisoes-e-pendencias.md`)
+
+8. **Limite de 6 e-mails gratuitos por conta/dia** travou os envios de 13/11 (a fila restante é toda de gratuitos).
+9. **Recarregar o Apify** com teto de gasto, senão a Quinn não repõe a fila.
+10. **Excluir os 7 agentes do jogo** na interface do OpenBot.
+11. **Primeira tarefa do Wren.**
+12. **Leads segurados:** 154 site fraco, 169 do Google Maps com site próprio, 39 de conteúdo/webinar sem campanha; 2 aguardam confirmação de CRP.
+13. **Valor de manutenção, renovação e domínio** do site: indefinido (hoje a resposta é "vou confirmar").
+14. **Regra de bounce única:** o playbook diz que a trava foi desligada em 13/11, mas o Dylan parou o dia por 1 bounce em 8.
+15. **Escada de produtos:** registrar como rascunho grátis → site → imersão se conectam.
+16. **Google Postmaster** e teste semanal de caixa de entrada.
+
 ## Inconsistências encontradas
 
 - **Rotinas editoriais [NOVO] rodam todo dia**: chamam-se "terça 05:00" e "quinta 05:00",

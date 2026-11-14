@@ -85,14 +85,17 @@ precisa de você.
 
 ## Mapeamento com o que você já tem
 
+A estrutura acima é a que vale; o OpenBot complementa (detalhe em `equipe-e-agentes.md`).
+
 | hoje (OpenBot) | nesta proposta |
 |---|---|
-| Tyler | orquestrador |
-| Casey (site + blog) | programador (+ skill `post-blog-psico`) |
-| Wren (design/front) | programador com escalada para Fable + qa-site |
+| Harbinger (WhatsApp) | porta de entrada do orquestrador |
+| Tyler (Head de Marketing, prévias de site) | estratégia + skill `rascunho-site-gratis`, sob o orquestrador |
+| Cameron / Jason / Morgan | executores genéricos do orquestrador |
+| Quinn (Apify / Google Maps) | pesquisador-leads |
 | Dylan (cold mail) | redator-vendas + código de disparo |
-| Harbinger (WhatsApp) | código/integração (Evolution API) — não precisa de modelo para enviar |
-| bot de Google Maps | pesquisador-leads |
+| Casey (blog) | programador (+ skill `post-blog-psico`) |
+| Wren (web/UX) | programador com escalada para Fable + qa-site |
 | — (falta) | enriquecedor, analista-mercado, guardião, qa-site |
 
 ## Janelas de uso (importante para a sua rotina)

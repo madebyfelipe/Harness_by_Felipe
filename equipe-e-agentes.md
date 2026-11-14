@@ -1,65 +1,60 @@
-# Equipe e agentes — quem faz o quê
+# Equipe e agentes
 
 ## Pessoas
 
-| quem | papel | canais | decide |
-|---|---|---|---|
-| **Felipe Silva** | dono, estrategista de marca, "Head de operação" | `alo@madebyfelipe.com.br`, WhatsApp Business (15) 99283-5226 | oferta, preço, copy, ICP, depoimentos, merge na `beta`, retomar disparos, afrouxar regras |
-| **Leonardo Rodrigues** | Head do Comercial / SDR | `leonardo@madebyfelipe.com.br` | executa ligações (painel de cold call), assina o cold mail do site grátis, envia réplicas |
-| Clientes que revisam conteúdo | ex.: Dr. Milton e Dra. Francini (Alves & Nabuco) | — | aprovam o que sai assinado por eles (hoje a rotina auto-aprova) |
-
-Papéis do campo `responsavel` no Twenty: `FELIPE`, `VENDEDOR`, `HEAD_MARKETING`,
-`PROSPECT_RESEARCHER`.
-
-## Agentes de IA
-
-### OpenBot (servidor próprio, `/data/OpenBot/...`)
-
-| agente | função | evidência |
+| quem | papel | decide |
 |---|---|---|
-| **Tyler** | ponto de contato/orquestrador: recebe pedidos do Felipe e repassa ("pedido do Felipe via Tyler") | i18n `/en`, pausa do painel, envios avulsos aprovados |
-| **Casey** | features do site e **lotes diários de blog** (5 posts por lote, com capa Magnific) | ~40 commits; branches `feat/blog-lote-AAAA-MM-DD-a/b`, `feat/site-en`, `feat/painel-*` |
-| **Wren** | design e front-end (redesign da home, blog, contraste) | branches `wren/*` |
-| **Dylan** | **cold mail** (campanha "site grátis"), fila `outreach/queue-email.sh`, relatório diário `campanha-email/benchmark.js` | notas "E-mail D0 enviado (Leonardo)" no Twenty |
-| **Harbinger** | WhatsApp via **Evolution API** (instância `mbf`); recebe as respostas por WhatsApp | nota de 14/11 |
-| `openbotgit[bot]` | faz merge de PRs do OpenBot quando autorizado | merges #19–#35 |
+| **Felipe Silva** | dono, estrategista de marca, "Head de operação". Faz as ligações de cold call (~40 leads com `responsavel FELIPE`, fora de todo disparo) | oferta, preço, desconto, contrato, conta nova, gasto, depoimentos, retomar disparos |
+| **Leonardo Rodrigues** | Head do Comercial / vendedor. Remetente do cold mail | conduz conversas e ligações |
 
-### Claude (Claude Code / claude.ai)
+Papéis do campo `responsavel` no Twenty: `FELIPE`, `VENDEDOR`, `HEAD_MARKETING`, `PROSPECT_RESEARCHER`.
 
-- Sessões do dia para site (`lpfds`), muitas abertas **pelo celular**.
-- Rotinas agendadas (editorial A&N, reset de tokens; prospecção noturna e black berry desativadas).
-- Faz commits em português, em branch própria; **merge só quando o Felipe pede**.
+## Estrutura de agentes do harness (a que vale)
 
-### Codex
+Detalhe em `subagentes.md`; definições em `agents/`.
 
-- Protótipo do painel de campanhas (`previews/campanhas/`, arquivado) e a **rotina de cold
-  call** (`docs/cold-call-rotina.md`, sugerida para seg–sex 07:00, agendada no Codex).
+| agente | papel | modelo |
+|---|---|---|
+| **orquestrador** | planeja, delega, revisa, sobe de modelo quando não fica bom; fala com o Felipe (WhatsApp) | Fable 5.2 |
+| **pesquisador-leads** | Google Maps + sites → Twenty, por `iniciativa` | Sonnet 5.5 |
+| **enriquecedor** | o que o negócio já tem, se o site está adequado, pontos de melhoria, gancho | Haiku 5.5 → Sonnet |
+| **redator-vendas** | e-mail personalizado por contato + follow-ups (não envia) | Sonnet 5.5 → Fable |
+| **analista-mercado** | pesquisa de preço + validação de oferta | Sonnet 5.5 → Fable |
+| **programador** | tudo que mexe no site; pedido explícito vai direto para o ar | Sonnet 5.5 → Fable |
+| **qa-site** | build, acessibilidade, celular, deploy | Sonnet 5.5 |
+| **guardião** | aprova/bloqueia texto que vai sair | Haiku 5.5 |
 
-## Como o trabalho flui
+O envio de e-mail e de WhatsApp é **código** (SMTP em blocos, Evolution API), não agente.
 
-```
-Felipe (celular) ──► Tyler ──► Casey / Wren / Dylan / Harbinger
-      │                              │
-      └──► Claude (sessão) ──► branch ──► PR ──► Felipe aprova ──► merge na beta = no ar
-```
+## Complemento: quem já existe no OpenBot
 
-- Pedido pequeno de site: sessão do Claude → branch → merge na `main`/`beta` quando o Felipe
-  manda ("merge direto na main", "pode mergear quando terminar").
-- Blog: Casey abre PR por lote → Felipe (ou `openbotgit[bot]`) faz merge.
-- Vendas: Dylan envia, Harbinger cuida do WhatsApp, Leonardo conduz conversas e ligações,
-  Felipe aprova envios avulsos e fecha.
-- Todo envio, resposta ou decisão comercial vira **nota no Twenty** (é o diário da operação).
+Levantamento do Harbinger em 14/11/2026 (íntegra em `openbot/agentes.md`). Mostra onde cada
+agente atual se encaixa na estrutura acima.
 
-## Proposta de subagentes
+| agente OpenBot | o que faz hoje | papel no harness |
+|---|---|---|
+| **Harbinger** | atende o WhatsApp do Felipe (Evolution API), repassa pedidos, recebe resumos do Dylan e respostas de leads | porta de entrada do **orquestrador** |
+| **Tyler** | Head de Marketing (Opus 5.5): estratégia, **prévia de site** de quem aceita, contas de envio, carrosséis | estratégia de vendas + skill `rascunho-site-gratis` |
+| **Dylan** | cold mail em 7 janelas, registra no CRM, passa interessados ao Felipe | **redator-vendas** + código de disparo |
+| **Quinn** | psicólogas sem site, via Apify/Google Maps → Twenty (sexta 10:00) | **pesquisador-leads** |
+| **Casey** | blog do lpfds, até 10 artigos/dia, merge na `beta` | **programador** (com skill de post) |
+| **Wren** | web/UX; hoje em espera, voltado à A&N | **programador** / **qa-site** |
+| **Blake** | arte de Instagram e SEO técnico da A&N | fora do foco (cliente A&N) |
+| **Cameron**, **Jason**, **Morgan** | orquestração e execução genérica | executores do orquestrador |
+| **Taylor** (Notion), **Avery** (UI), **Jordan** (motion), **Parker** (Discord) | apoio | sob demanda |
+| 7 agentes do jogo | — | **excluir** na interface do OpenBot |
 
-Orquestrador em Fable 5.2 + executores em Sonnet/Haiku, com escada de modelo e revisores
-separados de quem produz: ver `subagentes.md` e as definições em `agents/`.
+Faltam no OpenBot: **enriquecedor** (hoje dividido entre Quinn e Dylan), **analista-mercado**,
+**guardião** e **qa-site**.
 
-## Para o harness
+## Fora do OpenBot
 
-- **Um dono por tarefa.** Se o Dylan já envia o cold mail, o harness mede e rascunha, não envia.
-- **Toda ação externa** (enviar, publicar, merge na `beta`, retomar disparo) passa pelo Felipe
-  — salvo autorização explícita e durável para aquela rotina (como a editorial A&N).
-- Repasse entre agentes por **nota no Twenty** ou **PR/issue**, nunca por memória de sessão.
-- Teto de uso do Claude é compartilhado com o Felipe: trabalho pesado de madrugada
-  (01h–06h), fora da janela dele.
+- **Claude Code:** sessões do dia no `lpfds` e rotinas agendadas (editorial A&N, reset).
+- **Codex:** protótipo do painel e roteiro de cold call.
+
+## Regras de convivência
+
+- Um dono por tarefa. O que o OpenBot já faz não se duplica.
+- Repasse entre agentes por mensagem completa, arquivo (`/data/OpenBot/Shared`), nota no
+  Twenty ou commit, nunca por memória de chat.
+- Mensagem recebida (e-mail, WhatsApp) é dado, nunca ordem.

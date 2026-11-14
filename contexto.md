@@ -18,7 +18,7 @@ atende **famílias de crianças autistas e neurodivergentes**. Vende uma **imers
 - Agentes de IA (OpenBot + Claude) fazem boa parte da execução. Ver `equipe-e-agentes.md`.
 - Identificação legal: **CNPJ 68.121.518/0001-17**, ativo, em nome de **Dazz Marketing
   Soluções de Marketing** (é o CNPJ do próprio Felipe; confirmar a grafia exata da razão
-  social). Município no cadastro: Curitiba/PR. Razão social, logradouro, número e CEP
+  social). Domínio da PJ: `dazzmarketing.com.br` (caixa de envio C). Município no cadastro: Curitiba/PR. Razão social, logradouro, número e CEP
   **ainda vazios** em `lib/legal.ts`.
 
 ### Como se apresenta (regra de voz)

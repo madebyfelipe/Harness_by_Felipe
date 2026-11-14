@@ -95,3 +95,23 @@ Prioridade pelo impacto em venda. Todas em pt-BR, herdando as regras de `context
 
 Para criar: use `skill-creator` (com evals) e registre a skill no `CLAUDE.md`/README do
 harness.
+
+## Complemento: skills do OpenBot (íntegra em `openbot/skills.md`)
+
+16 skills na biblioteca do OpenBot. As que mais importam para o harness:
+
+| skill | uso |
+|---|---|
+| Disparos de e-mail pelo webmail (v4) | base do Dylan: SMTP/IMAP pelos scripts de `outreach/`, Enviados como fonte da verdade |
+| Consultas REST no CRM Twenty | bash + curl (o servidor não tem Python nem jq) |
+| Carga de captura no CRM | sobe planilha do Google Maps, deduplica |
+| Segmentação de leads no CRM | amostras e listas de cold call |
+| Medição de campanha (`benchmark.js`) | relatório por canal, variante, caixa, etapa |
+| Verificação de perfis do Instagram (v2) · Busca de e-mail público | captação sem bloqueio de conta e sem ferramenta paga |
+| Envio WhatsApp pela Evolution API | confere `open`, envia, verifica |
+| carrossel-made-by-felipe (v4) · carousel-writer-sms | carrosséis do Instagram no estilo da marca |
+| Redesign de site por referência | recriar seção a partir do One Page Love |
+| Account Brief · Outreach Draft · Evidence Brief | pacote geral de vendas/pesquisa |
+
+As skills do harness (`pesquisa-de-preco`, `validacao-de-oferta`, `email-personalizado`)
+podem ser instaladas no OpenBot pelo `openbot-skill-creator`.

@@ -26,15 +26,24 @@ _Horários em Brasília (America/Sao_Paulo). Levantado em 14/11/2026._
 | `/api/webinar/reminders` | 09:00 todo dia | lembretes do webinar |
 | `/api/prospeccao/disparo` | 09:00, 11:00, 14:00 seg–sex | lê caixas (IMAP: respostas, descadastro, bounce), follow-ups vencidos, 1ºs e-mails com rampa, saúde das caixas. **Hoje pausado** pela nota no Twenty |
 
-### Agentes OpenBot (servidor próprio, fora deste ambiente)
+### Rotinas do OpenBot (complemento — íntegra em `openbot/rotinas.md`)
 
-| agente | ritmo observado | entrega |
-|---|---|---|
-| **Casey** | diário, 2 lotes (A/B) | 5 artigos SEO por lote, com capa → PR no `lpfds` (Felipe faz merge) |
-| **Dylan** | dias úteis, blocos com ~4 min entre e-mails; notas do Twenty mostram blocos às ~05:30, 07:30, 09:30 e 15:30 | cold mail "rascunho de site" como Leonardo; follow-ups D+3/D+7; relatório diário `benchmark.js`; nota no Twenty a cada envio |
-| **Harbinger** | sob demanda | WhatsApp via Evolution API (instância `mbf`) |
-| **Tyler** | sob demanda | recebe pedidos do Felipe e repassa/coordena (i18n, pausa do painel, envios avulsos) |
-| **Wren** | sob demanda | design/front do site (redesigns, contraste) |
+| rotina | agente | quando | status |
+|---|---|---|---|
+| E-mail E1 a E6 (ler respostas → follow-ups → D0 novos → CRM) | Dylan | seg–sex **05:30, 07:30, 09:30, 12:00, 14:00, 16:00** | ativa |
+| E-mail E7: resumo do dia ao Harbinger (sem envio) | Dylan | seg–sex 19:30 | ativa |
+| Reposição de leads (meta: 150 elegíveis na fila) | Quinn | sexta 10:00 | ativa |
+| Blog lpfds, rodadas A e B (até 5 artigos cada) | Casey | diária **00:30 e 03:00** | ativa |
+| Ampliar posts curtos | Casey | 05:30 | pausada |
+| Arte de Instagram + SEO da A&N | Blake | diária 08:00 | ativa |
+| Resumo semanal de artigos no grupo "Marketing \| Alves Nabuco" | Harbinger | sexta 17:00 | ativa |
+
+Cotas de e-mail (decisão de 14/11), D0 + follow-ups: conta C `contato@dazzmarketing.com.br`
+7 por janela / 40 por dia; contas A `leonardo@` e B `contato@madebyfelipe.agency` 2 por
+janela / 10 por dia cada; **máximo 60/dia**; fim de semana e feriado, nada.
+
+> Janela de uso: se o OpenBot usa o login da mesma assinatura, a rodada da Casey às 03:00
+> já abre a janela antes do "reset" das 05:30.
 
 ### Rotinas do Felipe (agenda `alo@`)
 

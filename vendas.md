@@ -12,9 +12,9 @@ _Números do Twenty em 14/11/2026, só agregados._
    site, se está adequado, pontos de melhoria.
 4. **E-mail personalizado** para cada contato — "não é bulk mail, é custom delivery".
 5. **Disparo em blocos** a partir das 05:00, em janelas ao longo do dia, por **3–4 caixas
-   Hostinger** (SMTP), **~20 e-mails por caixa**. Caixas citadas: `alo@madebyfelipe.com.br`,
-   uma no domínio da PJ (Dazz Marketing — confirmar o domínio exato), além das já vistas no
-   CRM (`leonardo@madebyfelipe.com.br`, `contato@madebyfelipe.agency`).
+   Hostinger** (SMTP), **~20 e-mails por caixa**. Caixas hoje: A `leonardo@madebyfelipe.com.br`, B `contato@madebyfelipe.agency`,
+   C `contato@dazzmarketing.com.br` (em aquecimento pelo Snov.io; assunto com "[WRM]" é
+   aquecimento), todas com CCO para o `alo@`.
 6. **Respostas**: todas as caixas redirecionam para o Gmail pessoal do Felipe.
 7. **Antes de abrir uma iniciativa**: pesquisa de preço do mercado local (ex.: por estado,
    na campanha dos EUA, para achar uma média e ser um pouco mais competitivo) +
@@ -23,6 +23,25 @@ _Números do Twenty em 14/11/2026, só agregados._
 > Como as respostas chegam no Gmail pessoal (e não só no IMAP das caixas), o painel e os
 > bots podem não ver uma resposta que o Felipe já leu. Vale decidir uma fonte única de
 > "lead respondeu" (ver `pendencias.md`).
+
+## Complemento do OpenBot (íntegra em `openbot/vendas-cold-mail.md`)
+
+- **Canal ativo: só e-mail.** WhatsApp e DM do Instagram de prospecção estão pausados.
+- **Quem pode receber:** `PRONTO`/`LISTA_FRIA` da campanha `site-gratis-whatsapp`,
+  prioridade A/B, evidência "sem site", sem `optOut`, `responsavel` ≠ FELIPE. Só psicologia.
+- **Sequência v2 (12/11):** D0 70–90 palavras sem preço, uma pergunta ("Posso fazer o
+  seu?"), assunto A1 "site para o seu consultório" / A2 "rascunho de site, sem custo";
+  FU1 D+3, FU2 D+7, depois PERDIDO "sem resposta após 3 e-mails".
+- **Pergunta de preço:** texto fechado do playbook. ⚠️ O playbook diz **R$ 440 / R$ 1.540**;
+  o site novo (na `main`) diz **R$ 599 / R$ 1.999 em até 12x**, e o playbook proíbe falar
+  de parcelamento. Alinhar quando decidir a oferta (`pendencias.md`).
+- **Interesse:** pede nome como assina, CRP e modalidade → `RESPONDEU`, `responsavel FELIPE`.
+- **Fila:** e-mail gratuito só com nome/@ batendo e no máximo 6 por conta/dia. Em 13/11 só
+  18 elegíveis, todos gratuitos → fila acaba em poucos dias sem a Quinn repor.
+- **Captação:** Apify com teto de US$ 5 por ciclo (US$ 4,87 gastos em 13/11).
+- **Números:** 11/11 18 D0 (2 bounces) · 12/11 13 D0 · 13/11 12–13 D0, 1 bounce, 1 resposta
+  com interesse. Meta: reuniões até **30/11/2026**.
+- **Agenda:** `cal.com/madebyfelipe/15min`.
 
 ## O funil hoje
 
@@ -138,8 +157,8 @@ em nota no Twenty (ex.: e-mail do Leonardo + WhatsApp pelo Harbinger em 14/11).
 
 ## Caixas e entregabilidade
 
-- Prospecção: `alo@madebyfelipe.com.br`, caixa do domínio da PJ, `leonardo@madebyfelipe.com.br`,
-  `contato@madebyfelipe.agency` (`felipe@madebyfelipe.agency` previsto). Domínio `.agency`
+- Prospecção: `contato@dazzmarketing.com.br` (C), `leonardo@madebyfelipe.com.br` (A),
+  `contato@madebyfelipe.agency` (B); `alo@` recebe CCO (`felipe@madebyfelipe.agency` previsto). Domínio `.agency`
   tem MX, SPF, DKIM, DMARC com relatório.
 - Risco conhecido: o `alo@` é o mesmo domínio do site, da imersão e do e-book. Uma onda de
   denúncias de spam nele derruba tudo junto. Se for mantido no pool, ficar no teto mais

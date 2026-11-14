@@ -63,3 +63,15 @@ escolhidos pelo `source` na rota `/api/newsletter`. Ver `docs/newsletter-twenty.
 - Nunca mandar nome/e-mail de lead para tela de métrica, relatório público ou serviço externo
   sem necessidade.
 - Formulário novo: aceite obrigatório validado no servidor; nunca mostrar "enviado" sem ter enviado.
+
+## Complemento do OpenBot (íntegra em `openbot/infraestrutura.md`)
+
+- **Servidor OpenBot:** Linux em UTC, sem Python e sem jq (scripts bash + curl), ~2,5 GB de
+  RAM livre, IP de datacenter (Instagram bloqueia login; Vercel CLI barrada → usar API do
+  GitHub e MCP da Vercel). Cofre de chaves do OpenBot guarda os segredos.
+- **Evolution API:** `evo.madebyfelipe.agency`, instância `mbf`. Antes de enviar,
+  `connectionState` tem de estar `open`. `PENDING` = aceito, não entregue.
+- **Apify** (Google Maps, teto US$ 5/ciclo) · **Snov.io** (aquecimento da conta C) ·
+  **cal.com/madebyfelipe/15min** · **Google Postmaster**: ainda não configurado.
+- **MCP no OpenBot:** github, vercel, supabase, huggingface, onepagelove, computer_use.
+  Trello pede login; Notion e Cloudflare falham.
