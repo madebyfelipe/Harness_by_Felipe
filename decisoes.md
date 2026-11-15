@@ -4,6 +4,12 @@
 desta lista. Não travar por inconsistência: aplique a mais nova e corrija o arquivo antigo.
 Decisão nova entra **no topo**, com data e motivo.
 
+## 15/11/2026 — anotado pela Central
+
+| decisão | o que muda |
+|---|---|
+| refira-se a esse conteúdo quando for montar uma postagem | a aplicar (dita pelo Felipe; a triagem corrige os arquivos antigos) |
+
 ## 15/11/2026 (madrugada) — memória, crescimento e autonomia dos agentes
 
 | decisão | o que muda |
