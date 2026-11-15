@@ -12,7 +12,7 @@ import { getAgent, listAgents, ORCHESTRATOR, readContextFile } from "./repo";
  * (tarefa, ideia, feedback, decisão) e o workflow das tarefas. Não executa nada.
  */
 
-export const TRIAGE_MODEL = "claude-sonnet-5-5";
+export const TRIAGE_MODEL = "claude-haiku-5-5";
 export const AUTO_AGENT = "auto";
 
 export type Item = { tipo: "tarefa" | "ideia" | "feedback" | "decisao"; texto: string; sentimento?: "bom" | "ruim" | "ideia" };
@@ -60,7 +60,7 @@ ${agents}
 - \`contexto\`: Modo Contexto, responde pergunta sobre o negócio só com os .md do repositório, citando o arquivo. Use para pergunta pura sobre oferta, preço, regras, método.
 
 # Como responder nesta Central
-- Leia o que precisar com Read/Glob/Grep (só leitura, rápido, poucas chamadas). Comece por \`decisoes.md\`.
+- Seja rápido: responda direto, sem ler arquivo. Só use Read/Glob/Grep (uma chamada, no máximo duas) se a mensagem for impossível de classificar sem isso.
 - Separe a mensagem em itens. Pedido de fazer algo = "tarefa". Ideia solta para depois = "ideia". Opinião sobre algo que um agente ou rotina fez = "feedback". Regra ou escolha que vale daqui em diante ("a partir de agora…", "decidi…") = "decisao". Conversa, saudação ou pergunta simples = "tarefa" de nível N1.
 - Mensagem que começa com "planejar:" → "modo": "planejar".
 - Um único "workflow" cobre todas as tarefas da mensagem; sem tarefa, "workflow": null.
@@ -173,7 +173,7 @@ async function triageOnce(text: string, history: string, abort: AbortController,
         tools: ["Read", "Glob", "Grep"],
         allowedTools: ["Read", "Glob", "Grep"],
         hooks: { PreToolUse: [{ hooks: [gate] }] },
-        maxTurns: 12,
+        maxTurns: 3,
         env: { ...agentEnv(), ...accountEnv },
         ...(c.claudePath ? { pathToClaudeCodeExecutable: c.claudePath } : {})
       }

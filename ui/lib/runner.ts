@@ -408,6 +408,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const vai = Boolean(conversation.route?.planejado) && /^\s*(vai|pode ir|manda ver|manda|segue|ok|bora|roda)\b/i.test(extra.rawText);
     if (extra.redo) {
       route = { ...(conversation.route ?? { agent: ORCHESTRATOR }), model: conversation.model, planejado: false };
+    } else if (extra.history && !/^\s*planejar\s*:/i.test(extra.rawText) && !(vai && conversation.route)) {
+      // Triagem só na primeira mensagem: depois a conversa segue com o agente e o modelo já escolhidos.
+      route = { ...(conversation.route ?? { agent: ORCHESTRATOR }), model: conversation.model, planejado: false };
     } else if (vai && conversation.route) {
       route = { ...conversation.route, planejado: false };
       prompt = `${prompt}\n\n[O Felipe aprovou o plano. Pedido original: ${route.pedido ?? ""}]${route.workflow ? `\n\n${workflowBrief(route.workflow as Workflow)}` : ""}`;

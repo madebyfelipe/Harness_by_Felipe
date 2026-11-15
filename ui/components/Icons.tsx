@@ -121,3 +121,35 @@ export const IconGlobe = ({ size }: P) => (
     <path d="M3 10h14M10 3c2.2 2 3.2 4.3 3.2 7S12.2 15 10 17c-2.2-2-3.2-4.3-3.2-7S7.8 5 10 3Z" />
   </svg>
 );
+export const IconMonitor = ({ size }: P) => (
+  <svg {...s(size)}>
+    <rect x="3" y="4" width="14" height="10" rx="1.5" />
+    <path d="M8 18h4M10 14v4" />
+  </svg>
+);
+export const IconPanel = ({ size }: P) => (
+  <svg {...s(size)}>
+    <rect x="3" y="4" width="14" height="12" rx="2" />
+    <path d="M12 4v12" />
+  </svg>
+);
+export const IconClose = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M5 5l10 10M15 5L5 15" />
+  </svg>
+);
+export const IconExpand = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M11 4h5v5M9 16H4v-5M16 4l-5 5M4 16l5-5" />
+  </svg>
+);
+export const IconReload = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M15.5 8A6 6 0 1 0 16 11M16 4v4h-4" />
+  </svg>
+);
+export const IconArrowLeft = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M12 5l-5 5 5 5" />
+  </svg>
+);

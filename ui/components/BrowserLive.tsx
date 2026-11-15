@@ -164,7 +164,7 @@ export function BrowserLive() {
   );
 }
 
-function CookieForm({ agent, onDone }: { agent: string; onDone: (msg?: string) => void }) {
+export function CookieForm({ agent, onDone }: { agent: string; onDone: (msg?: string) => void }) {
   const [cookies, setCookies] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
