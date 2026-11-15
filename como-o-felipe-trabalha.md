@@ -29,8 +29,12 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
 - **Não quer revisar trabalho de IA.** Campanha aprovada uma vez = envio automático; a IA
   é o auxílio de escrita que ele usaria no próprio portal de e-mail. "Rotina é rotina":
   roda sem ele e checa depois.
-- **Triagem automática**: manda a tarefa e um Sonnet decide agente, modelo e workflow
-  (`triagem.md`).
+- **Triagem automática, sempre ligada**: abre o chat, fala, e um Sonnet decide agente,
+  modelo e workflow (`triagem.md`). Não quer trocar modo nem escolher agente.
+- **Voz primeiro.** Tem preguiça de texto; fala por áudio e descarrega ideia. Quanto mais
+  fala, mais contexto. A IA executa; ele não.
+- **Mínimo atrito, uso pessoal.** Assinatura e ferramentas pelo CLI, na VPS. Quer parar de
+  gerenciar provedora de IA e ferramenta secundária e sair das 30 abas (`consolidacao.md`).
 - **Pedido explícito no site vai direto para o ar**, sem PR: posts do blog, alterações que
   ele pediu. O site não é produto com dado sensível. Branch separada ou worktree só quando
   ele pedir.

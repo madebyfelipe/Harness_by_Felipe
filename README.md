@@ -22,7 +22,10 @@ decisão recente é **legado**: tirar, ou marcar como legado (pode estar defasad
 - **Projetos por milestones** no Trello; **loop de feedback** do Felipe.
 - **Envio de campanha é automático**: aprovou a campanha uma vez, a rotina roda e reporta
   depois. Pode assinar como Felipe. Ninguém revisa e-mail por e-mail.
-- **Triagem automática**: um Sonnet recebe a tarefa e decide agente, modelo e workflow.
+- **Uma porta só, voz primeiro**: abre o chat (ou manda áudio), a triagem sempre ligada
+  decide agente, modelo e workflow e executa.
+- **Uso pessoal, tudo pelo CLI** na assinatura; consolidar rotinas e sair das 30 abas
+  (Sellbird em avaliação).
 
 ## Arquivos
 
@@ -34,6 +37,7 @@ decisão recente é **legado**: tirar, ou marcar como legado (pode estar defasad
 | [`site.md`](site.md) | Manutenção do site: stack, deploy, design system, rotas (ativas e legado), blog, checklist |
 | [`rotinas.md`](rotinas.md) | O que já roda (OpenBot, Claude, Vercel) e as rotinas propostas para o harness |
 | [`milestones.md`](milestones.md) | Método de projetos no Trello (M0, M1…, critério de virada) e milestones do harness |
+| [`consolidacao.md`](consolidacao.md) | Uma porta só: princípios, inventário de rotinas e destino, critérios para avaliar o Sellbird, MVP |
 | [`triagem.md`](triagem.md) | Triagem automática ("auto mode"): complexidade, roteamento para agente/modelo, formato do workflow, exemplo |
 | [`feedback.md`](feedback.md) | Loop de feedback: como o Felipe registra (`fb:` no WhatsApp, janela na Central), triagem e registros |
 | [`skills.md`](skills.md) | Skills e conectores que existem, o que falta conectar e as skills a criar |

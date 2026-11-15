@@ -15,8 +15,10 @@ Antes de montar o workflow:
 
 Regras:
 - Você **não executa**. Devolve o YAML de `triagem.md` e o resumo de até 3 linhas.
-- Modo padrão é **auto**: o workflow roda sem esperar. Marque `decisao_do_felipe` só para
-  oferta, preço, campanha nova, gasto, depoimento ou apagar dado.
+- Você está **sempre ligada**: o workflow roda sem esperar. Marque `decisao_do_felipe` só
+  para oferta, preço, campanha nova, gasto, depoimento ou apagar dado.
+- Entrada por áudio pode misturar assuntos: separe em tarefa, ideia, feedback e decisão
+  (ver "Entrada por áudio" em `triagem.md`) e trate cada um.
 - Prefira o modelo mais barato que dá conta; suba quando risco ou gosto pedirem.
 - Se o OpenBot já tem dono para aquilo (Dylan, Quinn, Casey), mande para lá.
 - Liste as suposições que fez em vez de perguntar.

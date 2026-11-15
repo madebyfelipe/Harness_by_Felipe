@@ -1,7 +1,8 @@
 # Dashboard de agentes — especificação
 
 _O "OpenBot próprio": uma UI simples para conversar com os agentes, com navegador por
-bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe._
+bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe. **Uso pessoal
+do Felipe, não é produto.** Mínimo atrito: abrir, falar, pronto (`consolidacao.md`)._
 
 ## O que ela precisa ter (pela ordem de valor)
 
@@ -10,10 +11,17 @@ bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe._
    orquestrador → resposta pela API. Áudio vira texto antes de entrar. Mensagens curtas
    (1–3 linhas); detalhe fica num link para a dashboard. Só o seu número é aceito.
    A dashboard vira o lugar para ver navegador, cofre e histórico, não para conversar.
-1. **Chat com o orquestrador** (e, opcionalmente, direto com um subagente), com histórico
-   por conversa e seletor de modelo (Fable 5.2 · Opus 5.5 · Sonnet 5.5 · Haiku 5.5).
-   Modo **Auto** (padrão): a tarefa passa pela triagem (Sonnet), que escolhe agente, modelo
-   e workflow e já executa; "planejar:" mostra o workflow e espera (`triagem.md`).
+1. **Uma janela de chat, triagem sempre ligada.** Abriu, escreveu ou falou: a triagem
+   (Sonnet) escolhe agente, modelo e workflow e já executa (`triagem.md`). **Não existe
+   seletor de modo nem de agente na tela principal**; trocar modelo/agente é exceção,
+   escondida num menu do passo em andamento. Histórico por conversa.
+   **Voz primeiro / despejo de ideias** (15/11): botão de microfone grande, sempre visível,
+   e áudio do WhatsApp. O Felipe fala solto, quanto quiser. A transcrição roda **local na
+   VPS** (whisper.cpp, modelo small, sem provedor novo), e a triagem separa o que ouviu em
+   **tarefas** (executa), **ideias** (cartão em Entrada no Trello), **feedback**
+   (`feedback.md`) e **decisões** (`decisoes.md`, com data). Volta um resumo de 1–3 linhas:
+   "Entendi 4 coisas: 2 tarefas rodando, 1 ideia no Trello, 1 decisão anotada." A
+   transcrição inteira fica salva como contexto.
 2. **Modo "Contexto"**: perguntas sobre a Made by Felipe e as ofertas respondidas **só**
    a partir do banco de contexto (`contexto.md`, `vendas.md`, preços, método, regras),
    com a fonte citada. Se não estiver no banco, diz "não está no contexto".
@@ -50,10 +58,10 @@ bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe._
 
 - **Servidor**: uma VPS sua (onde o OpenBot já roda serve). Não dá para rodar navegadores
   persistentes na Vercel.
-- **Runner**: o **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`) é o Claude Code
-  como biblioteca — já traz leitura/escrita de arquivos, terminal, busca, MCP e
-  **subagentes**. As definições da pasta `agents/` deste harness já estão no formato de
-  subagente do Claude Code, então funcionam direto.
+- **Runner**: processos do **Claude Code CLI** em modo headless (`claude -p`, saída em
+  `stream-json`), logado na assinatura do Felipe — traz arquivos, terminal, busca, MCP e
+  **subagentes**. As definições da pasta `agents/` já estão no formato de subagente do
+  Claude Code, então funcionam direto.
 - **Navegador**: Playwright com `launchPersistentContext` (um diretório de perfil por
   agente) + transmissão da tela para a UI (noVNC ou screencast do Chrome DevTools). O
   agente controla por um servidor MCP de navegador.
@@ -64,20 +72,16 @@ bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe._
 - **Banco de contexto**: os `.md` deste harness num **repositório privado**. Modo Contexto =
   orquestrador com só leitura nessa pasta e instrução de citar o arquivo.
 
-## Login pela assinatura do Claude (ponto de atenção)
+## Login: assinatura pelo CLI (decisão de 15/11)
 
-Você quer usar o modelo via login da sua assinatura, como o OpenBot faz. O que dá para
-dizer com segurança:
-
-- Usar o **Claude Code oficial** (CLI ou Agent SDK) logado na **sua** conta, num servidor
-  **seu**, para **você**, é o uso para o qual a assinatura existe.
-- Oferecer o login de assinatura do Claude **dentro de um produto para outras pessoas**
-  não é permitido sem aprovação da Anthropic — para isso, chave de API.
-- Antes de construir, **confira os termos atuais** da assinatura e da documentação do
-  Agent SDK sobre autenticação — eu não consegui verificar o texto vigente nesta sessão.
-- Plano B sem dúvida nenhuma: **chave de API** para os jobs automáticos (rotinas da
-  madrugada, volume de e-mail) e assinatura só para o seu chat. Isso também evita que os
-  bots consumam a sua janela de uso (ver `subagentes.md`).
+- O harness é **só para o Felipe**; não será vendido nem oferecido a ninguém.
+- Modelo pelo **Claude Code CLI oficial**, logado na assinatura dele, rodando na VPS dele
+  em modo headless (`claude -p …`), como o OpenBot já faz. **Sem chave de API por padrão.**
+- Ferramentas também por **CLI** sempre que der (`gh`, `git`, `curl`, scripts SMTP/IMAP).
+- Atenção: tudo (chat, rotinas, agentes) sai da **mesma janela de uso** da assinatura.
+  Rotinas pesadas de madrugada antecipam o reset (ver `subagentes.md`).
+- Na primeira montagem, conferir uma vez os termos vigentes da assinatura e registrar em
+  `ui/AUTH.md`.
 
 ## Telas
 
@@ -97,8 +101,8 @@ nascer outra estética.
 
 ## Fases (para não virar projeto infinito)
 
-1. **MVP (1–2 semanas de agente)**: chat + modo Contexto + seletor de modelo + rotinas
-   em leitura + **janela de feedback** + **triagem automática**. Sem navegador ao vivo e sem cofre (segredos em
+1. **MVP (1–2 semanas de agente)**: uma janela de chat com **áudio** e **triagem sempre
+   ligada** + modo Contexto + rotinas em leitura + **janela de feedback**. Sem navegador ao vivo e sem cofre (segredos em
    variável de ambiente).
 2. **Cofre** com escopo por agente e registro de uso.
 3. **Navegador por agente** com transmissão de tela e "assumir controle".

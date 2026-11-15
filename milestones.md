@@ -41,7 +41,8 @@ Depende de: M<x> / decisão do Felipe
 | **M0 · Contexto limpo** | banco de contexto sem legado ativo | legado removido ou marcado; `decisoes.md` no ar; oferta ativa (e-book + site) igual em todos os arquivos; depoimentos fictícios fora do contexto |
 | **M1 · Oferta no ar** | site e cold mail falando a mesma coisa | `beta` com R$ 599 / R$ 1.999; playbook do Dylan atualizado; depoimentos fictícios e `/diagnostico` fora do site; e-mails sem link rastreado |
 | **M2 · Feedback e status** | o Felipe registra impressão em segundos e o agente lê | canal de feedback funcionando (WhatsApp `fb:` ou janela da Central); triagem semanal rodando; Trello certo conectado |
-| **M3 · Central (UI) fase 1** | chat + modo Contexto + modo Auto | ver `prompts/construir-ui.md`, fase 1; uma tarefa real ("atualizar /privacidade") passa pela triagem e é executada sem o Felipe intervir |
-| **M4 · Rotinas e avisos** | rotinas e avisos pela Central/WhatsApp | ver fase 3 do prompt da UI |
+| **M2.5 · Decidir a casa das rotinas** | harness próprio, Sellbird ou OpenBot | tabela de critérios de `consolidacao.md` preenchida para o Sellbird; decisão registrada em `decisoes.md` |
+| **M3 · Central (UI) fase 1** | uma janela, áudio, triagem sempre ligada | ver `prompts/construir-ui.md`, fase 1; um áudio com 3 assuntos vira tarefa executada + cartão + feedback, sem o Felipe escolher nada |
+| **M4 · Rotinas e avisos** | rotinas migradas, uma por vez | `consolidacao.md`: um dia inteiro sem abrir OpenBot, Vercel ou CRM para operar |
 
 Status em 15/11: **M0 virou** (legado tirado ou marcado em todos os arquivos, `decisoes.md` criado, oferta igual em tudo, conferido por busca de termos antigos). Próximo: **M1**.

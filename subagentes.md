@@ -111,7 +111,8 @@ partir do **primeiro uso** depois da janela anterior. Se for assim:
   10:30. O "Oi" das 05:30 só funciona se nada rodar antes.
 - Para o reset cair às 10:30: nada que use a assinatura entre ~00:30 e 05:30, e o "Oi" (ou
   o 1º bloco de e-mail) exatamente às 05:30.
-- Trabalho pesado de agente na madrugada (01h–05h) **empurra** o seu reset. Se precisar
-  de madrugada, use chave de API para esses jobs, não a assinatura.
+- Trabalho pesado de agente na madrugada (01h–05h) **empurra** o seu reset. Como tudo roda
+  na assinatura pelo CLI (decisão de 15/11), concentre o pesado logo depois das 05:30 ou
+  aceite o reset mais cedo; o monitor de janela da Central mostra quem está consumindo.
 
 Detalhe das definições prontas: pasta `agents/`. Skills: pasta `skills/`.

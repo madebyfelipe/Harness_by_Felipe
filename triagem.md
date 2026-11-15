@@ -13,16 +13,27 @@ modelo em cada um, onde entra revisão automática. Depois disso o workflow roda
 A triagem **não executa a tarefa**. Ela só decide quem faz e como. Por isso é barata
 (Sonnet, só leitura) e rápida.
 
-## Modos
+## Sempre ligada (não é um modo para escolher)
 
-| modo | o que acontece | quando |
-|---|---|---|
-| **Auto** (padrão) | triagem → mostra o plano em 3 linhas → **já executa**. O Felipe pode parar a qualquer momento | quase sempre |
-| **Planejar** | triagem → mostra o workflow completo → espera o "vai" | quando ele pede, ou quando a triagem marca **decisão do Felipe** |
+A triagem é a porta de entrada da Central e do WhatsApp. **O Felipe abre a janela, fala ou
+escreve, e pronto**: a triagem roda, mostra o plano em até 3 linhas e já executa. Não há
+seletor de modo, agente ou modelo na tela principal. Ele pode parar a qualquer momento.
 
-No modo Auto, a execução só para antes de começar se o workflow tiver um passo da lista
-"decisão do Felipe" (oferta, preço, campanha nova, gasto, depoimento, apagar dado). Nesse
-caso o resto do workflow pode rodar e só aquele passo espera.
+- Só espera antes de um passo da lista "decisão do Felipe" (oferta, preço, campanha nova,
+  gasto, depoimento, apagar dado). O resto do workflow roda; só aquele passo fica parado.
+- "planejar:" no começo da mensagem é a exceção: mostra o workflow e espera o "vai".
+
+## Entrada por áudio (despejo de ideias)
+
+O jeito principal de entrar é **áudio** (WhatsApp ou microfone da Central). Um áudio pode
+misturar vários assuntos. A triagem:
+1. Recebe a transcrição (whisper.cpp local na VPS).
+2. Separa em itens: **tarefa** (vira workflow e executa), **ideia** (cartão em Entrada no
+   Trello, `milestones.md`), **feedback** (`feedback.md`), **decisão** (`decisoes.md`, com
+   data e as palavras dele).
+3. Responde em 1–3 linhas: "Entendi 4 coisas: 2 tarefas rodando, 1 ideia no Trello,
+   1 decisão anotada."
+4. Guarda a transcrição inteira como contexto (fala solta também é contexto).
 
 ## Passo a passo da triagem
 
@@ -134,8 +145,8 @@ Para o Felipe (WhatsApp/Central), a triagem resume em até 3 linhas:
 
 ## Para construir (na Central)
 
-- Botão/modo **Auto** no chat e no WhatsApp (padrão). "planejar:" no começo da mensagem
-  força o modo Planejar.
+- Triagem sempre ligada no chat e no WhatsApp, sem botão. "planejar:" no começo da
+  mensagem faz esperar. Microfone grande e áudio do WhatsApp como entrada principal.
 - Tela mostra o workflow como lista de passos com agente, modelo e status de cada um.
 - Botões: **parar**, **subir de modelo** (passo atual), **trocar agente**.
 - Registro de cada triagem para o aprendizado acima.

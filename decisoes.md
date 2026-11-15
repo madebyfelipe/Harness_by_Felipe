@@ -4,6 +4,16 @@
 desta lista. Não travar por inconsistência: aplique a mais nova e corrija o arquivo antigo.
 Decisão nova entra **no topo**, com data e motivo.
 
+## 15/11/2026 — uma porta só, voz e CLI
+
+| decisão | o que muda |
+|---|---|
+| **Triagem sempre ligada**: abriu o chat, ela decide e executa; nada para trocar | Central sem seletor de modo/agente na tela principal (`triagem.md`) |
+| **Voz primeiro**: o Felipe fala (áudio), descarrega ideia, a IA executa | Microfone e áudio do WhatsApp como entrada principal; a triagem separa tarefa, ideia, feedback e decisão |
+| **Uso pessoal, não comercial** | Assinatura e ferramentas **pelo CLI**, na VPS; sem chave de API por padrão |
+| **Consolidar tudo** no harness ou numa solução mínima: sem 30 abas, sem gerenciar provedora | `consolidacao.md`: inventário de rotinas e destino |
+| **Sellbird em avaliação** (usa a assinatura de IA do Felipe) | Critérios de comparação em `consolidacao.md` |
+
 ## 15/11/2026 — envio automático e triagem automática
 
 | decisão | o que muda |
