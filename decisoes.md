@@ -11,6 +11,8 @@ Decisão nova entra **no topo**, com data e motivo.
 | "refira-se a esse conteúdo quando for montar uma postagem" | **Toda postagem de Instagram consulta `instagram.md`** (pilares, voz, limites, CTA, calendário) antes de ser montada. Planejamento criado em 15/11/2026 |
 | suba o sellbird na vps, versão github (reabre a decisão provisória de seguir só no harness próprio, porque agora há acesso) | **Aplicado na triagem de 15/11**: Sellbird em `/data/sellbird/app`, painel em `127.0.0.1:5555`; `consolidacao.md` e M2.5 corrigidos. Avaliação reaberta; casa das rotinas segue decisão do Felipe |
 | Triagem semanal de feedback (15/11, 1ª rodada) | Nenhuma regra nova. "Não consigo ver a interação dos subagentes nem o background" (3x) virou cartão prioritário em Entrada (M3). Seis "bom" sem ação |
+| quando me referir a oferta sellbird ou oferta gringa, é a oferta para terapeutas em private practice, em inglês, rodando pelo Sellbird, com US$ 499 (página única) e US$ 1.499 (institucional), sem mensalidade | a aplicar (dita pelo Felipe; a triagem corrige os arquivos antigos) |
+| descarte o que já existe (LP e copy anteriores desta oferta), comece do zero | a aplicar (dita pelo Felipe; a triagem corrige os arquivos antigos) |
 
 ## 15/11/2026 (madrugada) — memória, crescimento e autonomia dos agentes
 
