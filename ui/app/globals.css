@@ -1674,3 +1674,346 @@ details.fold > summary {
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
+
+/* ==========================================================================
+   Densidade compacta (pedido do Felipe, 15/11: "mais fechadinho, vide Twenty").
+   Só no desktop: base 13 px, controles de 28–32 px, cantos 4/8 px, menos respiro.
+   No celular os alvos de toque continuam grandes.
+   ========================================================================== */
+
+@media (min-width: 861px) {
+  :root {
+    --radius: 6px;
+    --radius-lg: 8px;
+    --pad: 20px;
+    --bar-h: 44px;
+    --rail-w: 48px;
+    --list-w: 264px;
+  }
+  html {
+    font-size: 14px;
+  }
+  body {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+  .h2,
+  .cat__head,
+  .list__title {
+    font-size: 0.9375rem;
+  }
+  .lead {
+    font-size: 13px;
+  }
+  .small,
+  .card__desc,
+  .citem__preview {
+    font-size: 12px;
+  }
+  .kicker,
+  .label,
+  .msg__meta,
+  .citem__time {
+    font-size: 11px;
+  }
+  .label {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .btn {
+    min-height: 32px;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .btn--sm,
+  .btn-connect {
+    min-height: 28px;
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+  .field,
+  .field--sm {
+    min-height: 32px;
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+  .search,
+  .clist__search {
+    height: 32px;
+    padding: 0 8px;
+  }
+  .notice {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .form {
+    gap: 12px;
+  }
+  .stack--lg {
+    gap: 20px;
+  }
+  .mode > summary {
+    min-height: 28px;
+    padding: 3px 8px;
+  }
+  .icon-btn,
+  .round {
+    width: 30px;
+    height: 30px;
+  }
+
+  .rail {
+    gap: 4px;
+    padding: 8px 0;
+  }
+  .rail__logo,
+  .rail__btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-lg);
+  }
+  .rail__logo {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+  .rail__btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .clist__head {
+    padding: 8px 8px 6px;
+  }
+  .clist__search {
+    margin: 0 8px 6px;
+  }
+  .clist__scroll {
+    padding: 0 6px 12px;
+  }
+  .clist__group {
+    margin: 10px 6px 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .citem {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px;
+    padding: 5px 6px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .citem__body {
+    gap: 0;
+  }
+
+  .main {
+    padding: 20px var(--pad) 40px;
+  }
+  .main--flush {
+    padding: 0;
+  }
+  .page {
+    max-width: 960px;
+    gap: 20px;
+  }
+  .page__head {
+    gap: 6px;
+  }
+  .cell {
+    gap: 4px;
+    padding: 12px 14px;
+  }
+  .cell__value {
+    font-size: 1.15rem;
+  }
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  .list__item {
+    gap: 2px;
+    padding: 9px 0;
+  }
+  .tag {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .pre,
+  .md pre {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .cfg__nav {
+    width: 208px;
+    padding: 10px 6px;
+  }
+  .cfg__nav ul {
+    gap: 1px;
+  }
+  .cfg__nav a {
+    gap: 8px;
+    min-height: 28px;
+    padding: 4px 8px;
+    font-weight: 400;
+  }
+  .cfg__nav a svg {
+    width: 15px;
+    height: 15px;
+  }
+  .cfg__nav a[aria-current="page"] {
+    font-weight: 500;
+  }
+  .cfg__title {
+    margin: 2px 8px 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .cfg__group {
+    margin: 14px 8px 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .toolbar {
+    gap: 8px;
+  }
+  .cat {
+    gap: 4px;
+  }
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 2px 16px;
+  }
+  .card {
+    gap: 6px;
+    padding: 6px;
+  }
+  .card__row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .card__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+  }
+  .card__name {
+    font-weight: 500;
+  }
+  .card__detail {
+    margin-left: 42px;
+    gap: 6px;
+  }
+  .form-grid {
+    gap: 8px 10px;
+  }
+
+  .chat__head {
+    padding: 6px var(--pad);
+  }
+  .chat__title strong {
+    font-size: 13px;
+  }
+  .chat__scroll {
+    padding: 16px var(--pad);
+  }
+  .chat__inner,
+  .composer__inner {
+    max-width: 760px;
+  }
+  .chat__inner {
+    gap: 14px;
+  }
+  .hello {
+    gap: 8px;
+  }
+  .bigmic {
+    width: 72px;
+    height: 72px;
+  }
+  .bigmic svg {
+    width: 24px;
+    height: 24px;
+  }
+  .msg {
+    gap: 4px;
+  }
+  .msg__bubble {
+    padding: 8px 12px;
+    border-radius: 12px 12px 12px 4px;
+  }
+  .msg--user .msg__body {
+    padding: 7px 12px;
+    border-radius: 12px 12px 4px 12px;
+  }
+  .triage,
+  .approval {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .steps,
+  .triage__steps,
+  .triage__notes {
+    font-size: 12px;
+  }
+  .composer {
+    padding: 6px var(--pad) 12px;
+  }
+  .composer__box {
+    gap: 6px;
+    padding: 5px;
+    border-radius: 12px;
+  }
+  .composer__box textarea,
+  .composer__rec {
+    min-height: 30px;
+  }
+  .composer__box textarea {
+    padding: 5px 4px;
+  }
+  .fbrow__btn,
+  .code__copy,
+  .fbrow__form .field {
+    min-height: 24px;
+  }
+  .md h1 {
+    font-size: 1.25rem;
+  }
+  .md h2 {
+    font-size: 1.1rem;
+  }
+  .md h3,
+  .md h4 {
+    font-size: 1rem;
+  }
+  .md th,
+  .md td {
+    padding: 5px 8px;
+  }
+  .md th,
+  .code__head,
+  .code__copy,
+  .fbrow__btn {
+    font-size: 11px;
+  }
+  .mode__panel,
+  .pop__panel {
+    padding: 10px;
+    gap: 8px;
+  }
+  .mode__opt {
+    padding: 6px 8px;
+  }
+}
