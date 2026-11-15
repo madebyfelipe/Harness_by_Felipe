@@ -44,3 +44,5 @@ Registrar as palavras do Felipe como ele disse. O encaminhamento é preenchido n
   → (a encaminhar na triagem semanal)
 - 15/11/2026 · Central · chat · triagem Haiku 5.5 · 'planejar: quero fazer um teste de delegação, preciso que um ' · bom · "bom"
   → (a encaminhar na triagem semanal)
+- 15/11/2026 · Central · chat · ruim · "Não fica muito claro qual é a gestão dos agentes: ao planejar uma tarefa, não consigo ver a interação dos subagentes nem o que está sendo feito em background."
+  → (a encaminhar na triagem semanal)

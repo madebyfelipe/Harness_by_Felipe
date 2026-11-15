@@ -55,3 +55,9 @@ Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 - **Fase 3 (rotinas e WhatsApp)**: agendador, tela de rotinas, aviso de saída e monitor de janela feitos. **Canal de entrada do WhatsApp feito** (webhook com token, texto e nota de voz transcrita aqui, resposta de volta, aprovação por "ok"/"não", "pare" interrompe); falta ligar na Evolution com um número que não seja o do Felipe. Janelas de envio de e-mail não começaram.
 - **Fase 4 (cofre e navegadores)**: feita. Cofre com escopo por agente e segredo por referência (`{{vault:NOME}}`, valor só depois da aprovação); navegador por agente com tela ao vivo na tela Navegadores, bloqueio de rede interna, controle pelo Felipe e cofre separado por agente; colar e arrastar arquivo no chat.
 - **Fase 5 (aprovações, registros, demais conectores)**: aprovação no chat e modo automático feitos; fila única e tela de registros não começaram.
+
+## Entrada (ideias)
+
+_Ideias que chegam pela Central ou pelo WhatsApp. Até o Trello certo estar ligado, ficam aqui; a triagem semanal encaixa cada uma._
+
+- 15/11/2026 · "Uma estrutura de abas na barra superior, ao lado do seletor, ou à esquerda, com uma aba para cada subagente, para ver onde cada comunicação está sendo feita." (via Central; encaixar no milestone certo)
