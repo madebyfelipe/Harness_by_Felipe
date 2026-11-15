@@ -15,7 +15,6 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
       <ChatView
         initial={{ conversation, messages: await listMessages(id), active: activeRun(id) }}
         models={MODELS.map(({ id: mid, label, note }) => ({ id: mid, label, note }))}
-        agentLabel={conversation.agent}
         backHref="/chat"
       />
     </main>

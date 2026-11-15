@@ -15,7 +15,6 @@ export default async function ContextoChatPage({ params }: { params: Promise<{ i
       <ChatView
         initial={{ conversation, messages: await listMessages(id), active: activeRun(id) }}
         models={MODELS.map(({ id: mid, label, note }) => ({ id: mid, label, note }))}
-        agentLabel="Modo Contexto"
         backHref="/contexto"
       />
     </main>

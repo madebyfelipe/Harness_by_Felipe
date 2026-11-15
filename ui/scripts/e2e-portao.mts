@@ -13,7 +13,9 @@ import { chromium, type Page } from "playwright-core";
 const URL_ = process.env.CENTRAL_E2E_URL || "http://localhost:4600";
 const DATA = process.env.CENTRAL_E2E_DATA!;
 const OUT = process.env.CENTRAL_E2E_OUT || "/tmp/central-e2e";
-const REPO = path.resolve(import.meta.dirname, "..", "..");
+/** Cópia do repositório que a Central de teste usa (CENTRAL_REPO_DIR): triagem e feedback gravam lá. */
+const REPO = process.env.CENTRAL_E2E_REPO || path.resolve(import.meta.dirname, "..", "..");
+const WAV = process.env.CENTRAL_E2E_WAV || "";
 
 const problems: string[] = [];
 const info = (s: string) => console.log(`  ${s}`);
@@ -22,19 +24,23 @@ const check = (ok: boolean, what: string) => {
   if (!ok) problems.push(what);
 };
 
-const browser = await chromium.launch({ executablePath: process.env.CENTRAL_E2E_CHROME, args: ["--no-sandbox"] });
-const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: "pt-BR", storageState: path.join(OUT, "state.json") });
+const browser = await chromium.launch({ executablePath: process.env.CENTRAL_E2E_CHROME, args: ["--no-sandbox", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
+const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: "pt-BR", storageState: path.join(OUT, "state.json"), permissions: ["microphone"] });
 const page = await context.newPage();
 page.on("pageerror", (e) => problems.push(`erro de JS: ${e.message}`));
 
 const DONE = "article.msg:not(.msg--user):not([data-testid=live])";
 
-async function newChat(start: string, button: string) {
+/** "/" = conversa nova pronta (triagem). Contexto ainda tem o botão próprio. */
+async function newChat(start: string, button?: string) {
   await page.goto(URL_ + start);
-  await page.click(`button:has-text("${button}")`);
-  await page.waitForURL(/\/(chat|contexto)\/[0-9a-f-]{36}$/);
+  if (button) {
+    await page.click(`button:has-text("${button}")`);
+    await page.waitForURL(/\/(chat|contexto)\/[0-9a-f-]{36}$/);
+  }
   await page.waitForSelector("#composer");
 }
+const read = (f: string) => fs.readFileSync(path.join(REPO, f), "utf8");
 
 type Step = "permitir" | "sempre" | "negar" | "nenhum";
 const BUTTON: Record<Exclude<Step, "nenhum">, string> = { permitir: "Permitir", sempre: "Sempre nesta conversa", negar: "Negar" };
@@ -47,8 +53,8 @@ async function ask(text: string, step: Step, p: Page = page): Promise<{ answer: 
   let card = "";
   // O cartão ou a resposta final: o que vier primeiro.
   const first = await Promise.race([
-    p.waitForSelector(".approval:not(form)", { timeout: 60_000 }).then(() => "card" as const),
-    p.waitForFunction(([sel, n]) => document.querySelectorAll(sel as string).length > (n as number), [DONE, before] as const, { timeout: 60_000 }).then(() => "done" as const)
+    p.waitForSelector(".approval:not(form)", { timeout: 60_000 }).then(() => "card" as const, () => "timeout" as const),
+    p.waitForFunction(([sel, n]) => document.querySelectorAll(sel as string).length > (n as number), [DONE, before] as const, { timeout: 60_000 }).then(() => "done" as const, () => "timeout" as const)
   ]);
   if (first === "card") {
     card = (await p.innerText(".approval:not(form)")).replace(/\s+/g, " ");
@@ -61,10 +67,12 @@ async function ask(text: string, step: Step, p: Page = page): Promise<{ answer: 
 }
 
 /* ---------------- orquestrador ---------------- */
-await newChat("/", "Falar com o orquestrador");
+await newChat("/");
 
 let r = await ask("oi", "nenhum");
 check(/resposta-falsa: ok/.test(r.answer) && !r.card, "a Central conversa com o modelo falso (nada de uso real neste teste)");
+check(/\/chat\/[0-9a-f-]{36}$/.test(page.url()), "a conversa nasce no primeiro envio, sem escolher agente nem modo");
+check(/Triagem · N1/i.test(r.answer) && /Orquestrador \(Sonnet 5\.5\)/i.test(r.answer), "toda mensagem passa pela triagem, que mostra nível, agente e modelo");
 
 r = await ask("FALSO:bash:echo central-ok-$((6*7))", "permitir");
 info(`cartão: ${r.card.slice(0, 150)}`);
@@ -114,7 +122,7 @@ r = await ask(`FALSO:bash:cat ${path.join(DATA, "master.key")}`, "nenhum");
 check(/Bloqueado pela Central/.test(r.answer), "mesmo com terminal liberado, a barreira de segredo continua valendo");
 
 // Conversa nova: a liberação não vaza. Recarregar com pedido pendente: o cartão volta. Parar: encerra.
-await newChat("/", "Falar com o orquestrador");
+await newChat("/");
 await page.fill("#composer", "FALSO:bash:echo outra-conversa");
 await page.click("button:has-text('Enviar')");
 await page.waitForSelector(".approval:not(form)", { timeout: 60_000 });
@@ -123,6 +131,61 @@ await page.reload();
 check(await page.waitForSelector(".approval:not(form)", { timeout: 15_000 }).then(() => true).catch(() => false), "recarregar a página com pedido pendente traz o cartão de volta");
 await page.click("button:has-text('Parar')");
 check(await page.waitForSelector("text=Execução parada por você.", { timeout: 30_000 }).then(() => true).catch(() => false), "\"Parar\" com pedido pendente encerra a execução sem rodar o comando");
+
+/* ---------------- triagem: despejo, fb:, planejar:, feedback, áudio ---------------- */
+await newChat("/");
+r = await ask("FALSO:ideia:ideia-e2e-111 FALSO:feedback:feedback-e2e-222 ruim FALSO:decisao:decisao-e2e-333", "nenhum");
+info(`despejo: ${r.answer.slice(0, 220)}`);
+check(/Entendi 3 coisa/.test(r.answer) && /nenhuma tarefa/.test(r.answer), "despejo sem tarefa: a triagem resume em 1 linha e não roda agente");
+check(/ideia-e2e-111/.test(read("milestones.md")) && /Entrada \(ideias\)/.test(read("milestones.md")), "ideia vai para Entrada em milestones.md");
+check(/· ruim · "feedback-e2e-222/.test(read("feedback.md")), "feedback vai para feedback.md no formato do arquivo");
+check(/decisao-e2e-333/.test(read("decisoes.md").split("\n## ").slice(0, 2).join("\n")), "decisão entra no topo de decisoes.md, com data");
+check(/ideia → milestones\.md/.test(r.answer.replace(/\s+/g, " ")) || /milestones\.md/.test(r.answer), "o card da triagem mostra onde cada item foi anotado");
+
+r = await ask("fb: fb-e2e-444 a lista lateral ficou boa", "nenhum");
+check(/^.*anotado/.test(r.answer) && /fb-e2e-444/.test(read("feedback.md")), "\"fb: …\" anota direto em feedback.md e responde \"anotado\"");
+
+r = await ask("planejar: FALSO:bash:echo plano-$((5+5))", "nenhum");
+check(!r.card && /Diga vai para rodar/.test(r.answer), "\"planejar:\" mostra o plano e espera, sem rodar nada");
+r = await ask("vai", "permitir");
+check(/Bash/.test(r.card) && /plano-10/.test(r.answer), "\"vai\" roda o plano guardado (e o terminal continua pedindo aprovação)");
+
+r = await ask("FALSO:contexto qual é o preço?", "nenhum");
+check(/Contexto · Sonnet 5\.5/i.test(r.answer), "pergunta sobre o negócio a triagem manda para o Modo Contexto");
+
+const before = (read("feedback.md").match(/· bom ·/g) ?? []).length;
+await page.locator("article.msg:not(.msg--user)").first().locator("button:has-text('bom')").click();
+await page.waitForSelector("text=feedback anotado");
+check((read("feedback.md").match(/· bom ·/g) ?? []).length === before + 1, "botão \"bom\" na resposta grava em feedback.md com o lugar");
+
+await page.click("summary[aria-label='Dar feedback']");
+await page.fill("#fb-text", "comentario-e2e-555 tela de chat");
+await page.click(".pop__panel button:has-text('Comentar')");
+await page.waitForSelector(".pop__panel >> text=Anotado.");
+check(/comentario-e2e-555/.test(read("feedback.md")) && /tela \/chat\//.test(read("feedback.md")), "botão fixo de feedback grava o comentário com a tela");
+
+if (WAV && fs.existsSync(WAV)) {
+  // jfk.wav: PCM 16 bits, mono, 16 kHz → Float32, como o navegador manda.
+  const wav = fs.readFileSync(WAV);
+  const data = wav.indexOf("data") + 8;
+  const pcm = new Float32Array((wav.length - data) / 2);
+  for (let i = 0; i < pcm.length; i++) pcm[i] = wav.readInt16LE(data + i * 2) / 32768;
+  const t0 = Date.now();
+  const res = await page.request.post(URL_ + "/api/transcrever", { headers: { origin: URL_, "content-type": "application/octet-stream" }, data: Buffer.from(pcm.buffer) });
+  const body = (await res.json()) as { text?: string; error?: string };
+  info(`transcrição (${Date.now() - t0} ms): ${body.text ?? body.error}`);
+  check(res.ok() && (body.text ?? "").length > 20, "áudio transcrito na própria VPS (Whisper small, sem provedor)");
+} else info("sem CENTRAL_E2E_WAV: transcrição de arquivo não conferida");
+
+await newChat("/");
+const transcreveu = page.waitForResponse((res) => res.url().endsWith("/api/transcrever"), { timeout: 180_000 });
+await page.click("button.bigmic");
+await page.waitForSelector("text=/Gravando/");
+await page.waitForTimeout(2500);
+await page.click("button.bigmic");
+const tr = await transcreveu;
+check(tr.status() === 200, "microfone: grava no navegador, decodifica para 16 kHz e a VPS transcreve");
+await page.waitForSelector("[data-testid=live]", { state: "detached", timeout: 90_000 }).catch(() => undefined);
 
 /* ---------------- Modo Contexto ---------------- */
 await newChat("/contexto", "Fazer uma pergunta");

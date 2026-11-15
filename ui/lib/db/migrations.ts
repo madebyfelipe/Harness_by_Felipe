@@ -130,6 +130,29 @@ export const MIGRATIONS: Migration[] = [
         detail TEXT
       )`
     ]
+  },
+  {
+    // Triagem sempre ligada: rota da última execução por conversa e registro de cada triagem.
+    id: "002_triagem",
+    statements: [
+      "ALTER TABLE conversations ADD COLUMN route TEXT",
+      `CREATE TABLE triages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        run_id TEXT,
+        pedido TEXT NOT NULL,
+        nivel TEXT,
+        soma INTEGER,
+        agente TEXT,
+        modelo TEXT,
+        resumo TEXT,
+        itens TEXT,
+        workflow TEXT,
+        status TEXT,
+        subiu_modelo INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )`
+    ]
   }
 ];
 

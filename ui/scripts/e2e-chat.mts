@@ -30,10 +30,13 @@ const context = await browser.newContext({ viewport: { width: 1280, height: 800 
 const page = await context.newPage();
 page.on("pageerror", (e) => problems.push(`erro de JS: ${e.message}`));
 
-async function newChat(p: Page, start: string, button: string) {
+/** "/" = conversa nova com triagem; com botão, conversa direta com agente ou contexto. */
+async function newChat(p: Page, start: string, button?: string) {
   await p.goto(URL_ + start);
-  await p.click(`button:has-text("${button}")`);
-  await p.waitForURL(/\/(chat|contexto)\/[0-9a-f-]{36}$/);
+  if (button) {
+    await p.click(`button:has-text("${button}")`);
+    await p.waitForURL(/\/(chat|contexto)\/[0-9a-f-]{36}$/);
+  }
   await p.waitForSelector("#composer");
 }
 
@@ -53,12 +56,12 @@ async function ask(p: Page, text: string, during?: () => Promise<void>, timeout 
 
 /* ---------------- orquestrador ---------------- */
 if (want("orq")) {
-  await newChat(page, "/", "Falar com o orquestrador");
-  assert.equal(await page.inputValue("#model"), "claude-fable-5-2", "orquestrador abre em Fable 5.2");
+  await newChat(page, "/");
 
   let a = await ask(page, "Qual é o preço atual do site, nos dois planos? Responda em uma linha, sem usar ferramenta.");
   info(`resposta: ${a.replace(/\s+/g, " ").slice(0, 260)}`);
-  check(/599/.test(a) && /1\.999/.test(a), "orquestrador (Fable 5.2) responde com a oferta atual do contexto: R$ 599 / R$ 1.999");
+  check(/599/.test(a) && /1\.999/.test(a), "a Central (triagem + agente escolhido) responde com a oferta atual do contexto: R$ 599 / R$ 1.999");
+  check(/Triagem/i.test(a), "a resposta mostra o card da triagem");
   check(/login da máquina|ANTHROPIC_API_KEY/.test(a), "a resposta mostra por onde o modelo autenticou, tempo e custo");
   await page.screenshot({ path: path.join(OUT, "40-chat-resposta.png") });
 
@@ -106,8 +109,10 @@ if (want("orq")) {
   a = await ask(page, "Delegue ao subagente guardiao a avaliação deste texto de e-mail e me devolva só o veredito dele: \"Sou da Made by Felipe e garanto agenda cheia em 30 dias.\"");
   info(`guardião: ${a.replace(/\s+/g, " ").slice(0, 260)}`);
   check(/BLOQUEADO/i.test(a), "orquestrador delega ao guardião e o texto com promessa é bloqueado");
-  await assistants(page).last().locator("details.fold summary").click();
-  check(/Agent|Task/.test(await assistants(page).last().innerText()) && /guardiao/.test(await assistants(page).last().innerText()), "a delegação aparece na lista de ações da resposta");
+  const fold = assistants(page).last().locator("details.fold summary").first();
+  if (await fold.count()) await fold.click();
+  const lastText = await assistants(page).last().innerText();
+  check(/guardiao/i.test(lastText), "o guardião aparece na resposta (delegado pelo orquestrador ou escolhido direto pela triagem)");
 
   // Recarregar no meio: a execução continua no servidor e a tela reconecta.
   const before = await assistants(page).count();
@@ -137,7 +142,9 @@ if (want("orq")) {
 /* ---------------- subir de modelo e parar ---------------- */
 if (want("escada")) {
   await newChat(page, "/agentes", "Conversar"); // primeiro da lista = orquestrador
+  await page.click("summary[aria-label='Mais opções']");
   await page.selectOption("#model", "claude-haiku-5-5");
+  await page.click("summary[aria-label='Mais opções']");
   await page.waitForTimeout(400);
   let a = await ask(page, "Responda só com a palavra: pronto");
   check(/Haiku 5\.5/.test(a), "trocar o modelo no seletor vale para a próxima resposta (Haiku 5.5)");
@@ -161,7 +168,8 @@ if (want("escada")) {
   await page.waitForSelector("text=Execução parada por você.", { timeout: 30_000 });
   check(true, "\"Parar\" interrompe a execução e guarda o que já tinha saído");
   await page.goto(URL_ + "/chat");
-  check((await page.locator("ul.list > li").count()) >= 2, "as conversas ficam na lista, com histórico");
+  await page.waitForSelector(".citem");
+  check((await page.locator(".citem").count()) >= 2, "as conversas ficam na lista, com histórico");
 }
 
 /* ---------------- Modo Contexto ---------------- */

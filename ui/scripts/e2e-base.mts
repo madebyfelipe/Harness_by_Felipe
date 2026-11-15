@@ -16,6 +16,8 @@ const URL_ = process.env.CENTRAL_E2E_URL || "http://localhost:4600";
 const DATA = process.env.CENTRAL_E2E_DATA!;
 const OUT = process.env.CENTRAL_E2E_OUT || "/tmp/central-e2e";
 const PASSWORD = "senha-de-teste-e2e-123";
+/** Cópia do repositório que a Central de teste usa (CENTRAL_REPO_DIR); o teste cria e apaga arquivo lá. */
+const REPO = process.env.CENTRAL_E2E_REPO || path.resolve("..");
 const axePath = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -152,47 +154,51 @@ assert.equal(again.status(), 409, "não dá para criar segunda conta");
 log("configuração inicial fechada depois da primeira conta");
 
 /* ---- 4. páginas, dois temas, contraste, celular ---- */
+// [url, nome, seletor que prova que a tela abriu]
 const pages: [string, string, string][] = [
-  ["/", "inicio", "Bom te ver"],
-  ["/chat", "chat", "Chat"],
-  ["/contexto", "contexto", "Contexto"],
-  ["/contexto/arquivo?f=contexto.md", "arquivo", "Contexto do negócio"],
-  ["/agentes", "agentes", "Agentes"],
-  ["/skills", "skills", "Skills"],
-  ["/conectores", "conectores", "Conectores"],
-  ["/conta", "conta", "Conta"]
+  ["/", "chat", "#composer"],
+  ["/inicio", "inicio", 'h1:has-text("Bom te ver")'],
+  ["/chat", "conversas", "#clist-q"],
+  ["/contexto", "contexto", 'h1:has-text("Contexto")'],
+  ["/contexto/arquivo?f=contexto.md", "arquivo", 'h1:has-text("Contexto do negócio")'],
+  ["/agentes", "agentes", 'h1:has-text("Agentes")'],
+  ["/skills", "skills", 'h1:has-text("Skills")'],
+  ["/conectores", "conectores", 'h1:has-text("Conectores")'],
+  ["/conta", "conta", 'h1:has-text("Conta")']
 ];
 let checked = 0;
 for (const theme of ["light", "dark"] as const) {
   await page.evaluate((t) => localStorage.setItem("central-theme", t), theme);
   for (const [url, name, heading] of pages) {
     await page.goto(URL_ + url);
-    await page.waitForSelector(`h1:has-text("${heading}")`);
+    await page.waitForSelector(heading);
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), theme);
     if (name === "conectores") await page.waitForSelector("[data-testid=conector-github]");
     await axe(page, `${name} (${theme})`);
     checked += 1;
-    if (theme === "light" || ["inicio", "agentes"].includes(name)) await page.screenshot({ path: path.join(OUT, `10-${name}-${theme}.png`) });
+    if (theme === "light" || ["chat", "inicio", "agentes"].includes(name)) await page.screenshot({ path: path.join(OUT, `10-${name}-${theme}.png`) });
   }
 }
 log(`${checked} telas conferidas com axe-core (WCAG 2.1 AA), claro e escuro`);
 
 assert.ok((await page.$$("[data-testid^=agente-]")).length === 0);
 await page.goto(URL_ + "/agentes");
-assert.equal((await page.$$("[data-testid^=agente-]")).length, 8, "8 agentes lidos de agents/");
-log("8 agentes lidos do repositório");
+const nAgents = fs.readdirSync(path.join(REPO, "agents")).filter((f) => f.endsWith(".md")).length;
+assert.equal((await page.$$("[data-testid^=agente-]")).length, nAgents, `${nAgents} agentes lidos de agents/`);
+log(`${nAgents} agentes lidos do repositório`);
 
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "pt-BR", storageState: await context.storageState() });
 const m = await mobile.newPage();
-for (const [url, name] of [["/", "inicio"], ["/agentes", "agentes"], ["/conectores", "conectores"], ["/contexto", "contexto"]] as const) {
+for (const [url, name, sel] of [["/", "chat", "#composer"], ["/chat", "conversas", "#clist-q"], ["/inicio", "inicio", "h1"], ["/agentes", "agentes", "h1"], ["/conectores", "conectores", "h1"], ["/contexto", "contexto", "h1"]] as const) {
   await m.goto(URL_ + url);
-  await m.waitForSelector("h1");
+  await m.waitForSelector(sel);
   const overflow = await m.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (overflow > 1) failures.push(`celular ${name}: página estoura ${overflow}px na horizontal`);
   assert.ok(await m.isVisible("nav.tabs"), "abas do celular visíveis");
   await axe(m, `${name} (celular)`);
   await m.screenshot({ path: path.join(OUT, `20-celular-${name}.png`) });
 }
+await m.goto(URL_ + "/chat");
 await m.click("details.mode > summary");
 await m.waitForSelector(".mode__panel");
 await m.waitForFunction(() => document.querySelector(".mode__panel dd")?.textContent !== "…");
@@ -237,7 +243,7 @@ await page.check("input[name=agentes][value=programador]");
 await page.click("button:has-text('Salvar e fazer commit')");
 await page.waitForSelector(".notice:has-text('Salvo no repositório (commit')", { timeout: 20_000 });
 console.log("  ", (await page.textContent(".notice:has-text('Salvo no repositório')"))!.trim());
-const yaml = fs.readFileSync(path.resolve("..", "connectors", "teste-e2e.yaml"), "utf8");
+const yaml = fs.readFileSync(path.join(REPO, "connectors", "teste-e2e.yaml"), "utf8");
 assert.match(yaml, /segredo: GITHUB_TOKEN/);
 assert.match(yaml, /- programador/);
 assert.ok(!yaml.includes("ghu_") && !yaml.includes("ghp_"), "o YAML não leva o valor do segredo");
@@ -248,7 +254,7 @@ await page.screenshot({ path: path.join(OUT, "30-conectores-testados.png"), full
 page.once("dialog", (d) => void d.accept());
 await page.click("[data-testid=conector-teste-e2e] button:has-text('Remover')");
 await page.waitForSelector("[data-testid=conector-teste-e2e]", { state: "detached" });
-assert.equal(fs.existsSync(path.resolve("..", "connectors", "teste-e2e.yaml")), false);
+assert.equal(fs.existsSync(path.join(REPO, "connectors", "teste-e2e.yaml")), false);
 log("MCP genérico: criado pela tela, commit feito, testado e removido");
 
 const bad = await page.request.post(URL_ + "/api/conectores", { headers: { origin: URL_ }, data: { nome: "x-ruim", url: "http://169.254.169.254/latest", segredo: "" } });

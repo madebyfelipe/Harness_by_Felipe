@@ -6,7 +6,7 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "same-origin" },
   { key: "X-Robots-Tag", value: "noindex, nofollow" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
   { key: "Cache-Control", value: "no-store" }
 ];
 
@@ -14,7 +14,7 @@ const config: NextConfig = {
   poweredByHeader: false,
   // O runner de agentes, o Postgres e o cliente MCP rodam só no servidor e
   // não devem ser empacotados.
-  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk", "pg", "@modelcontextprotocol/sdk"],
+  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk", "pg", "@modelcontextprotocol/sdk", "@huggingface/transformers", "onnxruntime-node"],
   turbopack: { root: path.resolve(__dirname) },
   outputFileTracingRoot: path.resolve(__dirname),
   async headers() {

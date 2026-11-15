@@ -56,6 +56,15 @@ inteiro:
   assinatura.
 - A mudança anunciada para 15/06/2026 foi suspensa.
 
+## Decisão de 15/11 (decisoes.md): assinatura pelo CLI, uso pessoal
+
+O Felipe decidiu: harness só para ele, modelo pelo Claude Code CLI logado na assinatura,
+sem chave de API por padrão. A Central já faz assim: o Agent SDK é uma camada fina que
+**executa o binário oficial do Claude Code em modo headless (stream-json)**, o mesmo que
+`claude -p --output-format stream-json`, com o login que estiver na máquina. Nada muda no
+runner. A chave de API continua possível (ANTHROPIC_API_KEY), mas desligada por padrão.
+O risco abaixo ("zona cinzenta" das rotinas) fica registrado: foi uma escolha consciente.
+
 ## Leitura para a Central
 
 | ponto | situação |

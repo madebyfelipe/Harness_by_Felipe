@@ -11,7 +11,7 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="icon-btn"
+      className="rail__btn"
       aria-label={`Mudar para o tema ${next === "dark" ? "escuro" : "claro"}`}
       title={`Tema ${next === "dark" ? "escuro" : "claro"}`}
       onClick={() => {

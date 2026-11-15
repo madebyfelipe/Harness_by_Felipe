@@ -43,6 +43,8 @@ Depende de: M<x> / decisão do Felipe
 | **M2 · Feedback e status** | o Felipe registra impressão em segundos e o agente lê | canal de feedback funcionando (WhatsApp `fb:` ou janela da Central); triagem semanal rodando; Trello certo conectado |
 | **M2.5 · Decidir a casa das rotinas** | harness próprio, Sellbird ou OpenBot | tabela de critérios de `consolidacao.md` preenchida para o Sellbird; decisão registrada em `decisoes.md` |
 | **M3 · Central (UI) fase 1** | uma janela, áudio, triagem sempre ligada | ver `prompts/construir-ui.md`, fase 1; um áudio com 3 assuntos vira tarefa executada + cartão + feedback, sem o Felipe escolher nada |
+| **M3.1 · Central no layout do OpenBot** | faixa de ícones, coluna de conversas, chat em balões (pedido de 15/11) | feito em 15/11: Central em chat.madebyfelipe.agency com triagem sempre ligada, microfone (Whisper local), feedback por resposta e botão fixo |
+| **M3.2 · Central desktop** | app de computador que roda a Central local: escolher a pasta de trabalho, abrir projetos, git, terminal, tudo na máquina, como o Claude Code (pedido de 15/11) | o Felipe instala no Windows, escolhe uma pasta, conversa com a triagem e um agente edita e faz commit num repositório local; login pelo Claude Code da máquina |
 | **M4 · Rotinas e avisos** | rotinas migradas, uma por vez | `consolidacao.md`: um dia inteiro sem abrir OpenBot, Vercel ou CRM para operar |
 
 Status em 15/11: **M0 virou** (legado tirado ou marcado em todos os arquivos, `decisoes.md` criado, oferta igual em tudo, conferido por busca de termos antigos). Próximo: **M1**.

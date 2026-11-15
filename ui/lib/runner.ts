@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { query, type CanUseTool, type HookCallback, type Options, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
-import { addMessage, getAttachments, listMessages, updateConversation, type Conversation, type Message, type MessageMeta, type ToolUse } from "./chat";
+import { addMessage, getAttachments, listMessages, updateConversation, type Conversation, type Message, type MessageMeta, type Route, type ToolUse, type TriageView } from "./chat";
+import { writeNotes, type NoteKind, type Sentimento } from "./notes";
+import { AUTO_AGENT, routeFor, runTriage, toView, TRIAGE_MODEL, workflowBrief, type Workflow } from "./triage";
 import { cfg, fmtBrasilia, nowIso } from "./config";
 import { mcpServersFor } from "./connectors";
 import { getDb } from "./db";
@@ -209,7 +211,10 @@ export type StartInput = {
   text: string;
   attachmentIds?: string[];
   redo?: boolean;
+  audio?: boolean;
 };
+
+type Extra = { auto: boolean; redo: boolean; rawText: string; history: string };
 
 export async function startRun(input: StartInput): Promise<{ runId: string; userMessage: Message }> {
   const { conversation } = input;
@@ -218,8 +223,9 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
   if (runningCount() >= MAX_PARALLEL) throw new Error(`Já há ${MAX_PARALLEL} execuções rodando. Espere uma terminar ou pare uma.`);
 
   const isContext = conversation.mode === "contexto";
-  const agent = isContext ? undefined : getAgent(conversation.agent);
-  if (!isContext && !agent) throw new Error(`O agente "${conversation.agent}" não existe mais em agents/.`);
+  const isAuto = conversation.mode === "chat" && conversation.agent === AUTO_AGENT;
+  const agent = isContext || isAuto ? undefined : getAgent(conversation.agent);
+  if (!isContext && !isAuto && !agent) throw new Error(`O agente "${conversation.agent}" não existe mais em agents/.`);
 
   const attachments = await getAttachments(conversation.id, input.attachmentIds ?? []);
   const runId = crypto.randomUUID();
@@ -232,7 +238,8 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     content: input.text,
     meta: {
       ...(attachments.length ? { attachments: attachments.map((a) => ({ id: a.id, name: a.name, size: a.size })) } : {}),
-      ...(input.redo ? { redo: true, model: conversation.model } : {})
+      ...(input.redo ? { redo: true, model: conversation.model } : {}),
+      ...(input.audio ? { audio: true } : {})
     }
   });
   if (!previous.length) await updateConversation(conversation.id, { title: input.text.replace(/\s+/g, " ").trim().slice(0, 70) || "Conversa" });
@@ -242,7 +249,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
   await db.run("INSERT INTO runs (id, conversation_id, agent, model, origin, status, input, tools, started_at) VALUES (?, ?, ?, ?, ?, 'running', ?, '[]', ?)", [
     runId,
     conversation.id,
-    isContext ? "contexto" : conversation.agent,
+    isContext ? "contexto" : isAuto ? "triagem" : conversation.agent,
     conversation.model,
     "chat",
     input.text.slice(0, 4000),
@@ -252,8 +259,8 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
   const run: ActiveRun = {
     id: runId,
     conversationId: conversation.id,
-    agent: isContext ? "contexto" : conversation.agent,
-    model: conversation.model,
+    agent: isContext ? "contexto" : isAuto && !input.redo ? "triagem" : isAuto ? conversation.route?.agent ?? ORCHESTRATOR : conversation.agent,
+    model: isAuto && !input.redo ? TRIAGE_MODEL : conversation.model,
     status: "running",
     events: [],
     listeners: new Set(),
@@ -272,16 +279,18 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
       .map((a) => `- ${a.path} (${a.name}${a.mime ? `, ${a.mime}` : ""})`)
       .join("\n")}`;
   }
-  // Sem sessão para retomar (primeira vez nesta máquina, ou sessão perdida): leva o histórico junto.
-  if (!conversation.sdk_session_id && previous.length) {
-    const history = previous
-      .slice(-20)
-      .map((m) => `${m.role === "user" ? "Felipe" : "Você"}: ${m.content.slice(0, 3000)}`)
-      .join("\n\n");
+  const history = previous
+    .slice(-20)
+    .map((m) => `${m.role === "user" ? "Felipe" : "Você"}: ${m.content.slice(0, 3000)}`)
+    .join("\n\n");
+  // Conversa "auto" troca de agente a cada pedido: sempre leva o histórico, não retoma sessão.
+  // Nas outras, só quando não há sessão para retomar (primeira vez nesta máquina, ou sessão perdida).
+  if ((isAuto || !conversation.sdk_session_id) && previous.length) {
     prompt = `[Histórico desta conversa, para você continuar de onde parou]\n${history}\n\n[Mensagem nova do Felipe]\n${prompt}`;
   }
 
-  void execute(run, conversation, agent, prompt, attachments.length ? [path.dirname(attachments[0].path)] : []).catch((e) => {
+  const extra: Extra = { auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
+  void execute(run, conversation, agent, prompt, attachments.length ? [path.dirname(attachments[0].path)] : [], extra).catch((e) => {
     console.error("[central] execução falhou fora do previsto:", e);
   });
   return { runId, userMessage };
@@ -315,12 +324,12 @@ function friendlyError(raw: string, limit?: { type?: string; resetsAt?: number }
   return short(raw.replace(/\s+/g, " "), 300);
 }
 
-async function execute(run: ActiveRun, conversation: Conversation, agent: AgentDef | undefined, prompt: string, extraDirs: string[]): Promise<void> {
+async function execute(run: ActiveRun, conversation: Conversation, agent: AgentDef | undefined, prompt: string, extraDirs: string[], extra: Extra): Promise<void> {
   const c = cfg();
-  const isContext = conversation.mode === "contexto";
+  let isContext = conversation.mode === "contexto";
   const cwd = c.repoDir;
   const allowed = new Set(conversation.allowed_tools);
-  let sessionId: string | null = conversation.sdk_session_id;
+  let sessionId: string | null = extra.auto ? null : conversation.sdk_session_id;
   let result: { cost?: number; inTok?: number; outTok?: number; turns?: number } = {};
   let errorText = "";
   let authSource = "";
@@ -328,6 +337,104 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   const stderrTail: string[] = [];
   let resolveDone: () => void = () => undefined;
   const done = new Promise<void>((r) => (resolveDone = r));
+
+  /* ---------- triagem sempre ligada (conversa "auto") ---------- */
+  let triageView: TriageView | undefined;
+  let triageId: string | null = null;
+  let extraCost = 0;
+  let skipExecutor = false;
+  let finalText = "";
+  if (extra.auto) {
+    let route: Route | null = null;
+    const vai = Boolean(conversation.route?.planejado) && /^\s*(vai|pode ir|manda ver|manda|segue|ok|bora|roda)\b/i.test(extra.rawText);
+    if (extra.redo) {
+      route = { ...(conversation.route ?? { agent: ORCHESTRATOR }), model: conversation.model, planejado: false };
+    } else if (vai && conversation.route) {
+      route = { ...conversation.route, planejado: false };
+      prompt = `${prompt}\n\n[O Felipe aprovou o plano. Pedido original: ${route.pedido ?? ""}]${route.workflow ? `\n\n${workflowBrief(route.workflow as Workflow)}` : ""}`;
+    } else {
+      emit(run, "triage_start", { model: modelLabel(TRIAGE_MODEL) });
+      const t = await runTriage(extra.rawText, extra.history, run.abort);
+      extraCost += t.costUsd;
+      if (t.limit) limit = t.limit;
+      if (run.status === "stopped") skipExecutor = true;
+      else if (!t.triage) {
+        if (t.error) {
+          errorText = t.error;
+          skipExecutor = true;
+        } else {
+          triageView = { resumo: "", falhou: "A triagem não devolveu um plano legível; mandei direto para o orquestrador." };
+          route = { agent: ORCHESTRATOR, model: "claude-fable-5-2", pedido: extra.rawText };
+        }
+      } else {
+        const tr = t.triage;
+        const planejar = /^\s*planejar\s*:/i.test(extra.rawText) || tr.workflow?.modo === "planejar";
+        const notes = tr.itens
+          .filter((i) => i.tipo !== "tarefa")
+          .map((i) => ({
+            kind: (i.tipo === "decisao" ? "decisao" : i.tipo === "ideia" ? "ideia" : "feedback") as NoteKind,
+            texto: i.texto,
+            sentimento: (i.tipo === "feedback" ? (i.sentimento === "bom" || i.sentimento === "ruim" ? i.sentimento : "ideia") : undefined) as Sentimento | undefined,
+            onde: "Central · chat"
+          }));
+        let anotados: NonNullable<TriageView["anotados"]> = [];
+        if (notes.length) {
+          try {
+            anotados = (await writeNotes(notes)).written;
+          } catch (e) {
+            console.error("[central] não consegui anotar:", e);
+          }
+        }
+        triageView = toView(tr, anotados, planejar);
+        const hasTask = tr.itens.some((i) => i.tipo === "tarefa") || Boolean(tr.workflow?.passos?.length);
+        if (tr.workflow && hasTask) route = routeFor(tr.workflow, extra.rawText);
+        if (route && planejar) {
+          await updateConversation(run.conversationId, { route: { ...route, planejado: true } });
+          finalText = `${tr.resumo || "Plano pronto."}\n\nDiga **vai** para rodar.`;
+          route = null;
+          skipExecutor = true;
+        } else if (!route) {
+          finalText = tr.resumo || "Anotado.";
+          skipExecutor = true;
+        } else {
+          prompt = `${prompt}\n\n${workflowBrief(tr.workflow!)}`;
+        }
+      }
+      triageId = crypto.randomUUID();
+      const wf = (route?.workflow ?? null) as Workflow | null;
+      await (await getDb())
+        .run("INSERT INTO triages (id, conversation_id, run_id, pedido, nivel, soma, agente, modelo, resumo, itens, workflow, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'rodando', ?)", [
+          triageId,
+          run.conversationId,
+          run.id,
+          extra.rawText.slice(0, 4000),
+          wf?.complexidade?.nivel ?? null,
+          typeof wf?.complexidade?.soma === "number" ? wf.complexidade.soma : null,
+          route?.agent ?? null,
+          route?.model ?? null,
+          triageView?.resumo ?? null,
+          JSON.stringify(triageView?.anotados ?? []),
+          wf ? JSON.stringify(wf) : null,
+          nowIso()
+        ])
+        .catch((e) => console.error("[central] não registrei a triagem:", e));
+      if (triageView) emit(run, "triage", triageView as unknown as Record<string, unknown>);
+    }
+    if (route && !skipExecutor) {
+      await updateConversation(run.conversationId, { route: { ...route, planejado: false }, model: route.model });
+      run.agent = route.agent;
+      run.model = route.model;
+      isContext = Boolean(route.contexto);
+      agent = isContext ? undefined : getAgent(route.agent) ?? getAgent(ORCHESTRATOR);
+      if (!isContext && !agent) {
+        errorText = "O orquestrador não existe em agents/.";
+        skipExecutor = true;
+      } else {
+        emit(run, "route", { agent: run.agent, model: run.model, modelLabel: modelLabel(run.model) });
+        await (await getDb()).run("UPDATE runs SET agent = ?, model = ? WHERE id = ?", [run.agent, run.model, run.id]).catch(() => undefined);
+      }
+    }
+  }
 
   /** Pede a decisão do Felipe e espera. Usado pelos dois caminhos de permissão abaixo. */
   const askFelipe = async (toolName: string, toolInput: unknown, who: string, signal?: AbortSignal): Promise<Decision> => {
@@ -437,7 +544,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       maxTurns: 25
     };
   } else {
-    const a = agent!;
+    // Sem executor (triagem só anotou ou planejou), as opções não são usadas; o orquestrador só preenche.
+    const a = agent ?? getAgent(ORCHESTRATOR)!;
     const subagents: NonNullable<Options["agents"]> = {};
     for (const sub of listAgents()) {
       if (sub.isOrchestrator || sub.name === a.name) continue;
@@ -473,9 +581,10 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
 
   const seenTools = new Set<string>();
   try {
+    if (skipExecutor) throw new SkipExecutor();
     for await (const msg of query({ prompt: input(), options })) {
       const m = msg as unknown as Record<string, unknown> & { type: string };
-      if (typeof m.session_id === "string" && m.session_id && m.session_id !== sessionId) {
+      if (!extra.auto && typeof m.session_id === "string" && m.session_id && m.session_id !== sessionId) {
         sessionId = m.session_id;
         await updateConversation(run.conversationId, { sdk_session_id: sessionId });
       }
@@ -526,7 +635,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       }
     }
   } catch (e) {
-    if (run.status !== "stopped") {
+    if (e instanceof SkipExecutor) {
+      /* triagem resolveu sem executor (só anotações, plano ou erro já registrado) */
+    } else if (run.status !== "stopped") {
       const raw = e instanceof Error ? e.message : String(e);
       errorText = errorText || `${raw} ${stderrTail.join(" ").slice(-400)}`.trim();
     }
@@ -534,6 +645,10 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     resolveDone();
   }
 
+  if (!run.text.trim() && finalText) {
+    run.text = finalText;
+    emit(run, "delta", { text: finalText });
+  }
   const stopped = run.status === "stopped";
   if (!stopped) run.status = errorText ? "error" : "done";
   if (limit && /hit your .*limit/i.test(run.text)) run.text = "";
@@ -549,21 +664,22 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     model: run.model,
     agent: run.agent,
     tools: run.tools,
-    costUsd: result.cost,
+    costUsd: result.cost !== undefined || extraCost ? (result.cost ?? 0) + extraCost : undefined,
     inputTokens: result.inTok,
     outputTokens: result.outTok,
     durationMs: run.endedAt - run.startedAt,
     turns: result.turns,
     ...(authSource ? { auth: authSource === "none" ? "login da máquina" : authSource } : {}),
     ...(error ? { error } : {}),
-    ...(stopped ? { stopped: true } : {})
+    ...(stopped ? { stopped: true } : {}),
+    ...(triageView ? { triage: triageView } : {})
   };
 
   try {
     const db = await getDb();
     await db.run("UPDATE approvals SET status = 'expired', decided_at = ? WHERE run_id = ? AND status = 'pending'", [nowIso(), run.id]);
     let saved: Message | null = null;
-    if (run.text.trim() || error || stopped || run.tools.length) {
+    if (run.text.trim() || error || stopped || run.tools.length || triageView) {
       saved = await addMessage({ conversationId: run.conversationId, runId: run.id, role: "assistant", content: run.text.trim(), meta });
     }
     await db.run(
@@ -571,6 +687,10 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       [run.status, run.text.trim().slice(0, 8000), JSON.stringify(run.tools), result.cost ?? null, result.inTok ?? null, result.outTok ?? null, result.turns ?? null, meta.durationMs ?? null, error || null, nowIso(), run.id]
     );
     await updateConversation(run.conversationId, {});
+    if (triageId) await db.run("UPDATE triages SET status = ? WHERE id = ?", [run.status, triageId]);
+    if (extra.auto && extra.redo) {
+      await db.run("UPDATE triages SET subiu_modelo = subiu_modelo + 1 WHERE id = (SELECT id FROM triages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 1)", [run.conversationId]);
+    }
     if (saved) emit(run, "final", { message: saved });
   } catch (e) {
     console.error("[central] não consegui gravar o fim da execução:", e);
@@ -582,6 +702,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     if (runs.get(run.conversationId) === run) runs.delete(run.conversationId);
   }, KEEP_AFTER_END_MS).unref?.();
 }
+
+class SkipExecutor extends Error {}
 
 /** Pasta de anexos de uma conversa (fora do repositório). */
 export function uploadsDir(conversationId: string): string {

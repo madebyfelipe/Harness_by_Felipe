@@ -8,6 +8,12 @@
  *   FALSO:write:<arquivo>          escreve "teste" num arquivo
  *   FALSO:agent:<nome>:<pedido>    delega ao subagente (o pedido pode ter outra marcação)
  *
+ * Triagem (pedido com "faça a triagem"): devolve o JSON da triagem. Marcações:
+ *   FALSO:ideia:<texto>  FALSO:feedback:<texto>  FALSO:decisao:<texto>   itens anotados
+ *   FALSO:contexto      pergunta para o Modo Contexto
+ *   FALSO:agente:<nome> um passo N1 com esse agente (padrão: orquestrador)
+ *   sem FALSO:bash/read/write/agent nem texto livre → sem tarefa
+ *
  * Depois que a ferramenta volta, responde "FIM: <resultado da ferramenta>".
  * Sem marcação, responde "resposta-falsa: ok".
  *
@@ -38,7 +44,11 @@ function decide(body: Body): Reply {
   if (results.length) return { text: `FIM: ${results.map((r) => flat(r.content)).join(" | ").slice(0, 600)}` };
 
   const tools = new Set((body.tools ?? []).map((t) => t.name));
-  const text = flat(last.content);
+  const full = flat(last.content);
+  // Só a mensagem nova conta (o histórico e o workflow repetem marcações antigas).
+  const at = full.lastIndexOf("[Mensagem nova do Felipe");
+  const text = at >= 0 ? full.slice(at) : full;
+  if (/— faça a triagem\]/.test(text)) return { text: "```json\n" + JSON.stringify(triage(text.replace(/^.*faça a triagem\]\n?/, ""))) + "\n```" };
   const has = (name: string) => tools.has(name);
   let m = /FALSO:agent:([\w-]+):([^\n]+)/.exec(text);
   if (m) {
@@ -53,6 +63,33 @@ function decide(body: Body): Reply {
   if (m && has("Write")) return { tool: "Write", input: { file_path: m[1], content: "teste\n" } };
   if (/FALSO:/.test(text)) return { text: "resposta-falsa: ferramenta indisponível neste agente" };
   return { text: "resposta-falsa: ok" };
+}
+
+function triage(msg: string) {
+  const itens: { tipo: string; texto: string; sentimento?: string }[] = [];
+  for (const m of msg.matchAll(/FALSO:(ideia|feedback|decisao):([^\n]*?)(?=\s+FALSO:|$)/gm)) {
+    itens.push({ tipo: m[1], texto: m[2].trim(), ...(m[1] === "feedback" ? { sentimento: /ruim/.test(m[2]) ? "ruim" : "bom" } : {}) });
+  }
+  const contexto = /FALSO:contexto/.test(msg);
+  const tarefa = contexto || /FALSO:(bash|read|write|agent):/.test(msg) || !/FALSO:/.test(msg);
+  if (tarefa) itens.unshift({ tipo: "tarefa", texto: msg.slice(0, 80) });
+  const agente = contexto ? "contexto" : /FALSO:agente:([\w-]+)/.exec(msg)?.[1] ?? "orquestrador";
+  const workflow = tarefa
+    ? {
+        pedido: msg.slice(0, 200),
+        objetivo: "teste",
+        pronto_quando: ["responder"],
+        estado_atual: "teste",
+        complexidade: { escopo: 0, ambiguidade: 0, gosto: 0, risco: 0, contexto: 0, soma: 0, nivel: "N1" },
+        modo: /^\s*planejar\s*:/i.test(msg) ? "planejar" : "auto",
+        decisao_do_felipe: [],
+        passos: [{ n: 1, o_que: "responder o pedido", agente, modelo: "claude-sonnet-5-5", por_que_esse_modelo: "teste", checagem: "" }],
+        custo: { tamanho: "P", onde: "assinatura" },
+        suposicoes: ["teste com modelo falso"]
+      }
+    : null;
+  const notas = itens.filter((i) => i.tipo !== "tarefa").length;
+  return { resumo: `Entendi ${itens.length} coisa(s): ${tarefa ? "1 tarefa rodando" : "nenhuma tarefa"}${notas ? `, ${notas} anotada(s)` : ""}.`, itens, workflow };
 }
 
 let n = 0;
