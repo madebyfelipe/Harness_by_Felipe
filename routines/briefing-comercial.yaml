@@ -1,0 +1,18 @@
+# Rotina da Central. Agenda em America/Sao_Paulo. Rotina roda sozinha e reporta depois.
+nome: briefing-comercial
+titulo: Briefing comercial
+quando: dias úteis às 07:30
+cron: 30 7 * * 1-5
+agente: auto
+modo: vps
+ativa: false
+silencio: false
+whatsapp: true
+limite_minutos: 20
+liberadas: []
+instrucoes: |
+  Briefing comercial do dia (rotinas.md, "Diárias"). Leia vendas.md e decisoes.md.
+  Pelo CRM Twenty (conector twenty, só leitura): o que a rotina de e-mail enviou e recebeu
+  desde ontem, respostas fora do playbook (as únicas que esperam o Felipe), prévias de site
+  pedidas e não entregues. Não envie nada a lead. Termine com "as 3 coisas que só você pode
+  fazer hoje". Se o CRM não responder, diga isso em uma linha.

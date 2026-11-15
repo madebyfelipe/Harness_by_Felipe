@@ -171,6 +171,31 @@ export const MIGRATIONS: Migration[] = [
       )`,
       "ALTER TABLE conversations ADD COLUMN provider TEXT"
     ]
+  },
+  {
+    // Cofre da Central (segredos cifrados com a chave mestra) e histórico das rotinas.
+    id: "004_cofre_rotinas",
+    statements: [
+      `CREATE TABLE secrets (
+        name TEXT PRIMARY KEY,
+        value_enc TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_used_at TEXT
+      )`,
+      `CREATE TABLE routine_runs (
+        id TEXT PRIMARY KEY,
+        rotina TEXT NOT NULL,
+        origem TEXT NOT NULL,
+        conversation_id TEXT,
+        run_id TEXT,
+        status TEXT NOT NULL,
+        resumo TEXT,
+        erro TEXT,
+        avisado INTEGER NOT NULL DEFAULT 0,
+        started_at TEXT NOT NULL,
+        ended_at TEXT
+      )`
+    ]
   }
 ];
 

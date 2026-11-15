@@ -3,24 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FeedbackButton } from "./FeedbackButton";
-import { IconBook, IconBot, IconChat, IconGrid, IconLayers, IconPlug, IconSpark, IconUser } from "./Icons";
+import { IconChat, IconGear } from "./Icons";
 import { ThemeToggle } from "./ThemeToggle";
 
-const ITEMS = [
-  { href: "/", label: "Chat", icon: IconChat, match: ["/", "/chat"] },
-  { href: "/contexto", label: "Contexto", icon: IconBook, match: ["/contexto"] },
-  { href: "/agentes", label: "Agentes", icon: IconBot, match: ["/agentes"] },
-  { href: "/skills", label: "Skills", icon: IconSpark, match: ["/skills"] },
-  { href: "/conectores", label: "Conectores", icon: IconPlug, match: ["/conectores"] },
-  { href: "/provedores", label: "Provedores de IA", icon: IconLayers, match: ["/provedores"] },
-  { href: "/inicio", label: "Painel", icon: IconGrid, match: ["/inicio"] }
-];
+const CONFIG = ["/inicio", "/provedores", "/conectores", "/agentes", "/skills", "/rotinas", "/contexto", "/conta"];
+const isConfig = (p: string) => CONFIG.some((c) => p === c || (p.startsWith(c + "/") && !/^\/contexto\/[0-9a-f-]{36}$/.test(p)));
+const isChat = (p: string) => p === "/" || p.startsWith("/chat") || /^\/contexto\/[0-9a-f-]{36}$/.test(p);
 
-function isCurrent(pathname: string, match: string[]): boolean {
-  return match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(m + "/")));
-}
-
-/** Faixa de ícones à esquerda, como no OpenBot. */
+/** Faixa à esquerda: só o Chat; o resto mora em Configurações. */
 export function Rail() {
   const pathname = usePathname();
   return (
@@ -28,16 +18,14 @@ export function Rail() {
       <Link className="rail__logo" href="/" aria-label="Central, nova conversa">
         C<i aria-hidden="true" />
       </Link>
-      {ITEMS.map(({ href, label, icon: Icon, match }) => (
-        <Link key={href} className="rail__btn" href={href} aria-label={label} title={label} aria-current={isCurrent(pathname, match) ? "page" : undefined}>
-          <Icon />
-        </Link>
-      ))}
+      <Link className="rail__btn" href="/" aria-label="Chat" title="Chat" aria-current={isChat(pathname) ? "page" : undefined}>
+        <IconChat />
+      </Link>
       <span className="rail__spacer" />
       <FeedbackButton />
       <ThemeToggle />
-      <Link className="rail__btn" href="/conta" aria-label="Conta" title="Conta" aria-current={pathname.startsWith("/conta") ? "page" : undefined}>
-        <IconUser />
+      <Link className="rail__btn" href="/inicio" aria-label="Configurações" title="Configurações" aria-current={isConfig(pathname) ? "page" : undefined}>
+        <IconGear />
       </Link>
     </nav>
   );
@@ -47,16 +35,14 @@ export function Rail() {
 export function TabNav() {
   const pathname = usePathname();
   const tabs = [
-    { href: "/", label: "Falar", match: ["/"] },
-    { href: "/chat", label: "Conversas", match: ["/chat"] },
-    { href: "/contexto", label: "Contexto", match: ["/contexto"] },
-    { href: "/agentes", label: "Agentes", match: ["/agentes", "/skills", "/conectores"] },
-    { href: "/inicio", label: "Painel", match: ["/inicio", "/conta", "/provedores"] }
+    { href: "/", label: "Falar", on: pathname === "/" },
+    { href: "/chat", label: "Conversas", on: pathname.startsWith("/chat") || /^\/contexto\/[0-9a-f-]{36}$/.test(pathname) },
+    { href: "/inicio", label: "Configurações", on: isConfig(pathname) }
   ];
   return (
     <nav className="tabs" aria-label="Seções">
       {tabs.map((t) => (
-        <Link key={t.href} href={t.href} aria-current={isCurrent(pathname, t.match) ? "page" : undefined}>
+        <Link key={t.href} href={t.href} aria-current={t.on ? "page" : undefined}>
           {t.label}
         </Link>
       ))}

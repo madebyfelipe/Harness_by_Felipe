@@ -5,6 +5,7 @@ import { cfg, nowIso } from "./config";
 import { getDb } from "./db";
 import { commitPaths, type CommitResult } from "./git";
 import { listYamlFiles, repoDir } from "./repo";
+import { vaultValue } from "./vault";
 
 /*
  * Um conector = um arquivo connectors/<nome>.yaml. O arquivo guarda só o NOME do
@@ -148,8 +149,11 @@ export async function deleteConnector(nome: string, who: string): Promise<Commit
 
 /* ---------- segredos ---------- */
 
+/** Cofre da Central primeiro (Apps → Conectar); depois a variável de ambiente (~/.central/env). */
 export function resolveSecret(name: string): string | undefined {
   if (!name || !SECRET_RE.test(name)) return undefined;
+  const fromVault = vaultValue(name);
+  if (fromVault) return fromVault;
   cfg(); // garante que ~/.central/env foi lido
   const value = process.env[name];
   return value && value.trim() ? value.trim() : undefined;

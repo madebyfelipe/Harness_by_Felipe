@@ -12,6 +12,7 @@ import { modelLabel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { friendlyCodexError, runCodex } from "./codex";
 import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, type Provider } from "./providers";
+import { loadVault } from "./vault";
 
 /* ------------------------------------------------------------------ */
 /* Execuções em memória: sobrevivem à aba fechada e ao celular dormindo */
@@ -214,9 +215,15 @@ export type StartInput = {
   attachmentIds?: string[];
   redo?: boolean;
   audio?: boolean;
+  /** "rotina" quando vem da agenda; aparece no registro da execução. */
+  origin?: "chat" | "rotina";
+  /** Chamado quando a execução termina (rotinas: gravar resultado e avisar). */
+  onEnd?: (r: RunEnd) => void | Promise<void>;
 };
 
-type Extra = { auto: boolean; redo: boolean; rawText: string; history: string };
+export type RunEnd = { status: string; text: string; error: string; conversationId: string; runId: string };
+
+type Extra = { auto: boolean; redo: boolean; rawText: string; history: string; onEnd?: StartInput["onEnd"] };
 
 export async function startRun(input: StartInput): Promise<{ runId: string; userMessage: Message }> {
   const { conversation } = input;
@@ -253,7 +260,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     conversation.id,
     isContext ? "contexto" : isAuto ? "triagem" : conversation.agent,
     conversation.model,
-    "chat",
+    input.origin ?? "chat",
     input.text.slice(0, 4000),
     nowIso()
   ]);
@@ -291,7 +298,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     prompt = `[Histórico desta conversa, para você continuar de onde parou]\n${history}\n\n[Mensagem nova do Felipe]\n${prompt}`;
   }
 
-  const extra: Extra = { auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
+  const extra: Extra = { onEnd: input.onEnd, auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
   void execute(run, conversation, agent, prompt, attachments.length ? [path.dirname(attachments[0].path)] : [], extra).catch((e) => {
     console.error("[central] execução falhou fora do previsto:", e);
   });
@@ -328,6 +335,7 @@ function friendlyError(raw: string, limit?: { type?: string; resetsAt?: number }
 
 async function execute(run: ActiveRun, conversation: Conversation, agent: AgentDef | undefined, prompt: string, extraDirs: string[], extra: Extra): Promise<void> {
   const c = cfg();
+  await loadVault().catch(() => undefined);
   let isContext = conversation.mode === "contexto";
   const cwd = c.repoDir;
   const allowed = new Set(conversation.allowed_tools);
@@ -772,6 +780,13 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   }
   emit(run, "end", { status: run.status });
   run.listeners.clear();
+  if (extra.onEnd) {
+    try {
+      await extra.onEnd({ status: run.status, text: run.text.trim(), error, conversationId: run.conversationId, runId: run.id });
+    } catch (e) {
+      console.error("[central] fim de execução (rotina) falhou:", e);
+    }
+  }
   setTimeout(() => {
     if (runs.get(run.conversationId) === run) runs.delete(run.conversationId);
   }, KEEP_AFTER_END_MS).unref?.();

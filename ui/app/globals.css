@@ -1392,3 +1392,244 @@ details.fold > summary {
     word-spacing: 0;
   }
 }
+
+/* ---------- Configurações: barra da seção + cartões (padrão da Loja do OpenBot) ---------- */
+
+.app > .cfg {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+.cfg__nav {
+  flex: none;
+  width: 248px;
+  padding: 18px 10px;
+  border-right: 1px solid var(--line-strong);
+  overflow-y: auto;
+}
+.cfg__nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.cfg__nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 500;
+}
+.cfg__nav a:hover {
+  background: var(--gray-100);
+}
+.cfg__nav a[aria-current="page"] {
+  background: var(--gray-200);
+}
+.cfg__nav a .dot {
+  margin: 0 3px;
+}
+.cfg__title {
+  margin: 0 10px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.cfg__group {
+  margin: 18px 10px 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.cfg__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+}
+.lead {
+  color: var(--muted);
+  max-width: 680px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.search {
+  flex: 1 1 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--gray-100);
+  color: var(--muted);
+}
+.search:focus-within {
+  outline: 2px solid var(--black);
+  outline-offset: 1px;
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--black);
+}
+.btn--light {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.btn-connect {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--gray-100);
+  color: var(--black);
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-connect:hover {
+  border-color: var(--black);
+}
+
+.cat {
+  display: grid;
+  gap: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.cat__head {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.cat__head .muted {
+  font-weight: 400;
+  margin-left: 6px;
+}
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 6px 28px;
+}
+.cards--one {
+  grid-template-columns: 1fr;
+}
+.card {
+  display: grid;
+  gap: 8px;
+  padding: 10px 6px;
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+.card__row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+.card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.card__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.card__name {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.card__desc {
+  font-size: 0.86rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card__desc .dot {
+  margin: 0 4px 0 0;
+  vertical-align: middle;
+}
+.card__detail {
+  margin-left: 58px;
+  display: grid;
+  gap: 8px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 14px;
+}
+.form-grid .label {
+  display: grid;
+  gap: 6px;
+}
+
+@media (max-width: 860px) {
+  .app > .cfg {
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .cfg__nav {
+    width: auto;
+    padding: 8px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-strong);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .cfg__nav ul {
+    display: flex;
+    gap: 4px;
+  }
+  .cfg__nav a {
+    white-space: nowrap;
+    min-height: 36px;
+  }
+  .cfg__title,
+  .cfg__group,
+  .cfg__nav ul + .cfg__group + ul {
+    display: none;
+  }
+  .card__row {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .card__row > :last-child {
+    grid-column: 1 / -1;
+  }
+  .card__detail {
+    margin-left: 0;
+  }
+}

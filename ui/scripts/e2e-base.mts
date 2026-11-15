@@ -162,8 +162,10 @@ const pages: [string, string, string][] = [
   ["/contexto", "contexto", 'h1:has-text("Contexto")'],
   ["/contexto/arquivo?f=contexto.md", "arquivo", 'h1:has-text("Contexto do negócio")'],
   ["/agentes", "agentes", 'h1:has-text("Agentes")'],
-  ["/skills", "skills", 'h1:has-text("Skills")'],
-  ["/conectores", "conectores", 'h1:has-text("Conectores")'],
+  ["/skills", "habilidades", 'h1:has-text("Habilidades")'],
+  ["/conectores", "conectores", 'h1:has-text("Apps")'],
+  ["/rotinas", "rotinas", 'h1:has-text("Rotinas")'],
+  ["/provedores", "provedores", "[data-testid=provider-maquina]"],
   ["/conta", "conta", 'h1:has-text("Conta")']
 ];
 let checked = 0;
@@ -222,6 +224,8 @@ log("busca no contexto acha o preço e cita arquivo:linha");
 /* ---- 6. conectores ---- */
 await page.goto(URL_ + "/conectores");
 await page.click("[data-testid=conector-github] button:has-text('Testar')");
+await page.waitForSelector("[data-testid=conector-github] button:has-text('Testar'):not([disabled])", { timeout: 40_000 });
+await page.click("[data-testid=conector-github] button:has-text('Configurar')");
 await page.waitForSelector("[data-testid=conector-github] ul.steps", { timeout: 40_000 });
 const gh = await page.textContent("[data-testid=conector-github]");
 console.log("  github:", gh!.replace(/\s+/g, " ").match(/(funcionando|com problema).*?(?=connectors\/)/)?.[0]);
@@ -229,6 +233,8 @@ assert.match(gh!, /funcionando/);
 assert.match(gh!, /MCP: \d+ ferramentas/);
 
 await page.click("[data-testid=conector-twenty] button:has-text('Testar')");
+await page.waitForSelector("[data-testid=conector-twenty] button:has-text('Testar'):not([disabled])", { timeout: 40_000 });
+await page.click("[data-testid=conector-twenty] button:has-text('Configurar')");
 await page.waitForSelector("[data-testid=conector-twenty] ul.steps", { timeout: 40_000 });
 const tw = await page.textContent("[data-testid=conector-twenty]");
 assert.match(tw!, /com problema/);
@@ -248,6 +254,8 @@ assert.match(yaml, /segredo: GITHUB_TOKEN/);
 assert.match(yaml, /- programador/);
 assert.ok(!yaml.includes("ghu_") && !yaml.includes("ghp_"), "o YAML não leva o valor do segredo");
 await page.click("[data-testid=conector-teste-e2e] button:has-text('Testar')");
+await page.waitForSelector("[data-testid=conector-teste-e2e] button:has-text('Testar'):not([disabled])", { timeout: 40_000 });
+await page.click("[data-testid=conector-teste-e2e] button:has-text('Configurar')");
 await page.waitForSelector("[data-testid=conector-teste-e2e] ul.steps", { timeout: 40_000 });
 assert.match((await page.textContent("[data-testid=conector-teste-e2e]"))!, /MCP: \d+ ferramentas/);
 await page.screenshot({ path: path.join(OUT, "30-conectores-testados.png"), fullPage: true });
