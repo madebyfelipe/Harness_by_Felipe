@@ -7,7 +7,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * se o matcher mudar, nada abre junto.
  */
 // O webhook do WhatsApp fala com a Evolution, não com o navegador: ele se protege pelo token na URL.
-const PUBLIC = ["/entrar", "/configurar", "/api/health", "/api/auth/login", "/api/auth/passkey/login", "/api/setup", "/api/whatsapp/webhook"];
+// /baixar: instaladores do app desktop (arquivo em <dados>/downloads, nome conferido na rota).
+const PUBLIC = ["/entrar", "/configurar", "/api/health", "/api/auth/login", "/api/auth/passkey/login", "/api/setup", "/api/whatsapp/webhook", "/baixar"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

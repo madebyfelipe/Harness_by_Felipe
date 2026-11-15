@@ -44,6 +44,12 @@ function tamanho(dir) {
 
 if (!fs.existsSync(NEXT)) falhar(`Next não encontrado em ${NEXT}. Rode "npm install" em ui/.`);
 
+// Limpa restos de builds anteriores ANTES: o Next copia para o pacote tudo o que achar
+// dentro de ui/ (inclusive instaladores), e isso inflava o app sem necessidade.
+fs.rmSync(APP, { recursive: true, force: true });
+fs.rmSync(path.join(HERE, "dist"), { recursive: true, force: true });
+fs.rmSync(path.join(HERE, "app"), { recursive: true, force: true });
+
 titulo("Build do Next em modo standalone (desktop)");
 const build = spawnSync(process.execPath, [NEXT, "build"], {
   cwd: UI,
@@ -56,7 +62,6 @@ const standalone = path.join(UI, ".next", "standalone");
 if (!fs.existsSync(path.join(standalone, "server.js"))) falhar("A build não gerou .next/standalone/server.js (confira output: standalone no next.config.ts).");
 
 titulo("Juntando o servidor");
-fs.rmSync(APP, { recursive: true, force: true });
 fs.mkdirSync(APP, { recursive: true });
 fs.cpSync(standalone, APP, { recursive: true });
 fs.cpSync(path.join(UI, ".next", "static"), path.join(APP, ".next", "static"), { recursive: true });
