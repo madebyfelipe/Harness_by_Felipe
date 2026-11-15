@@ -1,4 +1,5 @@
 import path from "node:path";
+import { browserAutoOn } from "./autoapprove-setting";
 
 /*
  * Modo automático de aprovação: classifica cada chamada de ferramenta em "seguro"
@@ -83,7 +84,7 @@ export function classifyBash(command: string, cwd: string): Verdict {
 
 const MCP_READ = /^(get|list|search|find|read|fetch|query|describe|learn|whoami|view|show|count|lookup|check)(_|-|[A-Z]|$)/;
 
-export function classifyTool(name: string, input: unknown, cwd: string): Verdict {
+export async function classifyTool(name: string, input: unknown, cwd: string): Promise<Verdict> {
   const i = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   if (name === "Bash") return classifyBash(String(i.command ?? ""), cwd);
   if (name === "Edit" || name === "Write" || name === "NotebookEdit") {
@@ -98,8 +99,11 @@ export function classifyTool(name: string, input: unknown, cwd: string): Verdict
   const m = /^mcp__(.+?)__(.+)$/.exec(name);
   if (m) {
     if (m[1] === "central") {
-      if (/^navegador_(abrir|ler|captura|fechar)$/.test(m[2])) return ok("navegador: só abre e lê");
-      if (/^navegador_/.test(m[2])) return ask("ação num site (pode enviar formulário, comprar ou publicar)");
+      if (/^navegador_(abrir|ler|captura|fechar|rolar|esperar)$/.test(m[2])) return ok("navegador: só abre, lê ou espera");
+      if (/^navegador_/.test(m[2])) {
+        if (await browserAutoOn()) return ok("navegador em modo sozinho (o Felipe ligou); fica registrado");
+        return ask("ação num site (pode enviar formulário, comprar ou publicar)");
+      }
       return ask("cria configuração da Central");
     }
     return MCP_READ.test(m[2]) ? ok("consulta em app conectado") : ask("ação em app conectado (pode criar, enviar ou apagar)");

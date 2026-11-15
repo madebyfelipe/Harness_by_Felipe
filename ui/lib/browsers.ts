@@ -56,6 +56,8 @@ function privateIp(ip: string): boolean {
 
 /** Endereço que o navegador de agente não pode abrir: rede interna e a própria Central. */
 export async function blockedHost(hostname: string): Promise<boolean> {
+  // Teste local do operador (nunca chega ao agente): CENTRAL_ALLOW_PRIVATE=1 libera rede interna.
+  if (process.env.CENTRAL_ALLOW_PRIVATE === "1") return false;
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (!h || h === "localhost" || /\.(localhost|local|internal|lan|home|corp)$/.test(h)) return true;
   try {
@@ -216,6 +218,86 @@ export async function agentType(agent: string, campo: string, valor: string, env
     await target.press("Enter");
     await settle(s.page);
   }
+  return agentRead(agent);
+}
+
+/** Arquivo para enviar: tem de estar na pasta de trabalho ou nos anexos (nunca ~/.ssh, etc.). */
+function resolveUploadFile(raw: string): string {
+  const c = cfg();
+  const repo = c.repoDir;
+  const uploads = path.join(c.dataDir, "uploads");
+  const expanded = raw.startsWith("~") ? path.join(os.homedir(), raw.slice(1)) : raw.trim();
+  const abs = path.isAbsolute(expanded) ? path.normalize(expanded) : path.resolve(repo, expanded);
+  const dentro = (dir: string) => abs === dir || abs.startsWith(dir + path.sep);
+  if (!dentro(repo) && !dentro(uploads)) throw new Error("O arquivo para enviar precisa estar na pasta de trabalho ou nos anexos.");
+  if (!fs.existsSync(abs)) throw new Error(`Arquivo não existe: ${raw}`);
+  return abs;
+}
+
+/** Resolve o alvo de clique/upload: css=seletor, ou texto/role visível na página. */
+async function targetLocator(p: Page, alvo: string): Promise<Locator | null> {
+  const t = alvo.trim();
+  if (t.startsWith("css=")) return p.locator(t.slice(4)).first();
+  return firstVisible([p.getByRole("button", { name: t }), p.getByRole("link", { name: t }), p.getByLabel(t), p.getByText(t, { exact: true }), p.getByText(t)]);
+}
+
+/** Envia um arquivo local para a página: direto num <input type=file>, ou clicando no botão que abre o seletor. */
+export async function agentUpload(agent: string, arquivo: string, campo?: string): Promise<string> {
+  const file = resolveUploadFile(arquivo);
+  const s = forAgent(agent);
+  const p = s.page;
+  if (campo?.trim()) {
+    const target = await targetLocator(p, campo);
+    if (!target) throw new Error(`Não achei "${campo}" na página para abrir o seletor de arquivo.`);
+    const ehInput = await target
+      .evaluate((el) => el instanceof HTMLInputElement && el.type === "file")
+      .catch(() => false);
+    touch(s, `enviar arquivo ${path.basename(file)}`);
+    if (ehInput) {
+      await target.setInputFiles(file, { timeout: 15_000 });
+    } else {
+      const fc = p.waitForEvent("filechooser", { timeout: 20_000 });
+      await target.click({ timeout: 8_000 });
+      const chooser = await fc;
+      await chooser.setFiles(file);
+    }
+  } else {
+    const input = p.locator("input[type=file]").first();
+    if (!(await input.count().catch(() => 0))) throw new Error("Não achei um campo de arquivo. Passe 'campo' com o botão que abre o seletor (ex.: css=button[aria-label='Nova publicação']).");
+    touch(s, `enviar arquivo ${path.basename(file)}`);
+    await input.setInputFiles(file, { timeout: 15_000 });
+  }
+  await settle(p);
+  return agentRead(agent);
+}
+
+const KEYS = /^(Enter|Tab|Escape|Backspace|Delete|Space|Home|End|PageUp|PageDown|ArrowUp|ArrowDown|ArrowLeft|ArrowRight)$/;
+
+export async function agentPress(agent: string, tecla: string): Promise<string> {
+  const t = tecla.trim();
+  if (!KEYS.test(t)) throw new Error(`Tecla não permitida: ${t || "vazia"}`);
+  const s = forAgent(agent);
+  touch(s, `tecla ${t}`);
+  await s.page.keyboard.press(t);
+  await settle(s.page);
+  return agentRead(agent);
+}
+
+export async function agentScroll(agent: string, quantidade: number): Promise<string> {
+  const s = forAgent(agent);
+  touch(s, `rolar ${quantidade > 0 ? "para baixo" : "para cima"}`);
+  await s.page.mouse.wheel(0, Math.max(-3000, Math.min(3000, quantidade || 400)));
+  await settle(s.page);
+  return agentRead(agent);
+}
+
+/** Espera um texto ou css=seletor aparecer (para diálogos e carregamentos), depois lê a página. */
+export async function agentWait(agent: string, alvo: string): Promise<string> {
+  const s = forAgent(agent);
+  const t = alvo.trim();
+  touch(s, `esperar ${t.slice(0, 60)}`);
+  if (t.startsWith("css=")) await s.page.locator(t.slice(4)).first().waitFor({ state: "visible", timeout: 20_000 });
+  else await s.page.getByText(t, { exact: false }).first().waitFor({ state: "visible", timeout: 20_000 });
   return agentRead(agent);
 }
 

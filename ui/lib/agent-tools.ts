@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getConnector, listConnectors, normalizeConnector, resolveSecret, saveConnector, secretState } from "./connectors";
 import { getRoutine, listRoutines, normalizeRoutine, saveRoutine } from "./routines";
 import { injectVault, loadVault, logUse, vaultRefs } from "./vault";
-import { agentClick, agentOpen, agentRead, agentShot, agentType, closeBrowser } from "./browsers";
+import { agentClick, agentOpen, agentPress, agentRead, agentScroll, agentShot, agentType, agentUpload, agentWait, closeBrowser } from "./browsers";
 import { normalizeAgent, normalizeSkill, saveAgent, saveSkill } from "./agents-store";
 import { getAgent, listSkills } from "./repo";
 
@@ -153,6 +153,34 @@ export function centralTools(ctx: ToolsCtx) {
           for (const s of inj.used) void logUse(s, ctx.agent(), `navegador · campo ${a.campo.slice(0, 60)}`);
           return browse(() => agentType(ctx.agent(), a.campo, inj.text, a.enviar === true, inj.used.length ? "(segredo do cofre)" : a.texto.slice(0, 60)));
         },
+        { alwaysLoad: true }
+      ),
+      tool(
+        "navegador_upload",
+        "Envia um arquivo local para a página (ex.: a imagem de uma publicação). O arquivo precisa já existir na pasta de trabalho ou nos anexos. Se houver um campo de arquivo, passe 'campo' como css=seletor do botão que abre o seletor (ex.: css=button[aria-label='Nova publicação']) — a Central clica nele e entrega o arquivo de uma vez. Sem 'campo', tenta o <input type=file> já presente.",
+        { arquivo: z.string().min(1).max(1000), campo: z.string().max(200).optional() },
+        async (a) => browse(() => agentUpload(ctx.agent(), a.arquivo, a.campo)),
+        { alwaysLoad: true }
+      ),
+      tool(
+        "navegador_rolar",
+        "Rola a página atual (quantidade em pixels; positivo desce, negativo sobe; padrão 400).",
+        { quantidade: z.number().min(-3000).max(3000).optional() },
+        async (a) => browse(() => agentScroll(ctx.agent(), a.quantidade ?? 400)),
+        { alwaysLoad: true }
+      ),
+      tool(
+        "navegador_pressionar",
+        "Aperta uma tecla na página atual (Enter, Escape, Tab, Backspace, setas…).",
+        { tecla: z.string().min(1).max(20) },
+        async (a) => browse(() => agentPress(ctx.agent(), a.tecla)),
+        { alwaysLoad: true }
+      ),
+      tool(
+        "navegador_esperar",
+        "Espera um texto ou css=seletor aparecer (diálogo, carregamento) e devolve a página depois.",
+        { alvo: z.string().min(1).max(200) },
+        async (a) => browse(() => agentWait(ctx.agent(), a.alvo)),
         { alwaysLoad: true }
       ),
       tool(

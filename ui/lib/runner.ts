@@ -535,7 +535,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const summary = summarizeTool(toolName, toolInput);
     const db = await getDb();
     // Modo automático: o que a regra classifica como seguro roda sem cartão, e fica registrado.
-    const verdict = classifyTool(toolName, toolInput, cwd);
+    const verdict = await classifyTool(toolName, toolInput, cwd);
     if (!force && verdict.auto && (await autoApproveOn())) {
       await db
         .run("INSERT INTO approvals (id, conversation_id, run_id, agent, tool, input, status, created_at, decided_at) VALUES (?, ?, ?, ?, ?, ?, 'auto', ?, ?)", [id, run.conversationId, run.id, who, toolName, summary, nowIso(), nowIso()])

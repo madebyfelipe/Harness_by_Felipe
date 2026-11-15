@@ -195,6 +195,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [thought, setThought] = useState("");
   const [since, setSince] = useState(() => Date.now());
   const [autoApprove, setAutoApprove] = useState<boolean | null>(null);
+  const [browserAuto, setBrowserAuto] = useState<boolean | null>(null);
   const [error, setError] = useState("");
   const [text, setText] = useState("");
   const [files, setFiles] = useState<Pending[]>([]);
@@ -298,8 +299,11 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   }, []);
 
   useEffect(() => {
-    api<{ autoApprove: boolean }>("/api/config")
-      .then((r) => setAutoApprove(r.autoApprove))
+    api<{ autoApprove: boolean; browserAuto?: boolean }>("/api/config")
+      .then((r) => {
+        setAutoApprove(r.autoApprove);
+        setBrowserAuto(r.browserAuto ?? false);
+      })
       .catch(() => undefined);
   }, []);
 
@@ -554,6 +558,19 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                 }}
               />
               Aprovar sozinho o que é seguro
+            </label>
+            <label className="row small" style={{ gap: 6 }}>
+              <input
+                type="checkbox"
+                data-testid="browser-auto"
+                checked={browserAuto ?? false}
+                disabled={browserAuto === null}
+                onChange={async (e) => {
+                  const r = await api<{ browserAuto: boolean }>("/api/config", { body: { browserAuto: e.target.checked } }).catch(() => null);
+                  if (r) setBrowserAuto(r.browserAuto ?? false);
+                }}
+              />
+              Navegador: deixar o agente agir sozinho (fica registrado)
             </label>
             <p className="small muted">Leitura, git local e arquivos de conteúdo rodam sem perguntar. Apagar, enviar, publicar, instalar e mexer em agentes ou rotinas continuam pedindo você.</p>
             <a className="link small" href="/provedores">
