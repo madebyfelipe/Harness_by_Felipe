@@ -225,6 +225,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const [liveText, setLiveText] = useState("");
   const [liveTools, setLiveTools] = useState<ToolUse[]>([]);
   const [liveImages, setLiveImages] = useState<Att[]>([]);
+  const [liveCtx, setLiveCtx] = useState<NonNullable<Message["meta"]["context"]> | null>(null);
   const [lb, setLb] = useState<{ images: LbImage[]; start: number } | null>(null);
   const [liveTriage, setLiveTriage] = useState<TriageView | null>(null);
   const [triaging, setTriaging] = useState(false);
@@ -346,6 +347,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
       setActivity(`${t.agent ? `${t.agent} › ` : ""}${t.name}${t.summary ? ` · ${t.summary}` : ""}`.slice(0, 140));
       setLiveTools((l) => (l.some((x) => x.id === d.id) ? l : [...l, t]));
     });
+    on("context", (d) => setLiveCtx(d as unknown as NonNullable<Message["meta"]["context"]>));
     on("image", (d) => setLiveImages((l) => (l.some((x) => x.id === d.id) ? l : [...l, d as unknown as Att])));
     on("approval", (d) => setApprovals((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Approval), status: "pending" }])));
     on("ask", (d) => setAsks((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Ask), status: "pending" }])));
@@ -357,6 +359,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
       setLiveText("");
       setLiveTools([]);
       setLiveImages([]);
+      setLiveCtx(null);
       setLiveTriage(null);
     });
     on("error", (d) => setError(String(d.message ?? "Erro na execução.")));
@@ -960,7 +963,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
                 )}
               </p>
             )}
-            {rec.state === "idle" ? <ContextMeter ctx={lastCtx} onNewChat={() => (window.location.href = "/")} /> : null}
+            {rec.state === "idle" ? <ContextMeter ctx={liveCtx ?? lastCtx} onNewChat={() => (window.location.href = "/")} /> : null}
             {!isContext ? (
               <button
                 type="button"

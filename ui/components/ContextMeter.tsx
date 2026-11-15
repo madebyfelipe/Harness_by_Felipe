@@ -91,7 +91,7 @@ export function ContextMeter({ ctx, onNewChat }: { ctx: Ctx | null; onNewChat: (
               <p className="small muted">Quando enche, a conversa é resumida sozinha. Assunto novo gasta menos numa conversa nova.</p>
             </>
           ) : (
-            <p className="small muted">Aparece depois da próxima resposta de um modelo Claude nesta conversa.</p>
+            <p className="small muted">Aparece na primeira volta de um modelo Claude nesta conversa (a triagem e a DeepSeek não informam).</p>
           )}
           <button
             type="button"

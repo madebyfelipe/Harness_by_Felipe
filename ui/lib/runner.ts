@@ -796,6 +796,17 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     limit = null;
     try {
     const q = query({ prompt: input(), options });
+    const readCtx = (): Promise<ContextUsage | null> =>
+      q
+        .getContextUsage({ detail: "summary" })
+        .then((u) => ({
+          total: u.totalTokens,
+          max: u.rawMaxTokens || u.maxTokens,
+          pct: u.percentage,
+          cats: u.categories.filter((c) => c.tokens > 0 && c.kind !== "deferred").map((c) => ({ id: c.id ?? c.name, name: c.name, tokens: c.tokens, kind: c.kind }))
+        }))
+        .catch(() => null);
+    let ctxAt = 0;
     for await (const msg of q) {
       const m = msg as unknown as Record<string, unknown> & { type: string };
       if (!extra.auto && typeof m.session_id === "string" && m.session_id && m.session_id !== sessionId) {
@@ -821,6 +832,15 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
           emit(run, "delta", { text: ev.delta.text });
         }
       } else if (m.type === "assistant") {
+        // Contexto ao vivo: a cada volta da sessão principal (no máximo a cada 8 s).
+        if (m.parent_tool_use_id === null && Date.now() - ctxAt > 8000) {
+          ctxAt = Date.now();
+          void readCtx().then((u) => {
+            if (!u) return;
+            ctxUsage = u;
+            emit(run, "context", u as unknown as Record<string, unknown>);
+          });
+        }
         const message = m.message as { content?: Block[] } | undefined;
         if (typeof m.error === "string" && m.error) errorText = m.error;
         // Com chave de API o limite chega só como erro da resposta (sem rate_limit_event).
@@ -834,21 +854,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
           }
         }
       } else if (m.type === "result") {
-        // Janela de contexto (como o /context): leitura rápida, sem chamadas extras de contagem.
-        if (!ctxUsage) {
-          ctxUsage = await Promise.race([
-            q
-              .getContextUsage({ detail: "summary" })
-              .then((u) => ({
-                total: u.totalTokens,
-                max: u.rawMaxTokens || u.maxTokens,
-                pct: u.percentage,
-                cats: u.categories.filter((c) => c.tokens > 0 && c.kind !== "deferred").map((c) => ({ id: c.id ?? c.name, name: c.name, tokens: c.tokens, kind: c.kind }))
-              }))
-              .catch(() => null),
-            new Promise<null>((res) => setTimeout(() => res(null), 4000))
-          ]);
-        }
+        // Janela de contexto final (como o /context): leitura rápida, sem chamadas extras de contagem.
+        const fin = await Promise.race([readCtx(), new Promise<null>((res) => setTimeout(() => res(null), 4000))]);
+        if (fin) ctxUsage = fin;
         const usage = (m.usage ?? {}) as Record<string, number>;
         result = {
           cost: typeof m.total_cost_usd === "number" ? m.total_cost_usd : undefined,
