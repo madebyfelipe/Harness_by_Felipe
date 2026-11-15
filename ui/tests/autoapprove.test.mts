@@ -66,23 +66,23 @@ test("modo automático: o que apaga, envia, instala ou sai do repositório sempr
     assert.equal(auto(c), false, c);
 });
 
-test("modo automático: escrita só em arquivo de conteúdo do repositório; apps só em consulta", () => {
-  const t = (name: string, input: unknown) => classifyTool(name, input, CWD).auto;
-  assert.equal(t("Write", { file_path: "milestones.md" }), true);
-  assert.equal(t("Edit", { file_path: "/srv/repo/logs/reset.log" }), true);
-  assert.equal(t("Write", { file_path: "/etc/cron.d/x" }), false);
-  assert.equal(t("Write", { file_path: "../fora.md" }), false);
-  assert.equal(t("Edit", { file_path: "ui/lib/guardrails.ts" }), false);
-  assert.equal(t("Write", { file_path: "agents/novo.md" }), false);
-  assert.equal(t("Write", { file_path: "routines/x.yaml" }), false);
-  assert.equal(t("Write", { file_path: "connectors/x.yaml" }), false);
-  assert.equal(t("Write", { file_path: ".env.local" }), false);
-  assert.equal(t("mcp__github__list_issues", {}), true);
-  assert.equal(t("mcp__github__get_file_contents", {}), true);
-  assert.equal(t("mcp__Twenty__learn_tools", {}), true);
-  assert.equal(t("mcp__github__merge_pull_request", {}), false);
-  assert.equal(t("mcp__github__create_issue", {}), false);
-  assert.equal(t("mcp__Twenty__execute_tool", {}), false);
-  assert.equal(t("mcp__central__criar_rotina", {}), false);
-  assert.equal(t("FerramentaNova", {}), false);
+test("modo automático: escrita só em arquivo de conteúdo do repositório; apps só em consulta", async () => {
+  const t = async (name: string, input: unknown) => (await classifyTool(name, input, CWD)).auto;
+  assert.equal(await t("Write", { file_path: "milestones.md" }), true);
+  assert.equal(await t("Edit", { file_path: "/srv/repo/logs/reset.log" }), true);
+  assert.equal(await t("Write", { file_path: "/etc/cron.d/x" }), false);
+  assert.equal(await t("Write", { file_path: "../fora.md" }), false);
+  assert.equal(await t("Edit", { file_path: "ui/lib/guardrails.ts" }), false);
+  assert.equal(await t("Write", { file_path: "agents/novo.md" }), false);
+  assert.equal(await t("Write", { file_path: "routines/x.yaml" }), false);
+  assert.equal(await t("Write", { file_path: "connectors/x.yaml" }), false);
+  assert.equal(await t("Write", { file_path: ".env.local" }), false);
+  assert.equal(await t("mcp__github__list_issues", {}), true);
+  assert.equal(await t("mcp__github__get_file_contents", {}), true);
+  assert.equal(await t("mcp__Twenty__learn_tools", {}), true);
+  assert.equal(await t("mcp__github__merge_pull_request", {}), false);
+  assert.equal(await t("mcp__github__create_issue", {}), false);
+  assert.equal(await t("mcp__Twenty__execute_tool", {}), false);
+  assert.equal(await t("mcp__central__criar_rotina", {}), false);
+  assert.equal(await t("FerramentaNova", {}), false);
 });

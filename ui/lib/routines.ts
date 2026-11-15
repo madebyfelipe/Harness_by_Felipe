@@ -9,7 +9,11 @@ import { getAgent, repoDir } from "./repo";
 import { startRun, stopRun } from "./runner";
 import { nextRuns, parseQuando } from "./schedule";
 import { AUTO_AGENT, TRIAGE_MODEL } from "./triage";
+import { pingAccounts } from "./ping";
 import { centralLink, notifyFelipe } from "./whatsapp";
+
+/** Agente especial das rotinas de reset: só abre a janela de uso de cada conta. */
+export const PING_AGENT = "ping";
 
 /*
  * Uma rotina = routines/<nome>.yaml. "Rotina é rotina" (decisoes.md): roda sozinha e
@@ -50,7 +54,7 @@ export function normalizeRoutine(raw: unknown, file = ""): Routine {
   const quando = String(r.quando ?? "").trim();
   const parsed = parseQuando(quando || String(r.cron ?? ""));
   const agente = String(r.agente ?? AUTO_AGENT).trim() || AUTO_AGENT;
-  if (agente !== AUTO_AGENT && !getAgent(agente)) throw new Error(`agente "${agente}" não existe em agents/`);
+  if (agente !== AUTO_AGENT && agente !== PING_AGENT && !getAgent(agente)) throw new Error(`agente "${agente}" não existe em agents/`);
   const modo = String(r.modo ?? "vps") as Routine["modo"];
   if (!["vps", "local", "ambos"].includes(modo)) throw new Error("modo: vps, local ou ambos");
   const instrucoes = String(r.instrucoes ?? "").trim();
@@ -145,6 +149,16 @@ function briefOf(text: string): string {
 
 /** Dispara uma rotina agora (agenda ou botão "Rodar agora"). */
 export async function runRoutine(r: Routine, origem: "agenda" | "manual", who = "agenda"): Promise<{ runId: string; conversationId: string }> {
+  if (r.agente === PING_AGENT) {
+    // Só abre a janela de uso: uma chamada mínima por conta, sem conversa, triagem nem agente.
+    const id = crypto.randomUUID();
+    const db = await getDb();
+    await db.run("INSERT INTO routine_runs (id, rotina, origem, conversation_id, status, started_at) VALUES (?, ?, ?, NULL, 'rodando', ?)", [id, r.nome, origem, nowIso()]);
+    void pingAccounts()
+      .then((p) => db.run("UPDATE routine_runs SET status = ?, resumo = ?, erro = ?, ended_at = ? WHERE id = ?", [p.ok.length ? "silencio" : "error", p.ok.length ? `janela aberta: ${p.ok.join(", ")}` : null, p.falhas.join("; ") || null, nowIso(), id]))
+      .catch((e) => db.run("UPDATE routine_runs SET status = 'error', erro = ?, ended_at = ? WHERE id = ?", [e instanceof Error ? e.message : String(e), nowIso(), id]));
+    return { runId: id, conversationId: "" };
+  }
   const agent = r.agente === AUTO_AGENT ? undefined : getAgent(r.agente);
   const conversation = await createConversation({
     mode: "chat",

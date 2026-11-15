@@ -2334,3 +2334,32 @@ details.triage[open] {
   color: #fff;
   white-space: nowrap;
 }
+
+/* botão "Planejar" ao lado do enviar */
+.chip-toggle {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: center;
+}
+.chip-toggle:hover:not(:disabled) {
+  color: var(--black);
+  background: var(--gray-200);
+}
+.chip-toggle--on,
+.chip-toggle--on:hover:not(:disabled) {
+  border-color: var(--red);
+  background: var(--red);
+  color: var(--on-red);
+}
+.chip-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

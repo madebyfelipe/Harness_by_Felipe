@@ -100,6 +100,7 @@ function Editor({ initial, agents, onSaved, onCancel }: { initial: typeof EMPTY;
           Agente
           <select className="field field--sm" value={r.agente} onChange={(e) => set("agente", e.target.value)}>
             <option value="auto">Triagem decide</option>
+            <option value="ping">Só abrir a janela de uso (sem IA de verdade)</option>
             {agents.map((a) => (
               <option key={a} value={a}>
                 {a}

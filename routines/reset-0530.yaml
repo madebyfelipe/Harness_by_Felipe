@@ -3,7 +3,7 @@ nome: reset-0530
 titulo: Reset da janela de 5h (05:30)
 quando: todo dia às 05:30
 cron: 30 5 * * *
-agente: auto
+agente: ping
 modo: vps
 ativa: true
 silencio: true

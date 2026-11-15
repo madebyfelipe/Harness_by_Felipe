@@ -206,6 +206,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [provider, setProvider] = useState(initial.conversation?.provider ?? "");
   const [switchNote, setSwitchNote] = useState("");
   const [side, setSide] = useState(false);
+  const [plan, setPlan] = useState(false);
   useEffect(() => {
     setSide(localStorage.getItem("central.side") === "1");
   }, []);
@@ -352,8 +353,11 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   }
 
   async function send(override?: string, audio = false) {
-    const body = (override ?? text).trim();
-    if ((!body && !files.length) || running || uploading) return;
+    const raw = (override ?? text).trim();
+    if ((!raw && !files.length) || running || uploading) return;
+    // "Planejar" ligado: a triagem monta o plano e espera o "vai" antes de rodar.
+    const body = plan && raw && !/^\s*planejar\s*:/i.test(raw) ? `planejar: ${raw}` : raw;
+    setPlan(false);
     setError("");
     setRunning(true);
     stickRef.current = true;
@@ -856,6 +860,18 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                 onClick={() => (rec.state === "rec" ? stopRec() : void startRec())}
               >
                 {rec.state === "rec" ? <IconStop /> : <IconMic />}
+              </button>
+            ) : null}
+            {rec.state === "idle" && isAuto && !isContext ? (
+              <button
+                type="button"
+                className={`chip-toggle${plan ? " chip-toggle--on" : ""}`}
+                aria-pressed={plan}
+                disabled={running}
+                title="Planejar: a Central monta o plano e só roda depois do seu “vai”"
+                onClick={() => setPlan((v) => !v)}
+              >
+                Planejar
               </button>
             ) : null}
             {rec.state === "idle" ? (

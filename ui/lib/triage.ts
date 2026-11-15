@@ -92,7 +92,8 @@ export function parseTriage(raw: string): Triage | null {
   return null;
 }
 
-const LEVEL_MODEL: Record<string, string> = { N1: "claude-sonnet-5-5", N2: "claude-sonnet-5-5", N3: "claude-opus-5-5", N4: "claude-fable-5-2" };
+// Sessão principal (orquestrador): coordena e delega; o trabalho pesado vai no modelo de cada passo.
+const LEVEL_MODEL: Record<string, string> = { N1: "claude-haiku-5-5", N2: "claude-sonnet-5-5", N3: "claude-sonnet-5-5", N4: "claude-opus-5-5" };
 
 /** Agente e modelo da sessão principal, a partir do workflow (tabela de triagem.md). */
 export function routeFor(wf: Workflow, pedido: string): Route {

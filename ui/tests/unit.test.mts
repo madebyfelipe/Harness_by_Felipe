@@ -124,7 +124,7 @@ test("barreiras: caminhos e comandos de segredo são bloqueados", () => {
 
 test("barreiras: o ambiente do agente não leva segredo de conector", () => {
   const env = agentEnv({ PATH: "/bin", HOME: "/h", TWENTY_API_KEY: "x", GITHUB_TOKEN: "y", CENTRAL_MASTER_KEY: "z", CENTRAL_SETUP_TOKEN: "t", DATABASE_URL: "pg", ANTHROPIC_API_KEY: "k", CLAUDE_CODE_SESSION_ID: "s", CLAUDECODE: "1" });
-  assert.deepEqual(Object.keys(env).sort(), ["ANTHROPIC_API_KEY", "CLAUDE_AGENT_SDK_CLIENT_APP", "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS", "CLAUDE_CODE_DISABLE_CRON", "HOME", "PATH"]);
+  assert.deepEqual(Object.keys(env).sort(), ["ANTHROPIC_API_KEY", "CLAUDE_AGENT_SDK_CLIENT_APP", "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE", "CLAUDE_CODE_DISABLE_BACKGROUND_TASKS", "CLAUDE_CODE_DISABLE_CRON", "ENABLE_TOOL_SEARCH", "HOME", "PATH"]);
 });
 
 test("conectores: valida, grava YAML sem valor de segredo e lê os dois da base", () => {

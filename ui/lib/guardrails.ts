@@ -90,5 +90,9 @@ export function agentEnv(source: NodeJS.ProcessEnv = process.env): Record<string
   // resposta, onde o Felipe vê e para; rotina é da Central.
   out.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS = "1";
   out.CLAUDE_CODE_DISABLE_CRON = "1";
+  // Economia de tokens: esquemas das ferramentas MCP só entram quando o agente procura por elas,
+  // e a conversa longa é resumida mais cedo em vez de reenviar o histórico inteiro a cada volta.
+  out.ENABLE_TOOL_SEARCH = "true";
+  out.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "60";
   return out;
 }
