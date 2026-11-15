@@ -8,7 +8,8 @@ Decisão nova entra **no topo**, com data e motivo.
 
 | decisão | o que muda |
 |---|---|
-| refira-se a esse conteúdo quando for montar uma postagem | a aplicar (dita pelo Felipe; a triagem corrige os arquivos antigos) |
+| "refira-se a esse conteúdo quando for montar uma postagem" | **Toda postagem de Instagram consulta `instagram.md`** (pilares, voz, limites, CTA, calendário) antes de ser montada. Planejamento criado em 15/11/2026 |
+| suba o sellbird na vps, versão github (reabre a decisão provisória de seguir só no harness próprio, porque agora há acesso) | a aplicar (dita pelo Felipe; a triagem corrige os arquivos antigos) |
 
 ## 15/11/2026 (madrugada) — memória, crescimento e autonomia dos agentes
 
