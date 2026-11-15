@@ -130,22 +130,50 @@ export function BrowserSide({ onClose }: { onClose: () => void }) {
 function OpenForm({ agents, onOpen }: { agents: string[]; onOpen: (agent: string, url: string) => void }) {
   const [who, setWho] = useState(agents[0] ?? "");
   const [url, setUrl] = useState("");
-  if (!agents.length) return <p className="small muted">Nenhum agente com navegador liberado.</p>;
+  const [menu, setMenu] = useState(false);
+  if (!agents.length) return <p className="small muted bside__empty">Nenhum agente com navegador liberado.</p>;
   return (
     <form
-      className="bside__open"
+      className="bopen"
       onSubmit={(e) => {
         e.preventDefault();
         if (url.trim()) onOpen(who || agents[0], url.trim());
       }}
     >
-      <select className="field field--sm" value={who} onChange={(e) => setWho(e.target.value)} aria-label="Agente do navegador">
-        {agents.map((a) => (
-          <option key={a}>{a}</option>
-        ))}
-      </select>
-      <input className="field field--sm" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="instagram.com" aria-label="Endereço" autoFocus />
-      <button className="btn btn--sm">Abrir</button>
+      <div className="bopen__who">
+        <button type="button" className="bopen__agent" aria-haspopup="listbox" aria-expanded={menu} onClick={() => setMenu((m) => !m)} title="Qual agente usa este navegador">
+          <span className="bopen__dot" aria-hidden="true" />
+          {who || agents[0]}
+          <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+        {menu ? (
+          <ul className="bopen__menu" role="listbox" aria-label="Agente">
+            {agents.map((a) => (
+              <li key={a}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={a === who}
+                  onClick={() => {
+                    setWho(a);
+                    setMenu(false);
+                  }}
+                >
+                  {a}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      <div className="bopen__bar">
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="instagram.com" aria-label="Endereço" autoFocus spellCheck={false} />
+        <button className="bopen__go" disabled={!url.trim()} aria-label="Abrir">
+          Abrir
+        </button>
+      </div>
     </form>
   );
 }

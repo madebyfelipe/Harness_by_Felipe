@@ -12,6 +12,8 @@ import { lastSlot } from "./schedule";
 const g = globalThis as unknown as { __centralScheduler?: NodeJS.Timeout };
 
 async function tick(): Promise<void> {
+  // Mensagens agendadas no chat (e as da fila esperando vaga).
+  await import("./queue").then((q) => q.dispatchDue()).catch((e) => console.error("[central] fila:", e));
   const now = new Date();
   for (const r of listRoutines().routines) {
     if (!r.ativa || !runsHere(r)) continue;

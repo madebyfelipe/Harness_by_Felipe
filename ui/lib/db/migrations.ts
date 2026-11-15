@@ -226,6 +226,22 @@ export const MIGRATIONS: Migration[] = [
       )`,
       "ALTER TABLE conversations ADD COLUMN project_id TEXT"
     ]
+  },
+  {
+    // Mensagens pendentes: na fila (sai quando a execução atual termina) ou agendadas.
+    id: "007_fila",
+    statements: [
+      `CREATE TABLE queued_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        run_at TEXT,
+        status TEXT NOT NULL,
+        error TEXT,
+        created_at TEXT NOT NULL,
+        sent_at TEXT
+      )`
+    ]
   }
 ];
 

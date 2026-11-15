@@ -3138,3 +3138,245 @@ details.triage[open] {
   align-self: flex-end;
   margin-bottom: 2px;
 }
+
+/* abrir site no painel do navegador */
+.bopen {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+.bopen__who {
+  position: relative;
+}
+.bopen__agent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gray-200);
+  color: var(--black);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.bopen__agent svg {
+  color: var(--muted);
+}
+.bopen__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red-ink);
+}
+.bopen__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 180px;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--gray-100);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+.bopen__menu button {
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--black);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+.bopen__menu button:hover,
+.bopen__menu button[aria-selected="true"] {
+  background: var(--gray-200);
+}
+.bopen__bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 3px 3px 3px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--gray-100);
+}
+.bopen__bar:focus-within {
+  border-color: var(--gray-300);
+}
+.bopen__bar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--black);
+  font: inherit;
+  font-size: 0.875rem;
+}
+.bopen__go {
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--black);
+  color: var(--cream);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.bopen__go:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* enviar: pill com seletor (agora / agendar) */
+.sendpill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--black);
+  color: var(--cream);
+  align-self: flex-end;
+  margin-bottom: 2px;
+  flex: none;
+}
+.sendpill__main,
+.sendpill__more {
+  display: grid;
+  place-items: center;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.sendpill__main {
+  width: 38px;
+  padding-left: 4px;
+  border-radius: 999px 0 0 999px;
+}
+.sendpill__main svg {
+  width: 18px;
+  height: 18px;
+}
+.sendpill__more {
+  width: 26px;
+  padding-right: 4px;
+  border-left: 1px solid color-mix(in srgb, var(--cream) 22%, transparent);
+  border-radius: 0 999px 999px 0;
+}
+.sendpill__main:hover:not(:disabled),
+.sendpill__more:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cream) 14%, transparent);
+}
+.sendpill:has(.sendpill__main:disabled) {
+  opacity: 0.45;
+}
+.sendpill button:disabled {
+  cursor: default;
+}
+.sendpill__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 60;
+  width: 250px;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--gray-100);
+  color: var(--black);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.sendpill__menu > button {
+  display: grid;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--black);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+.sendpill__menu > button span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.sendpill__menu > button:hover {
+  background: var(--gray-200);
+}
+.sendpill__form {
+  gap: 8px;
+  padding: 12px;
+}
+.sendpill__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sendpill__presets button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--black);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.sendpill__presets button:hover {
+  background: var(--gray-200);
+}
+
+/* pendentes acima da caixa */
+.pending {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.pending li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--gray-100);
+  font-size: 0.8125rem;
+}
+.pending__when {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.pending__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

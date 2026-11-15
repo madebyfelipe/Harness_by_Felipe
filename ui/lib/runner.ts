@@ -973,6 +973,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       console.error("[central] fim de execução (rotina) falhou:", e);
     }
   }
+  // Mensagem que o Felipe mandou enquanto rodava: sai agora (se ele não parou a execução).
+  if (run.status !== "stopped") void import("./queue").then((q) => q.dispatch(run.conversationId)).catch(() => undefined);
   setTimeout(() => {
     if (runs.get(run.conversationId) === run) runs.delete(run.conversationId);
   }, KEEP_AFTER_END_MS).unref?.();

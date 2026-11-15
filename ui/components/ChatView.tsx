@@ -11,6 +11,7 @@ import { ContextMeter } from "./ContextMeter";
 import { ModelPicker } from "./ModelPicker";
 import { Welcome } from "./Welcome";
 import { Lightbox, type LbImage } from "./Lightbox";
+import { SendPill } from "./SendPill";
 import { filterMentions, MentionMenu, type MentionItem } from "./MentionMenu";
 import { Markdown } from "./Markdown";
 
@@ -225,6 +226,9 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const [liveText, setLiveText] = useState("");
   const [liveTools, setLiveTools] = useState<ToolUse[]>([]);
   const [liveImages, setLiveImages] = useState<Att[]>([]);
+  // Mensagens pendentes: na fila (enquanto roda) ou agendadas.
+  const [queue, setQueue] = useState<{ id: string; text: string; run_at: string | null }[]>([]);
+  const [afterEnd, setAfterEnd] = useState(0);
   const [liveCtx, setLiveCtx] = useState<NonNullable<Message["meta"]["context"]> | null>(null);
   const [lb, setLb] = useState<{ images: LbImage[]; start: number } | null>(null);
   const [liveTriage, setLiveTriage] = useState<TriageView | null>(null);
@@ -370,6 +374,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
       setApprovals([]);
       setTriaging(false);
       refreshList();
+      setAfterEnd((n) => n + 1);
     };
     on("end", finish);
     on("idle", () => {
@@ -425,8 +430,61 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
     return r.conversation;
   }
 
+  const loadQueue = useCallback((cid: string) => {
+    api<{ items: { id: string; text: string; run_at: string | null }[] }>(`/api/chat/${cid}/fila`)
+      .then((r) => setQueue(r.items))
+      .catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    if (conv) loadQueue(conv.id);
+  }, [conv, loadQueue]);
+  // Terminou: a fila pode ter começado outra execução; segue nela.
+  useEffect(() => {
+    if (!afterEnd || !conv) return;
+    const t = setTimeout(() => {
+      api<{ messages: Message[]; active: { status: string } | null }>(`/api/chat/${conv.id}`)
+        .then((r) => {
+          if (r.active?.status === "running") {
+            setMessages(r.messages);
+            setRunning(true);
+            connect(conv.id);
+          }
+          loadQueue(conv.id);
+        })
+        .catch(() => undefined);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [afterEnd, conv, connect, loadQueue]);
+  // Agendada vencendo com a tela aberta: confere a cada 30 s.
+  useEffect(() => {
+    if (!conv || running || !queue.some((q) => q.run_at)) return;
+    const t = setInterval(() => setAfterEnd((n) => n + 1), 30_000);
+    return () => clearInterval(t);
+  }, [conv, running, queue]);
+
+  async function schedule(when: Date) {
+    const raw = text.trim();
+    if (!raw) throw new Error("Escreva a mensagem antes de agendar.");
+    const c = await ensureConversation();
+    await api(`/api/chat/${c.id}/fila`, { body: { text: raw, runAt: when.toISOString() } });
+    setText("");
+    loadQueue(c.id);
+  }
+
   async function send(override?: string, audio = false) {
     const raw = (override ?? text).trim();
+    if (running && conv && raw && !uploading) {
+      // Rodando: vai para a fila e sai quando a execução atual terminar.
+      if (files.length) return setError("Anexo só depois que a execução terminar; o texto pode ir para a fila.");
+      try {
+        await api(`/api/chat/${conv.id}/fila`, { body: { text: raw } });
+        if (override === undefined) setText("");
+        loadQueue(conv.id);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Não entrou na fila.");
+      }
+      return;
+    }
     if ((!raw && !files.length) || running || uploading) return;
     // "Planejar" ligado: a triagem monta o plano e espera o "vai" antes de rodar.
     const body = plan && raw && !/^\s*planejar\s*:/i.test(raw) ? `planejar: ${raw}` : raw;
@@ -847,6 +905,25 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
 
       <div className="composer">
         <div className="composer__inner">
+          {queue.length ? (
+            <ul className="pending" aria-label="Mensagens pendentes">
+              {queue.map((q) => (
+                <li key={q.id}>
+                  <span className="pending__when">{q.run_at ? new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(q.run_at)) : "Na fila"}</span>
+                  <span className="pending__text" title={q.text}>
+                    {q.text}
+                  </span>
+                  <button
+                    type="button"
+                    className="link small"
+                    onClick={() => conv && void api(`/api/chat/${conv.id}/fila?item=${q.id}`, { method: "DELETE" }).then(() => loadQueue(conv.id))}
+                  >
+                    Cancelar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {mention && mentionItems ? <MentionMenu items={mentionList} active={mentionIdx} onPick={pickMention} onHover={setMentionIdx} /> : null}
           {redoOpen && upper ? (
             <form
@@ -988,10 +1065,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
               </button>
             ) : null}
             {rec.state === "idle" ? (
-              <button type="button" className="round round--send" onClick={() => void send()} disabled={running || uploading || (!text.trim() && !files.length)} aria-label="Enviar">
-                <IconSend />
-                <span className="sr-only">{uploading ? "Anexando…" : "Enviar"}</span>
-              </button>
+              <SendPill disabled={uploading || (!text.trim() && !files.length)} queued={running} onSend={() => void send()} onSchedule={schedule} />
             ) : null}
           </div>
         </div>

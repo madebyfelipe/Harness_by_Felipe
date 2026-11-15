@@ -179,10 +179,10 @@ if (WAV && fs.existsSync(WAV)) {
 
 await newChat("/");
 const transcreveu = page.waitForResponse((res) => res.url().endsWith("/api/transcrever"), { timeout: 180_000 });
-await page.click("button.bigmic");
+await page.click("button[aria-label='Gravar áudio']");
 await page.waitForSelector("text=/Gravando/");
 await page.waitForTimeout(2500);
-await page.click("button.bigmic");
+await page.click("button[aria-label='Parar e enviar o áudio']");
 const tr = await transcreveu;
 check(tr.status() === 200, "microfone: grava no navegador, decodifica para 16 kHz e a VPS transcreve");
 await page.waitForSelector("[data-testid=live]", { state: "detached", timeout: 90_000 }).catch(() => undefined);
