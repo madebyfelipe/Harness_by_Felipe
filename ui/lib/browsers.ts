@@ -238,6 +238,73 @@ export async function closeBrowser(agent: string): Promise<boolean> {
   return true;
 }
 
+/* ---------- importar cookies ---------- */
+
+export type CookieIn = { name: string; value: string; domain: string; path: string; expires?: number; httpOnly?: boolean; secure?: boolean; sameSite?: "Strict" | "Lax" | "None" };
+
+/**
+ * Lê cookies colados pelo Felipe em dois formatos:
+ *  - JSON: `[{name,value,domain,path,...}]` ou `{"cookies":[...]}`;
+ *  - Netscape (`cookies.txt` do navegador): linhas `domain flag path secure expires name value`,
+ *    com `#HttpOnly_` no começo da linha quando o cookie é httpOnly.
+ * Devolve só o que o Playwright aceita; sem número de domínio ou sem nome, erro claro.
+ */
+export function parseCookies(raw: string): CookieIn[] {
+  const texto = raw.trim();
+  if (!texto) return [];
+  const out: CookieIn[] = [];
+  if (texto.startsWith("[") || texto.startsWith("{")) {
+    let data: unknown;
+    try {
+      data = JSON.parse(texto);
+    } catch {
+      throw new Error("Não consegui ler o JSON dos cookies. Cole o vetor inteiro, ou o formato do cookies.txt.");
+    }
+    const arr = Array.isArray(data) ? data : Array.isArray((data as { cookies?: unknown }).cookies) ? (data as { cookies: unknown[] }).cookies : [];
+    if (!arr.length) throw new Error("Nenhum cookie achado nesse JSON (esperava um vetor com name, value, domain, path).");
+    for (const c of arr) {
+      if (!c || typeof c !== "object") continue;
+      const o = c as Record<string, unknown>;
+      const name = String(o.name ?? "").trim();
+      const value = String(o.value ?? "");
+      const domain = String(o.domain ?? "").trim();
+      const path = String(o.path ?? "/");
+      if (!name || !domain) continue;
+      const expires = typeof o.expires === "number" ? o.expires : typeof o.expirationDate === "number" ? o.expirationDate : undefined;
+      const sameSite = ["Strict", "Lax", "None"].includes(String(o.sameSite ?? "")) ? (String(o.sameSite) as CookieIn["sameSite"]) : undefined;
+      out.push({ name, value, domain, path: path || "/", ...(expires ? { expires } : {}), httpOnly: Boolean(o.httpOnly), secure: Boolean(o.secure), ...(sameSite ? { sameSite } : {}) });
+    }
+  } else {
+    // Netscape: o domínio pode começar com ponto; colunas separadas por TAB.
+    for (const rawLine of texto.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const httpOnly = line.startsWith("#HttpOnly_");
+      if (!httpOnly && line.startsWith("#")) continue;
+      const rest = httpOnly ? line.slice("#HttpOnly_".length) : line;
+      const p = rest.split("\t");
+      if (p.length < 7) continue;
+      const [domain, , path, secure, expiresStr, name, ...valueParts] = p;
+      const value = valueParts.join("\t");
+      if (!name || !domain) continue;
+      const exp = Number(expiresStr);
+      out.push({ name, value, domain, path: path || "/", secure: String(secure).toUpperCase() === "TRUE", httpOnly, ...(Number.isFinite(exp) && exp > 0 ? { expires: exp } : {}) });
+    }
+  }
+  if (!out.length) throw new Error("Não achei cookies válidos. Confira se o texto tem as colunas (ou campos) de nome, valor e domínio.");
+  return out;
+}
+
+/** Guarda os cookies no perfil do navegador do agente e abre a sessão para o Felipe já usá-la. */
+export async function importCookies(agent: string, raw: string): Promise<{ count: number; domains: string[] }> {
+  const cookies = parseCookies(raw);
+  const s = await open(agent);
+  await s.ctx.addCookies(cookies.map((c) => ({ name: c.name, value: c.value, domain: c.domain, path: c.path, expires: c.expires, httpOnly: c.httpOnly, secure: c.secure, sameSite: c.sameSite })));
+  const domains = [...new Set(cookies.map((c) => c.domain))].slice(0, 8);
+  touch(s, `importou ${cookies.length} cookies (${domains.join(", ")})`);
+  return { count: cookies.length, domains };
+}
+
 /* ---------- o que o Felipe faz pela tela ---------- */
 
 export type BrowserInfo = { agent: string; url: string; title: string; takenOver: boolean; lastAction: string; idleSecs: number; sandbox: boolean; width: number; height: number };

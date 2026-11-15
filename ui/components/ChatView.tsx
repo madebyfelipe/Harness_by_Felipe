@@ -7,6 +7,7 @@ import { agentName, REFRESH_EVENT } from "./ConversationList";
 import { sendFeedback } from "./FeedbackButton";
 import { IconBack, IconMic, IconMore, IconPlus, IconSend, IconStop, IconTool } from "./Icons";
 import { Markdown } from "./Markdown";
+import { BrowserLive } from "./BrowserLive";
 
 type ModelOpt = { id: string; label: string; note: string };
 type Approval = { id: string; tool: string; summary: string; agent: string; motivo?: string; semSempre?: boolean; status: "pending" | "approved" | "denied" };
@@ -203,6 +204,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [providers, setProviders] = useState<ProviderOpt[]>([]);
   const [provider, setProvider] = useState(initial.conversation?.provider ?? "");
   const [switchNote, setSwitchNote] = useState("");
+  const [showBrowser, setShowBrowser] = useState(false);
 
   const esRef = useRef<EventSource | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -509,6 +511,9 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
             Subir de modelo
           </button>
         ) : null}
+        <button type="button" className={`btn btn--ghost btn--sm${showBrowser ? " btn--on" : ""}`} title="Navegador do agente (tela ao vivo e importar cookies)" onClick={() => setShowBrowser((v) => !v)}>
+          Navegador
+        </button>
         <details className="pop">
           <summary className="rail__btn" aria-label="Mais opções" title="Mais opções">
             <IconMore />
@@ -716,6 +721,18 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
           ) : null}
         </div>
       </div>
+
+      {showBrowser ? (
+        <div className="chat__browser">
+          <div className="row row--between">
+            <strong>Navegador do agente</strong>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowBrowser(false)}>
+              Fechar
+            </button>
+          </div>
+          <BrowserLive />
+        </div>
+      ) : null}
 
       <div className="composer">
         <div className="composer__inner">
