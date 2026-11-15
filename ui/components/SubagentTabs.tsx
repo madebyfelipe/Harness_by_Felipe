@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SubItem, SubThread } from "@/lib/chat";
 import { agentName } from "./ConversationList";
-import { IconPlus, IconTool } from "./Icons";
+import { IconBack, IconPlus, IconTool } from "./Icons";
 import { Markdown } from "./Markdown";
 
 /*
@@ -170,8 +170,9 @@ export function SubView({ thread: t, all, mainAgent, modelLabel, onPick }: ViewP
           {t.model ? ` · ${modelLabel(t.model)}` : ""} · {STATUS[t.status]} · <Elapsed from={t.startedAt} to={t.endedAt} />
         </span>
         {t.title ? <strong className="subview__title">{t.title}</strong> : null}
-        <button type="button" className="link small" onClick={() => onPick(t.parent)}>
-          ← voltar para {parent ? agentName(parent.agent) : "a conversa"}
+        <button type="button" className="link small subview__back" onClick={() => onPick(t.parent)}>
+          <IconBack size={14} />
+          Voltar para {parent ? agentName(parent.agent) : "a conversa"}
         </button>
       </header>
 
