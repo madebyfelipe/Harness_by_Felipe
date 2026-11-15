@@ -12,6 +12,8 @@ const securityHeaders = [
 
 const config: NextConfig = {
   poweredByHeader: false,
+  // Publicação sem derrubar a produção: a build nova sai em outra pasta e só troca no religamento.
+  ...(process.env.CENTRAL_NEXT_DIST ? { distDir: process.env.CENTRAL_NEXT_DIST } : {}),
   // O runner de agentes, o Postgres e o cliente MCP rodam só no servidor e
   // não devem ser empacotados.
   serverExternalPackages: ["@anthropic-ai/claude-agent-sdk", "pg", "@modelcontextprotocol/sdk", "@huggingface/transformers", "onnxruntime-node", "playwright-core"],

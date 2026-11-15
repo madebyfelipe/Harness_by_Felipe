@@ -7,7 +7,7 @@ import { IconChat, IconGear } from "./Icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { UsageMeter } from "./UsageMeter";
 
-const CONFIG = ["/inicio", "/provedores", "/conectores", "/agentes", "/skills", "/rotinas", "/navegadores", "/cofre", "/contexto", "/conta"];
+const CONFIG = ["/configuracoes", "/inicio", "/provedores", "/conectores", "/agentes", "/skills", "/rotinas", "/navegadores", "/cofre", "/contexto", "/conta"];
 const isConfig = (p: string) => CONFIG.some((c) => p === c || (p.startsWith(c + "/") && !/^\/contexto\/[0-9a-f-]{36}$/.test(p)));
 const isChat = (p: string) => p === "/" || p.startsWith("/chat") || /^\/contexto\/[0-9a-f-]{36}$/.test(p);
 

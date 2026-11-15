@@ -69,10 +69,12 @@ type TabsProps = {
 
 export function SubTabs({ mainAgent, mainLabel, subs, active, onPick }: TabsProps) {
   const ref = useRef<HTMLDivElement>(null);
-  // Aba nova de subagente aparece no fim: rola até ela.
+  const seen = useRef(subs.length);
+  // Aba nova de subagente (depois de abrir a conversa) aparece no fim: rola até ela.
   useEffect(() => {
     const el = ref.current;
-    if (el) el.scrollLeft = el.scrollWidth;
+    if (el && subs.length > seen.current) el.scrollLeft = el.scrollWidth;
+    seen.current = subs.length;
   }, [subs.length]);
   return (
     <div className="subtabs" data-testid="subtabs">

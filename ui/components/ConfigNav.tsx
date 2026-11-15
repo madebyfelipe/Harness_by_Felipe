@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { IconBook, IconBot, IconCheck, IconClock, IconGlobe, IconGrid, IconKey, IconLayers, IconList, IconPlug, IconSpark, IconUser } from "./Icons";
+import { IconBack, IconBook, IconBot, IconCheck, IconClock, IconGlobe, IconGrid, IconKey, IconLayers, IconList, IconPlug, IconSpark, IconUser } from "./Icons";
+import { DrawerButton } from "./MobileDrawer";
 
-const ITEMS = [
+export const ITEMS = [
   { href: "/inicio", label: "Visão geral", icon: IconGrid },
   { href: "/provedores", label: "Provedores de IA", icon: IconLayers },
   { href: "/conectores", label: "Apps", icon: IconPlug },
@@ -32,7 +33,20 @@ export function ConfigNav() {
       .then((r) => setMine(r.connectors.map((c) => ({ nome: c.nome, titulo: c.titulo, ok: c.secretState === "ausente" ? false : c.status ? Boolean(c.status.ok) : null }))))
       .catch(() => undefined);
   }, [pathname]);
+  const atual = ITEMS.find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
   return (
+    <>
+    {/* Celular: barra com voltar para a lista de configurações (no lugar da barra lateral). */}
+    <div className="cfg__mtop">
+      {pathname === "/configuracoes" ? (
+        <DrawerButton />
+      ) : (
+        <Link className="mround" href="/configuracoes" aria-label="Voltar para Configurações">
+          <IconBack />
+        </Link>
+      )}
+      <strong>{pathname === "/configuracoes" ? "" : (atual?.label ?? "Configurações")}</strong>
+    </div>
     <nav className="cfg__nav" aria-label="Configurações">
       <p className="cfg__title">Configurações</p>
       <ul>
@@ -61,5 +75,6 @@ export function ConfigNav() {
         </>
       ) : null}
     </nav>
+    </>
   );
 }

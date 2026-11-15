@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import { IconFolder, IconPlus, IconSearch } from "./Icons";
 import { ModeSelector } from "./ModeSelector";
+import { DrawerButton } from "./MobileDrawer";
+import { UsageMeter } from "./UsageMeter";
 
 type Item = {
   id: string;
@@ -49,6 +51,7 @@ function group(iso: string): string {
 /** Coluna de conversas (busca, grupos, última mensagem), como a do OpenBot. */
 export function ConversationList({ initialMode, page = false }: { initialMode: "vps" | "local"; page?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [items, setItems] = useState<Item[] | null>(null);
   const [q, setQ] = useState("");
   const [searching, setSearching] = useState(false);
@@ -106,6 +109,16 @@ export function ConversationList({ initialMode, page = false }: { initialMode: "
 
   return (
     <aside className={`clist${page ? " clist--page" : ""}`} aria-label="Conversas">
+      {page ? (
+        <div className="mhome">
+          <div className="mbar">
+            <DrawerButton />
+            <span className="mbar__fill" />
+            <UsageMeter />
+          </div>
+          <h1 className="mhome__title">Conversas</h1>
+        </div>
+      ) : null}
       <div className="clist__head">
         <ModeSelector initialMode={initialMode} />
       </div>
@@ -181,6 +194,27 @@ export function ConversationList({ initialMode, page = false }: { initialMode: "
           </section>
         ))}
       </div>
+      {page ? (
+        <form
+          className="mfind"
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const t = q.trim();
+            // @agente ou pedido sem conversa achada: começa uma conversa nova com o texto.
+            if (t.startsWith("@") || (items && !items.length)) router.push(`/?texto=${encodeURIComponent(t)}`);
+          }}
+        >
+          <IconSearch size={20} />
+          <label className="sr-only" htmlFor="mfind-q">
+            Pesquisar conversas ou começar com @
+          </label>
+          <input id="mfind-q" type="search" enterKeyHint="go" placeholder="Pesquise ou digite @ para iniciar…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Link className="mfind__new" href="/" aria-label="Nova conversa">
+            <IconPlus size={20} />
+          </Link>
+        </form>
+      ) : null}
     </aside>
   );
 }

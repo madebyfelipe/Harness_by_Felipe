@@ -7,6 +7,7 @@ import { api } from "./api";
 import { agentName } from "./ConversationList";
 import { FolderPicker } from "./FolderPicker";
 import { IconFolder, IconPlus } from "./Icons";
+import { DrawerButton } from "./MobileDrawer";
 
 type Project = { id: string; slug: string; name: string; description: string; instructions: string; folder: string | null; conversations?: number; last_at?: string | null; updated_at: string };
 type Conv = { id: string; title: string; mode: string; agent: string; updated_at: string; preview: string; route: { agent?: string } | null };
@@ -31,6 +32,9 @@ export function ProjectsView() {
 
   return (
     <div className="stack stack--lg">
+      <div className="mbar mbar--page">
+        <DrawerButton />
+      </div>
       <header className="proj__head">
         <div>
           <h1 className="title">Projetos</h1>

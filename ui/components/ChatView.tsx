@@ -31,6 +31,8 @@ type Props = {
   draftMode?: "chat" | "contexto";
   /** Conversa nova já dentro de um projeto (/?projeto=slug). */
   projectId?: string | null;
+  /** Texto que já vem na caixa (busca do celular: /?texto=…). */
+  initialText?: string;
 };
 
 const fmtCost = (v?: number) => (typeof v === "number" ? `US$ ${v < 0.01 ? v.toFixed(4) : v.toFixed(2)}` : "");
@@ -204,7 +206,7 @@ function Gallery({ cid, items, onOpen }: { cid: string; items: Att[]; onOpen: (i
   );
 }
 
-export function ChatView({ initial, models, backHref, draftMode = "chat", projectId = null }: Props) {
+export function ChatView({ initial, models, backHref, draftMode = "chat", projectId = null, initialText = "" }: Props) {
   const [conv, setConv] = useState<Conversation | null>(initial.conversation);
   const [projects, setProjects] = useState<{ id: string; slug: string; name: string }[]>([]);
   const [projectSel, setProjectSel] = useState<string | null>(initial.conversation?.project_id ?? projectId);
@@ -248,7 +250,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const [autoApprove, setAutoApprove] = useState<boolean | null>(null);
   const [browserAuto, setBrowserAuto] = useState<boolean | null>(null);
   const [error, setError] = useState("");
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [files, setFiles] = useState<Pending[]>([]);
   const [uploading, setUploading] = useState(false);
   const [redoOpen, setRedoOpen] = useState(false);
@@ -856,6 +858,9 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
         <a className="rail__btn chat__back" href={backHref} aria-label="Voltar para a lista">
           <IconBack />
         </a>
+        <span className="chat__av" aria-hidden="true">
+          {headAgent.replace(/^Central · /, "").charAt(0) || "C"}
+        </span>
         <div className="chat__title">
           <span className="kicker">
             {project ? (
@@ -887,7 +892,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
             Parar
           </button>
         ) : hasAnswer && upper ? (
-          <button type="button" className="btn btn--ghost btn--sm" title={`Refaz a última resposta com ${upper.label}`} onClick={() => setRedoOpen((o) => !o)}>
+          <button type="button" className="btn btn--ghost btn--sm chat__redo" title={`Refaz a última resposta com ${upper.label}`} onClick={() => setRedoOpen((o) => !o)}>
             Subir de modelo
           </button>
         ) : null}
@@ -899,6 +904,23 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
             <IconMore />
           </summary>
           <div className="pop__panel">
+            <div className="only-mobile pop__mobile">
+              <span className="label">Modelo</span>
+              <ModelPicker
+                models={models}
+                providers={providers}
+                model={model}
+                provider={provider}
+                disabled={running}
+                onModel={(id) => void changeModel(id)}
+                onProvider={(id) => void changeProvider(id)}
+              />
+              {!running && hasAnswer && upper ? (
+                <button type="button" className="link small" onClick={() => setRedoOpen((o) => !o)}>
+                  Subir de modelo ({upper.label})
+                </button>
+              ) : null}
+            </div>
             {!isContext ? (
               <>
                 <label className="label" htmlFor="conv-project">
