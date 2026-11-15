@@ -9,7 +9,8 @@ Decisão nova entra **no topo**, com data e motivo.
 | decisão | o que muda |
 |---|---|
 | "refira-se a esse conteúdo quando for montar uma postagem" | **Toda postagem de Instagram consulta `instagram.md`** (pilares, voz, limites, CTA, calendário) antes de ser montada. Planejamento criado em 15/11/2026 |
-| suba o sellbird na vps, versão github (reabre a decisão provisória de seguir só no harness próprio, porque agora há acesso) | a aplicar (dita pelo Felipe; a triagem corrige os arquivos antigos) |
+| suba o sellbird na vps, versão github (reabre a decisão provisória de seguir só no harness próprio, porque agora há acesso) | **Aplicado na triagem de 15/11**: Sellbird em `/data/sellbird/app`, painel em `127.0.0.1:5555`; `consolidacao.md` e M2.5 corrigidos. Avaliação reaberta; casa das rotinas segue decisão do Felipe |
+| Triagem semanal de feedback (15/11, 1ª rodada) | Nenhuma regra nova. "Não consigo ver a interação dos subagentes nem o background" (3x) virou cartão prioritário em Entrada (M3). Seis "bom" sem ação |
 
 ## 15/11/2026 (madrugada) — memória, crescimento e autonomia dos agentes
 

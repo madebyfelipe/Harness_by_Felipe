@@ -51,8 +51,8 @@ Status em 15/11 (madrugada):
 
 - **M0 virou.** Legado tirado ou marcado; `decisoes.md` no ar; oferta igual em tudo.
 - **M1 virou em 15/11** — conferido no site publicado (`www.madebyfelipe.com.br`): home, `/en` e `/lp/marca` sem nenhuma menção a depoimento; `/diagnostico` e `/r/abc` em **404**; `/lp/site` com **R$ 599 / R$ 1.999**; `vercel.json` sem crons. Commit `c5617ce` na `beta`.
-- **M2 em andamento.** Canal de feedback funciona (janela da Central + `fb:` no WhatsApp). Rotina semanal de triagem **ligada** (`routines/resumo-semana.yaml`, domingo 20:00), mas ainda não rodou uma vez. **Trello travado**: o conector está em outra conta (só o Felipe resolve).
-- **M2.5 travado.** Sellbird sem nome/recursos confirmáveis e sem acesso; tabela de `consolidacao.md` preenchida até onde dá. Decisão provisória registrada: harness próprio.
+- **M2 em andamento.** Canal de feedback funciona (janela da Central + `fb:` no WhatsApp). Rotina semanal de triagem **ligada** (`routines/resumo-semana.yaml`, domingo 20:00), **rodou pela 1ª vez em 15/11**. **Trello travado**: o conector está em outra conta (só o Felipe resolve).
+- **M2.5 travado.** Sellbird sem nome/recursos confirmáveis e sem acesso; tabela de `consolidacao.md` preenchida até onde dá. Decisão provisória registrada: harness próprio. **Atualização 15/11 (noite): destravado.** O Felipe mandou subir o Sellbird (versão GitHub); está em `/data/sellbird/app`, painel em `127.0.0.1:5555` respondendo. Falta preencher a coluna do Sellbird em `consolidacao.md` com uso real e o Felipe decidir a casa das rotinas.
 - **M3 bloqueado no Felipe**: o critério é um áudio com 3 assuntos do celular; os testes automáticos de chat dependem disso.
 - **M3.2 com estrutura pronta.** App Electron monta e abre (testado com display virtual: janela, `/configurar`, ponte de pastas criando e recusando `../`); zip do Windows em `/baixar`. Desde 15/11 (tarde) tem **modo VPS**: entra com a mesma conta da web (testado: abre o login da VPS). **Falta o Felipe instalar no Windows**, escolher pasta e ver um agente editar e commitar num repo local.
 - **M4 não começou de verdade**: falta migrar rotina por rotina e o teste "um dia sem abrir OpenBot" (depende de Evolution e contas).
@@ -76,3 +76,4 @@ Feito em 15/11 (tarde), fora das fases:
 _Ideias que chegam pela Central ou pelo WhatsApp. Até o Trello certo estar ligado, ficam aqui; a triagem semanal encaixa cada uma._
 
 - ~~15/11/2026 · "Uma estrutura de abas na barra superior … uma aba para cada subagente"~~ — **feito 15/11** (abas de subagentes no topo do chat).
+- **15/11/2026 · prioridade (feedback repetido 3x) · M3** · "Não fica muito claro qual é a gestão dos agentes: ao planejar uma tarefa, não consigo ver a interação dos subagentes nem o que está sendo feito em background." Abas e painel Tasks já existem; o último registro (15:16) veio depois delas. Falta: ao planejar, mostrar o workflow da triagem (quem faz o quê, modelo) antes e durante a execução, e um indicador do que roda em segundo plano (subagente ativo, rotina, fila). Pronto quando: o Felipe planeja uma tarefa no celular e diz, sem abrir aba, qual agente está trabalhando e em quê.

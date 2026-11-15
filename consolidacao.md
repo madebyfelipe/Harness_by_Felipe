@@ -59,6 +59,12 @@ indisponível nesta máquina e o Felipe não passou link/acesso. Sem isso, a col
 "a confirmar" e não é honesto recomendar por comparação. Decisão provisória registrada em
 `decisoes.md`: **seguir no harness próprio**; reavaliar só se o Felipe trouxer o acesso.
 
+**Atualização 15/11 (noite).** O Felipe mandou subir o Sellbird (versão GitHub), o que
+reabre a decisão provisória. Instalado em `/data/sellbird/app` (Python via uv), painel em
+`127.0.0.1:5555`. Sem setup interativo, campanha ou envio até ele aprovar. A coluna do
+Sellbird acima segue "a confirmar" até ser preenchida com uso real; a escolha da casa das
+rotinas é do Felipe.
+
 Se o Sellbird cobrir vendas bem, o harness fica com o resto (site, blog, triagem,
 feedback, contexto) e só integra.
 

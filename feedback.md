@@ -35,20 +35,20 @@ Registrar as palavras do Felipe como ele disse. O encaminhamento é preenchido n
 - 14/11/2026 · Central · tela / · Chat · Central · ideia · "pode arredondar mais as bordas, está tudo muito quadrado, deixar mais agradável de olhar, etc"
   → ajuste feito em 15/11: Central com raio 10px (cartões 16px, caixa de mensagem e bolhas mais macias, pontos redondos). O site segue com 2px.
 - 15/11/2026 · Central · chat · orquestrador Haiku 5.5 · 'teste' · bom · "bom"
-  → (a encaminhar na triagem semanal)
+  → descartado na triagem de 15/11: sinal positivo, sem ação (resposta curta e direta agradou; já é a regra).
 - 15/11/2026 · Central · chat · orquestrador Haiku 5.5 · 'teste' · bom · "bom"
-  → (a encaminhar na triagem semanal)
+  → descartado na triagem de 15/11: sinal positivo, sem ação (resposta curta e direta agradou; já é a regra).
 - 15/11/2026 · Central · chat · orquestrador Sonnet 5.5 · 'quais repos vc tem acesso da minha conta??' · bom · "bom"
-  → (a encaminhar na triagem semanal)
+  → descartado na triagem de 15/11: sinal positivo, sem ação (resposta curta e direta agradou; já é a regra).
 - 15/11/2026 · Central · chat · orquestrador Sonnet 5.5 · 'quais repos vc tem acesso da minha conta??' · bom · "bom"
-  → (a encaminhar na triagem semanal)
+  → descartado na triagem de 15/11: sinal positivo, sem ação (resposta curta e direta agradou; já é a regra).
 - 15/11/2026 · Central · chat · triagem Haiku 5.5 · 'planejar: quero fazer um teste de delegação, preciso que um ' · bom · "bom"
-  → (a encaminhar na triagem semanal)
+  → descartado na triagem de 15/11: sinal positivo, sem ação (resposta curta e direta agradou; já é a regra).
 - 15/11/2026 · Central · chat · ruim · "Não fica muito claro qual é a gestão dos agentes: ao planejar uma tarefa, não consigo ver a interação dos subagentes nem o que está sendo feito em background."
-  → (a encaminhar na triagem semanal)
+  → cartão em Entrada (M3, prioridade: repetido 3x) em 15/11: ver delegação e trabalho em segundo plano na hora de planejar. Abas de subagentes e painel Tasks (15/11 tarde) cobrem parte; o último registro veio depois delas.
 - 15/11/2026 · Central · chat · ruim · "Não fica muito claro qual é a gestão dos agentes: ao planejar uma tarefa, não consigo ver a interação dos subagentes nem o que está sendo feito em background."
-  → (a encaminhar na triagem semanal)
+  → cartão em Entrada (M3, prioridade: repetido 3x) em 15/11: ver delegação e trabalho em segundo plano na hora de planejar. Abas de subagentes e painel Tasks (15/11 tarde) cobrem parte; o último registro veio depois delas.
 - 15/11/2026 · Central · chat · ruim · "Não fica muito claro qual é a gestão dos agentes: ao planejar uma tarefa, não consigo ver a interação dos subagentes nem o que está sendo feito em background."
-  → (a encaminhar na triagem semanal)
+  → cartão em Entrada (M3, prioridade: repetido 3x) em 15/11: ver delegação e trabalho em segundo plano na hora de planejar. Abas de subagentes e painel Tasks (15/11 tarde) cobrem parte; o último registro veio depois delas.
 - 15/11/2026 · Central · chat · orquestrador Sonnet 5.5 · 'suba o sellbird na vps, versão github' · bom · "bom"
-  → (a encaminhar na triagem semanal)
+  → descartado na triagem de 15/11: sinal positivo, sem ação (resposta curta e direta agradou; já é a regra).
