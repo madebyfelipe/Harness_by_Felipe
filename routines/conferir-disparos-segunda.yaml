@@ -1,0 +1,20 @@
+# Rotina da Central. Agenda em America/Sao_Paulo. Rotina roda sozinha e reporta depois.
+nome: conferir-disparos-segunda
+titulo: Conferir disparos de segunda
+quando: segunda às 10:00
+cron: 0 10 * * 1
+agente: auto
+modo: vps
+ativa: true
+silencio: true
+whatsapp: true
+limite_minutos: 30
+liberadas: []
+instrucoes: "Confira se a rotina de disparos do dia rodou. Consulte no Twenty (objeto messages, e
+  message_campaigns se útil) as mensagens criadas hoje e conte quantas, com data e hora do primeiro
+  e do último registro e os assuntos. Compare com o esperado: segunda a sexta, janelas 05:30, 07:30,
+  09:30, 12:00, 14:00 e 16:00, no máximo 60 por dia (às 10:00 só as 3 primeiras janelas já
+  passaram). Veja também logs/reset.log para falha do reset das 05:30 (antes apareceu 'claude: No
+  such file or directory'). Só leia, não envie nem altere nada. Relate em até 5 linhas: quantos
+  envios, se bate com o esperado, o que não deu para verificar (o campo de status de entrega costuma
+  vir vazio; o Dylan pode gravar os envios fora do Twenty), e se algo precisa do Felipe."
