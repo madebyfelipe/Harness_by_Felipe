@@ -1890,3 +1890,87 @@ details.fold > summary {
     display: none;
   }
 }
+
+/* ---------- formulários de agente e habilidade ---------- */
+
+textarea.field {
+  resize: vertical;
+  line-height: 1.5;
+}
+.card:has(.card__detail > form) {
+  grid-column: 1 / -1;
+}
+
+/* ---------- chat enxuto: uma linha de andamento, triagem recolhida ---------- */
+
+.liveline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.liveline__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red-ink);
+  animation: livepulse 1.2s ease-in-out infinite;
+}
+.liveline__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.liveline__time {
+  flex: none;
+  color: var(--black);
+  font-variant-numeric: tabular-nums;
+}
+@keyframes livepulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .liveline__dot {
+    animation: none;
+  }
+}
+.live__more > summary {
+  color: var(--muted);
+  font-weight: 500;
+}
+.live__thought {
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+details.triage {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+details.triage > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  cursor: pointer;
+  list-style: none;
+}
+details.triage > summary::-webkit-details-marker {
+  display: none;
+}
+details.triage[open] {
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-lg);
+  background: var(--gray-100);
+}

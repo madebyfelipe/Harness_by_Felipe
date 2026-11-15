@@ -115,4 +115,9 @@ partir do **primeiro uso** depois da janela anterior. Se for assim:
   na assinatura pelo CLI (decisão de 15/11), concentre o pesado logo depois das 05:30 ou
   aceite o reset mais cedo; o monitor de janela da Central mostra quem está consumindo.
 
+**Grade de resets (15/11/2026, Felipe: "reset a partir das 5h30, de 5 em 5")**: rotinas
+`reset-0530`, `reset-1030`, `reset-1530`, `reset-2030`, todo dia, um "Oi" em Haiku pelo CLI,
+com log em `logs/reset.log`. A janela de 01:30 não entrou (madrugada dos agentes). Conflito
+conhecido: blog da Casey (00:30/03:00) e rotinas das 05:00 abrem a janela antes das 05:30.
+
 Detalhe das definições prontas: pasta `agents/`. Skills: pasta `skills/`.

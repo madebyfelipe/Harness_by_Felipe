@@ -10,7 +10,5 @@ silencio: true
 whatsapp: false
 limite_minutos: 2
 liberadas: []
-instrucoes: 'Abre a janela de 5h da assinatura. Faça uma única chamada mínima pelo CLI, sem chave de
-  API, no modelo Haiku: claude -p "Oi" --model claude-haiku-5-5. Depois acrescente uma linha com a
-  data e hora (America/Sao_Paulo) em logs/reset.log. Não leia arquivos, não use ferramentas, não
-  envie nada. Responda só "ok".'
+instrucoes: 'Abre a janela de 5h da assinatura. Esta execução já é a chamada que abre a janela: não
+  use nenhuma ferramenta, não leia arquivos, não rode comando e não envie nada. Responda só "ok".'

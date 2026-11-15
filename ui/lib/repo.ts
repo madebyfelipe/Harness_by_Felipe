@@ -17,6 +17,8 @@ export type AgentDef = {
   prompt: string;
   file: string;
   isOrchestrator: boolean;
+  /** Pausado ou rascunho: aparece na tela, mas a triagem e o orquestrador não o usam. */
+  paused: boolean;
 };
 
 export type SkillDef = { name: string; description: string; file: string; body: string };
@@ -80,7 +82,8 @@ export function listAgents(): AgentDef[] {
       ladder: toList(data.ladder ?? data.escada),
       prompt: body.trim(),
       file: `agents/${f}`,
-      isOrchestrator
+      isOrchestrator,
+      paused: data.pausado === true
     });
   }
   return agents.sort((a, b) => Number(b.isOrchestrator) - Number(a.isOrchestrator) || a.name.localeCompare(b.name));

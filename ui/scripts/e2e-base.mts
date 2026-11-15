@@ -185,6 +185,7 @@ log(`${checked} telas conferidas com axe-core (WCAG 2.1 AA), claro e escuro`);
 
 assert.ok((await page.$$("[data-testid^=agente-]")).length === 0);
 await page.goto(URL_ + "/agentes");
+await page.waitForSelector("[data-testid=agente-orquestrador]");
 const nAgents = fs.readdirSync(path.join(REPO, "agents")).filter((f) => f.endsWith(".md")).length;
 assert.equal((await page.$$("[data-testid^=agente-]")).length, nAgents, `${nAgents} agentes lidos de agents/`);
 log(`${nAgents} agentes lidos do repositório`);

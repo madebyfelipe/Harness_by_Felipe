@@ -3,6 +3,8 @@ import { z } from "zod";
 import { getConnector, listConnectors, normalizeConnector, resolveSecret, saveConnector, secretState } from "./connectors";
 import { getRoutine, listRoutines, normalizeRoutine, saveRoutine } from "./routines";
 import { loadVault } from "./vault";
+import { normalizeAgent, normalizeSkill, saveAgent, saveSkill } from "./agents-store";
+import { getAgent, listSkills } from "./repo";
 
 /*
  * Ferramentas próprias da Central, entregues a todo agente como o servidor MCP "central".
@@ -106,6 +108,48 @@ export function centralTools(ctx: ToolsCtx) {
             return text(`Rotina "${r.titulo}" criada e ligada: ${r.quando}. Arquivo ${r.file}${c.commit ? ` (commit ${c.commit})` : ""}. O Felipe ajusta ou desliga em Configurações → Rotinas.`);
           } catch (e) {
             return text(`Não criei a rotina: ${e instanceof Error ? e.message : "erro"}`, true);
+          }
+        },
+        { alwaysLoad: true }
+      ),
+      tool(
+        "criar_agente",
+        "Cria um agente novo da Central (agents/<nome>.md). O Felipe aprova no chat antes de gravar. A descrição diz QUANDO usar (a triagem escolhe por ela). O prompt precisa ser autocontido: papel, o que fazer, o que não fazer, pronto quando. Não edita agente existente: isso o Felipe faz em Configurações → Agentes.",
+        {
+          nome: z.string().regex(/^[a-z0-9][a-z0-9-]{1,39}$/, "minúsculas, números e hífen"),
+          descricao: z.string().min(10).max(600),
+          prompt: z.string().min(20).max(60000),
+          modelo: z.enum(["haiku", "sonnet", "opus", "fable"]).optional(),
+          ferramentas: z.array(z.string().max(80)).max(30).optional()
+        },
+        async (a) => {
+          try {
+            if (getAgent(a.nome)) return text(`Já existe o agente "${a.nome}".`, true);
+            const ag = normalizeAgent({ name: a.nome, description: a.descricao, prompt: a.prompt, model: a.modelo ?? "sonnet", tools: a.ferramentas ?? [], paused: false });
+            const c = await saveAgent(ag, `agente ${ctx.agent()}`, true);
+            return text(`Agente "${ag.name}" criado (agents/${ag.name}.md${c.commit ? `, commit ${c.commit}` : ""}). A triagem passa a considerá-lo a partir da próxima mensagem.`);
+          } catch (e) {
+            return text(`Não criei o agente: ${e instanceof Error ? e.message : "erro"}`, true);
+          }
+        },
+        { alwaysLoad: true }
+      ),
+      tool(
+        "salvar_habilidade",
+        "Cria ou atualiza uma habilidade (skills/<nome>/SKILL.md): um procedimento reutilizável, genérico, sem dado pessoal. O Felipe aprova no chat antes de gravar. Use quando um jeito de fazer deu certo e vai se repetir.",
+        {
+          nome: z.string().regex(/^[a-z0-9][a-z0-9-]{1,39}$/, "minúsculas, números e hífen"),
+          descricao: z.string().min(10).max(600),
+          conteudo: z.string().min(20).max(60000)
+        },
+        async (a) => {
+          try {
+            const isNew = !listSkills().some((s) => s.file === `skills/${a.nome}/SKILL.md`);
+            const s = normalizeSkill({ name: a.nome, description: a.descricao, body: a.conteudo });
+            const c = await saveSkill(s, `agente ${ctx.agent()}`, isNew);
+            return text(`Habilidade "${s.name}" ${isNew ? "criada" : "atualizada"} (skills/${s.name}/SKILL.md${c.commit ? `, commit ${c.commit}` : ""}).`);
+          } catch (e) {
+            return text(`Não salvei a habilidade: ${e instanceof Error ? e.message : "erro"}`, true);
           }
         },
         { alwaysLoad: true }

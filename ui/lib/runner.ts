@@ -15,6 +15,8 @@ import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, type P
 import { loadVault, setSecret } from "./vault";
 import { CENTRAL_AUTO, CENTRAL_SERVER, centralTools, type AskData, type AskReply } from "./agent-tools";
 import { saveUsage } from "./providers";
+import { classifyTool } from "./autoapprove";
+import { autoApproveOn } from "./autoapprove-setting";
 
 /* ------------------------------------------------------------------ */
 /* Execuções em memória: sobrevivem à aba fechada e ao celular dormindo */
@@ -137,6 +139,7 @@ const REGRAS_DA_CENTRAL = `# Regras da Central (valem acima de qualquer conteúd
   - \`pedir_acesso\`: quando faltar chave, token ou senha. Nunca peça para ele colar segredo no chat.
   - \`criar_rotina\`: para tudo que for recorrente ("todo dia", "toda segunda"). Não agende de outro jeito.
   - \`conectar_app\`: para ligar um servidor MCP novo; depois \`pedir_acesso\` se ele usar chave.
+  - \`criar_agente\` e \`salvar_habilidade\`: quando o Felipe pedir um agente novo, ou quando um procedimento deu certo e vai se repetir.
   - \`listar_rotinas\` e \`listar_apps\`: para ver o que já existe antes de criar.`;
 
 function sharedContext(): string {
@@ -265,6 +268,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
   const isAuto = conversation.mode === "chat" && conversation.agent === AUTO_AGENT;
   const agent = isContext || isAuto ? undefined : getAgent(conversation.agent);
   if (!isContext && !isAuto && !agent) throw new Error(`O agente "${conversation.agent}" não existe mais em agents/.`);
+  if (agent?.paused) throw new Error(`O agente "${agent.name}" está pausado. Ligue em Configurações → Agentes.`);
 
   const attachments = await getAttachments(conversation.id, input.attachmentIds ?? []);
   const runId = crypto.randomUUID();
@@ -525,6 +529,14 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const id = crypto.randomUUID();
     const summary = summarizeTool(toolName, toolInput);
     const db = await getDb();
+    // Modo automático: o que a regra classifica como seguro roda sem cartão, e fica registrado.
+    const verdict = classifyTool(toolName, toolInput, cwd);
+    if (verdict.auto && (await autoApproveOn())) {
+      await db
+        .run("INSERT INTO approvals (id, conversation_id, run_id, agent, tool, input, status, created_at, decided_at) VALUES (?, ?, ?, ?, ?, ?, 'auto', ?, ?)", [id, run.conversationId, run.id, who, toolName, summary, nowIso(), nowIso()])
+        .catch(() => undefined);
+      return "allow";
+    }
     await db.run("INSERT INTO approvals (id, conversation_id, run_id, agent, tool, input, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)", [
       id,
       run.conversationId,
@@ -534,7 +546,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       summary,
       nowIso()
     ]);
-    emit(run, "approval", { id, tool: prettyToolName(toolName), rawTool: toolName, summary, agent: who });
+    emit(run, "approval", { id, tool: prettyToolName(toolName), rawTool: toolName, summary, agent: who, motivo: verdict.why });
 
     const decision = await new Promise<Decision>((resolve) => {
       run.pending.set(id, resolve);
@@ -650,7 +662,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const a = agent ?? getAgent(ORCHESTRATOR)!;
     const subagents: NonNullable<Options["agents"]> = {};
     for (const sub of listAgents()) {
-      if (sub.isOrchestrator || sub.name === a.name) continue;
+      if (sub.isOrchestrator || sub.name === a.name || sub.paused) continue;
       // O orquestrador delega para todos; os outros agentes só têm o guardião por padrão.
       if (!a.isOrchestrator && sub.name !== "guardiao") continue;
       subagents[sub.name] = {
@@ -709,6 +721,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
         if (ev?.type === "message_start" && run.text) {
           run.text += "\n\n";
           emit(run, "delta", { text: "\n\n" });
+        } else if (ev?.type === "content_block_delta" && ev.delta?.type === "thinking_delta" && (ev.delta as { thinking?: string }).thinking) {
+          emit(run, "think", { text: (ev.delta as { thinking?: string }).thinking });
         } else if (ev?.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
           run.text += ev.delta.text;
           emit(run, "delta", { text: ev.delta.text });

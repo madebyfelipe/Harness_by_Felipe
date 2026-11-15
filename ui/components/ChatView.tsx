@@ -9,7 +9,7 @@ import { IconBack, IconMic, IconMore, IconPlus, IconSend, IconStop, IconTool } f
 import { Markdown } from "./Markdown";
 
 type ModelOpt = { id: string; label: string; note: string };
-type Approval = { id: string; tool: string; summary: string; agent: string; status: "pending" | "approved" | "denied" };
+type Approval = { id: string; tool: string; summary: string; agent: string; motivo?: string; status: "pending" | "approved" | "denied" };
 type Pending = { id: string; name: string; size: number };
 import { AskCard, type Ask } from "./AskCards";
 type ProviderOpt = { id: string; kind: string; name: string; enabled: boolean; info: { loggedIn?: boolean } };
@@ -23,7 +23,27 @@ type Props = {
 };
 
 const fmtCost = (v?: number) => (typeof v === "number" ? `US$ ${v < 0.01 ? v.toFixed(4) : v.toFixed(2)}` : "");
-const fmtSecs = (ms?: number) => (typeof ms === "number" ? `${Math.max(1, Math.round(ms / 1000))} s` : "");
+const fmtSecs = (ms?: number) => {
+  if (typeof ms !== "number") return "";
+  const s = Math.max(1, Math.round(ms / 1000));
+  return s < 60 ? `${s} s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+};
+
+/** Uma linha só enquanto roda: o que está fazendo agora + há quanto tempo. */
+function LiveLine({ label, since }: { label: string; since: number }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <p className="liveline" data-testid="liveline">
+      <span className="liveline__dot" aria-hidden="true" />
+      <span className="liveline__label">{label}</span>
+      <span className="liveline__time">{fmtSecs(Date.now() - since)}</span>
+    </p>
+  );
+}
 const fmtTokens = (n?: number) => (typeof n === "number" && n > 0 ? `${n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n} tokens` : "");
 const fmtSize = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const fmtClock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -58,8 +78,8 @@ const ANOTADO: Record<string, string> = { feedback: "feedback", decisao: "decis�
 function TriageCard({ t, modelLabel }: { t: TriageView; modelLabel: (id: string) => string }) {
   const passos = t.passos ?? [];
   return (
-    <div className="triage" data-testid="triage">
-      <div className="triage__head">
+    <details className="triage" data-testid="triage" open={Boolean(t.anotados?.length || t.falhou || t.planejar)}>
+      <summary className="triage__head">
         <span className="kicker">Triagem{t.nivel ? ` · ${t.nivel}` : ""}</span>
         {passos.length ? (
           <span className="small muted">
@@ -67,7 +87,7 @@ function TriageCard({ t, modelLabel }: { t: TriageView; modelLabel: (id: string)
             {t.planejar ? " · esperando o seu vai" : ""}
           </span>
         ) : null}
-      </div>
+      </summary>
       {t.falhou ? <p className="small">{t.falhou}</p> : null}
       {passos.length > 1 ? (
         <details className="fold">
@@ -91,7 +111,7 @@ function TriageCard({ t, modelLabel }: { t: TriageView; modelLabel: (id: string)
         </ul>
       ) : null}
       {t.suposicoes?.length ? <p className="small muted">Assumi: {t.suposicoes.join("; ")}</p> : null}
-    </div>
+    </details>
   );
 }
 
@@ -170,6 +190,10 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [liveAgent, setLiveAgent] = useState<{ agent: string; model: string } | null>(null);
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [asks, setAsks] = useState<Ask[]>([]);
+  const [activity, setActivity] = useState("");
+  const [thought, setThought] = useState("");
+  const [since, setSince] = useState(() => Date.now());
+  const [autoApprove, setAutoApprove] = useState<boolean | null>(null);
   const [error, setError] = useState("");
   const [text, setText] = useState("");
   const [files, setFiles] = useState<Pending[]>([]);
@@ -214,7 +238,14 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
         }
       });
     on("start", (d) => setLiveAgent({ agent: String(d.agent ?? ""), model: String(d.model ?? "") }));
+    setActivity("");
+    setThought("");
+    setSince(Date.now());
     on("triage_start", () => setTriaging(true));
+    on("think", (d) => {
+      setActivity("Pensando…");
+      setThought((t) => (t + String(d.text ?? "")).slice(-6000));
+    });
     on("triage", (d) => {
       setTriaging(false);
       setLiveTriage(d as unknown as TriageView);
@@ -223,10 +254,17 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
       setLiveAgent({ agent: String(d.agent ?? ""), model: String(d.model ?? "") });
       setModel(String(d.model ?? ""));
     });
-    on("delta", (d) => setLiveText((t) => t + String(d.text ?? "")));
+    on("delta", (d) => {
+      setActivity("Escrevendo a resposta…");
+      setLiveText((t) => t + String(d.text ?? ""));
+    });
     on("reset", () => setLiveText(""));
     on("account", (d) => setSwitchNote(`${String(d.from)} bateu o limite; segui com ${String(d.to)}.`));
-    on("tool", (d) => setLiveTools((t) => (t.some((x) => x.id === d.id) ? t : [...t, d as unknown as ToolUse])));
+    on("tool", (d) => {
+      const t = d as unknown as ToolUse;
+      setActivity(`${t.agent ? `${t.agent} › ` : ""}${t.name}${t.summary ? ` · ${t.summary}` : ""}`.slice(0, 140));
+      setLiveTools((l) => (l.some((x) => x.id === d.id) ? l : [...l, t]));
+    });
     on("approval", (d) => setApprovals((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Approval), status: "pending" }])));
     on("ask", (d) => setAsks((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Ask), status: "pending" }])));
     on("ask_done", (d) => setAsks((a) => a.map((x) => (x.id === d.id ? { ...x, status: "done" } : x))));
@@ -255,6 +293,12 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
         .then((r) => setMessages(r.messages))
         .catch(() => undefined);
     });
+  }, []);
+
+  useEffect(() => {
+    api<{ autoApprove: boolean }>("/api/config")
+      .then((r) => setAutoApprove(r.autoApprove))
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -493,6 +537,20 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                 </option>
               ))}
             </select>
+            <label className="row small" style={{ gap: 6 }}>
+              <input
+                type="checkbox"
+                data-testid="auto-approve"
+                checked={autoApprove ?? false}
+                disabled={autoApprove === null}
+                onChange={async (e) => {
+                  const r = await api<{ autoApprove: boolean }>("/api/config", { body: { autoApprove: e.target.checked } }).catch(() => null);
+                  if (r) setAutoApprove(r.autoApprove);
+                }}
+              />
+              Aprovar sozinho o que é seguro
+            </label>
+            <p className="small muted">Leitura, git local e arquivos de conteúdo rodam sem perguntar. Apagar, enviar, publicar, instalar e mexer em agentes ou rotinas continuam pedindo você.</p>
             <a className="link small" href="/provedores">
               Gerenciar provedores
             </a>
@@ -595,20 +653,32 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
 
           {running ? (
             <article className="msg" data-testid="live">
-              {triaging ? <p className="msg__meta">Triagem · lendo o pedido e escolhendo agente e modelo…</p> : null}
+              <LiveLine
+                since={since}
+                label={
+                  pendingApprovals.length || pendingAsks.length
+                    ? "Esperando você"
+                    : triaging
+                      ? "Triagem · lendo o pedido e escolhendo agente e modelo…"
+                      : `${liveAgent ? `${agentName(liveAgent.agent)} (${label(liveAgent.model)}) · ` : ""}${activity || "Trabalhando…"}`
+                }
+              />
               {switchNote ? <p className="small muted">{switchNote}</p> : null}
-              {liveTriage ? <TriageCard t={liveTriage} modelLabel={label} /> : null}
-              {liveAgent && !triaging ? (
-                <span className="kicker">
-                  {agentName(liveAgent.agent)} · {label(liveAgent.model)}
-                </span>
+              {liveTriage || liveTools.length || thought ? (
+                <details className="fold live__more">
+                  <summary>
+                    Detalhes{liveTools.length ? ` · ${liveTools.length} ${liveTools.length === 1 ? "ação" : "ações"}` : ""}
+                  </summary>
+                  {liveTriage ? <TriageCard t={liveTriage} modelLabel={label} /> : null}
+                  {thought ? <p className="small muted live__thought">{thought.slice(-1200)}</p> : null}
+                  <Steps tools={liveTools} live />
+                </details>
               ) : null}
               {liveText ? (
                 <div className="msg__bubble">
                   <Markdown text={liveText} />
                 </div>
               ) : null}
-              <Steps tools={liveTools} live />
               {pendingApprovals.map((a) => (
                 <div className="approval" key={a.id} role="group" aria-label="Pedido de aprovação">
                   <span className="kicker">Precisa de você · {a.agent}</span>
@@ -616,6 +686,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                     <strong>{a.tool}</strong>
                   </p>
                   {a.summary ? <pre className="pre">{a.summary}</pre> : null}
+                  {a.motivo && autoApprove ? <p className="small muted">Perguntei porque: {a.motivo}.</p> : null}
                   <div className="row">
                     <button type="button" className="btn btn--sm" onClick={() => void decide(a.id, "allow")}>
                       Permitir
@@ -632,12 +703,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
               {pendingAsks.map((a) => (
                 <AskCard key={a.id} ask={a} onError={setError} />
               ))}
-              {!pendingApprovals.length && !pendingAsks.length && !triaging ? (
-                <p className="msg__meta">
-                  trabalhando
-                  <span className="cursor" aria-hidden="true" />
-                </p>
-              ) : null}
+
             </article>
           ) : null}
 

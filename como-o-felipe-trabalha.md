@@ -92,6 +92,7 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
 - **05:30** — tarefa "reset": abre a janela de uso da assinatura cedo para o limite
   **resetar às 10:30**.
 - **08:30–10:30** — trabalho intenso, gastando a primeira janela.
+- **15:30 e 20:30** — novos resets da grade de 5 em 5h (rotinas `reset-0530/1030/1530/2030`).
 - **10:30** — reset; segue trabalhando o resto do dia com a janela nova.
 - Dia útil cheio de entregas de outros trabalhos (fora do harness).
 - Madrugada e começo da manhã são dos agentes (blog, prospecção no OpenBot).

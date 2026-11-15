@@ -45,7 +45,7 @@ const SCHEMA = `{
 
 export function triagePrompt(): string {
   const agents = listAgents()
-    .filter((a) => a.name !== "triagem")
+    .filter((a) => a.name !== "triagem" && !a.paused)
     .map((a) => `- \`${a.name}\` (${a.model}): ${a.description.replace(/\s+/g, " ").slice(0, 220)}`)
     .join("\n");
   const self = getAgent("triagem")?.prompt ?? "Você faz a triagem automática da Made by Felipe.";
@@ -101,7 +101,7 @@ export function routeFor(wf: Workflow, pedido: string): Route {
   if (passos.length === 1 && passos[0].agente === "contexto") return { agent: "contexto", model: "claude-sonnet-5-5", contexto: true, workflow: wf, pedido };
   if (passos.length === 1 && nivel === "N1") {
     const a = getAgent(passos[0].agente);
-    if (a && a.name !== "triagem") return { agent: a.name, model: resolveModel(passos[0].modelo, a.model), workflow: wf, pedido };
+    if (a && a.name !== "triagem" && !a.paused) return { agent: a.name, model: resolveModel(passos[0].modelo, a.model), workflow: wf, pedido };
   }
   return { agent: ORCHESTRATOR, model: LEVEL_MODEL[nivel] ?? "claude-sonnet-5-5", workflow: wf, pedido };
 }
