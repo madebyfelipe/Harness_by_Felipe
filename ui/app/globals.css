@@ -46,7 +46,9 @@
   --muted: var(--gray-700);
   --line: rgba(8, 8, 7, 0.16);
   --line-strong: rgba(8, 8, 7, 0.42);
-  --radius: 2px;
+  /* Feedback do Felipe (15/11): mais arredondado que o site (que segue com 2px). */
+  --radius: 10px;
+  --radius-lg: 16px;
   --font: "Neue Haas Grotesk Display", Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
   --pad: clamp(16px, 8.2px + 1.24vw, 28px);
@@ -400,6 +402,7 @@ select.field {
 .dot {
   width: 9px;
   height: 9px;
+  border-radius: 50%;
   margin-top: 5px;
   border: 1.5px solid var(--black);
   background: var(--black);
@@ -476,6 +479,7 @@ summary > .dot {
   bottom: 5px;
   width: 6px;
   height: 6px;
+  border-radius: 50%;
   background: var(--red);
 }
 .rail__spacer {
@@ -656,6 +660,7 @@ summary > .dot {
   bottom: -3px;
   width: 11px;
   height: 11px;
+  border-radius: 50%;
   background: var(--cream);
   border: 2.5px solid var(--red);
 }
@@ -1004,7 +1009,7 @@ details.fold > summary {
   padding: 12px 16px;
   background: var(--gray-100);
   border: 1px solid var(--line);
-  border-radius: 14px 14px 14px 4px;
+  border-radius: 18px 18px 18px 6px;
   min-width: 0;
 }
 .msg--user {
@@ -1015,7 +1020,7 @@ details.fold > summary {
   padding: 10px 16px;
   background: var(--black);
   color: var(--cream);
-  border-radius: 14px 14px 4px 14px;
+  border-radius: 18px 18px 6px 18px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1091,7 +1096,7 @@ details.fold > summary {
   padding: 12px 14px;
   border: 1px solid var(--line-strong);
   border-left: 4px solid var(--red);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 .triage__head {
   display: grid;
@@ -1116,7 +1121,7 @@ details.fold > summary {
   padding: 16px;
   border: 1px solid var(--black);
   border-left: 4px solid var(--red);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 .composer {
   padding: 8px var(--pad) calc(14px + env(safe-area-inset-bottom));
@@ -1139,7 +1144,7 @@ details.fold > summary {
   gap: 8px;
   padding: 8px;
   border: 1px solid var(--line-strong);
-  border-radius: 14px;
+  border-radius: 24px;
   background: var(--gray-100);
 }
 .composer__box:focus-within {
@@ -1206,7 +1211,7 @@ details.fold > summary {
 }
 .code {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--cream);
 }
