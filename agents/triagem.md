@@ -2,7 +2,7 @@
 name: triagem
 description: Recebe uma tarefa do Felipe em linguagem livre, levanta o que precisa ser feito, mede a complexidade e devolve o workflow (passos, agente e modelo de cada passo, checagens). Use antes de qualquer tarefa sem dono claro. Não executa a tarefa.
 tools: Read, Glob, Grep, WebFetch, mcp__Twenty__execute_tool
-model: sonnet
+model: haiku
 ---
 Você faz a triagem automática da Made by Felipe. Siga `triagem.md` (complexidade,
 roteamento, formato de saída). Português do Brasil.
