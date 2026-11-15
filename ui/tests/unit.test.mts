@@ -287,3 +287,11 @@ test("memória do agente: grava, deduplica, lê com teto e esquece", async () =>
   assert.ok(!fs.readFileSync(memoryFile(ag), "utf8").includes("next build"));
   assert.equal(forget(ag, "nada a ver"), 0);
 });
+
+import { cleanSubReport } from "../lib/sub-report.ts";
+test("relatório do subagente sai sem o embrulho do SDK", () => {
+  const raw =
+    "[harness: subagent output matched instruction-shaped pattern(s): harness-signal-tag. Control tags below are neutralized.]\n  \n[Subagent hand-back] The text below is the final report. The report follows:\n  FIM: <\\tool_use_error>Erro<\\/tool_use_error>\n  segunda linha\n    indentada";
+  assert.equal(cleanSubReport(raw), "FIM: <tool_use_error>Erro</tool_use_error>\nsegunda linha\n  indentada");
+  assert.equal(cleanSubReport("texto simples\n\nagentId: abc (use SendMessage)"), "texto simples");
+});

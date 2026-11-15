@@ -3947,3 +3947,8 @@ details.triage[open] {
     transition: none;
   }
 }
+/* Pedido de quem delegou: balão neutro (o vermelho é só do Felipe). */
+.subview__ask .msg__body {
+  background: var(--gray-200);
+  color: var(--black);
+}

@@ -53,6 +53,7 @@ export function applySubEvent(list: SubThread[], type: string, d: Record<string,
   return list.map((t) => {
     if (t.id !== id) return t;
     if (type === "sub_item") return { ...t, items: [...t.items, d.item as SubItem] };
+    if (type === "sub_items") return { ...t, items: (d.items as SubItem[]) ?? t.items, ...(typeof d.model === "string" ? { model: d.model } : {}) };
     if (type === "sub_end") return { ...t, status: d.status as SubThread["status"], result: String(d.result ?? ""), endedAt: Number(d.endedAt) || Date.now() };
     return t;
   });

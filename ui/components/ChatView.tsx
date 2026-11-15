@@ -368,7 +368,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
       setActivity(`${t.agent ? `${t.agent} › ` : ""}${t.name}${t.summary ? ` · ${t.summary}` : ""}`.slice(0, 140));
       setLiveTools((l) => (l.some((x) => x.id === d.id) ? l : [...l, t]));
     });
-    for (const type of ["sub_start", "sub_item", "sub_end"]) on(type, (d) => setLiveSubs((l) => applySubEvent(l, type, d)));
+    for (const type of ["sub_start", "sub_item", "sub_items", "sub_end"]) on(type, (d) => setLiveSubs((l) => applySubEvent(l, type, d)));
     on("tasks", (d) => setLiveTasks(Array.isArray(d.items) ? (d.items as TaskItem[]) : []));
     on("context", (d) => setLiveCtx(d as unknown as NonNullable<Message["meta"]["context"]>));
     on("image", (d) => setLiveImages((l) => (l.some((x) => x.id === d.id) ? l : [...l, d as unknown as Att])));

@@ -13,6 +13,7 @@ import { modelLabel, resolveModel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { getProject, projectFolder } from "./projects";
 import { readMemory } from "./agent-memory";
+import { cleanSubReport } from "./sub-report";
 import { expandPath, extraAllowedDirs, insideAny, sandboxRoots } from "./paths";
 import { friendlyCodexError, runCodex } from "./codex";
 import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, apiKeyOf, deepseekBase, type Provider } from "./providers";
@@ -51,6 +52,8 @@ type ActiveRun = {
   subs: Map<string, SubThread>;
   /** Lista de tarefas que o agente mantém (ferramenta tarefas). */
   tasks: TaskItem[];
+  /** Onde o SDK grava as transcrições desta execução (para ler os subagentes). */
+  sdk?: { configDir: string; cwd: string; sessionId: string };
   startedAt: number;
   endedAt?: number;
 };
@@ -424,14 +427,96 @@ function subPush(run: ActiveRun, id: string, item: SubItem): void {
 }
 
 /** Resultado da chamada Agent/Task: fecha a conversa com a resposta devolvida a quem delegou. */
+/** Pasta das transcrições da sessão: <config>/projects/<cwd codificado>/<sessão>/subagents. */
+function subagentsDir(configDir: string, cwd: string, sessionId: string): string | null {
+  const projects = path.join(configDir, "projects");
+  const direct = path.join(projects, cwd.replace(/[^a-zA-Z0-9]/g, "-"), sessionId, "subagents");
+  if (fs.existsSync(direct)) return direct;
+  try {
+    for (const p of fs.readdirSync(projects)) {
+      const d = path.join(projects, p, sessionId, "subagents");
+      if (fs.existsSync(d)) return d;
+    }
+  } catch {
+    /* sem pasta de projetos */
+  }
+  return null;
+}
+
+/**
+ * O SDK não repassa as mensagens do subagente no fluxo; elas ficam na transcrição dele.
+ * Lê o texto e as ferramentas, na ordem, e o modelo que ele usou.
+ */
+function readSubTranscript(dir: string, toolUseId: string): { items: SubItem[]; model?: string } | null {
+  let agentId = "";
+  let model: string | undefined;
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith(".meta.json")) continue;
+    try {
+      const meta = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) as { toolUseId?: string; pickedEffortModel?: string };
+      if (meta.toolUseId !== toolUseId) continue;
+      agentId = f.slice(0, -".meta.json".length);
+      model = meta.pickedEffortModel || undefined;
+      break;
+    } catch {
+      /* meta corrompido: tenta o próximo */
+    }
+  }
+  if (!agentId) return null;
+  const file = path.join(dir, `${agentId}.jsonl`);
+  if (!fs.existsSync(file) || fs.statSync(file).size > 8 * 1024 * 1024) return null;
+  const items: SubItem[] = [];
+  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
+    if (!line.trim() || items.length >= SUB_MAX_ITEMS) continue;
+    let e: { type?: string; message?: { model?: string; content?: Block[] | string } };
+    try {
+      e = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (e.type !== "assistant" || !Array.isArray(e.message?.content)) continue;
+    if (!model && e.message?.model) model = e.message.model;
+    for (const b of e.message.content) {
+      if (b.type === "text" && b.text?.trim()) items.push({ k: "text", text: b.text.trim().slice(0, SUB_MAX_TEXT) });
+      else if (b.type === "tool_use" && b.name && !b.name.endsWith("__tarefas")) items.push({ k: "tool", name: prettyToolName(b.name), summary: summarizeTool(b.name, b.input) });
+    }
+  }
+  return { items, model };
+}
+
 function subClose(run: ActiveRun, block: Block): void {
   const t = block.tool_use_id ? run.subs.get(block.tool_use_id) : undefined;
   if (!t || t.status !== "running") return;
   t.status = block.is_error ? "error" : "done";
-  // O SDK acrescenta um rodapé com o id do agente; não faz parte da resposta.
-  t.result = blockText(block.content).replace(/\n*agentId:[\s\S]*$/i, "").trim().slice(0, SUB_MAX_RESULT);
+  t.result = cleanSubReport(blockText(block.content)).slice(0, SUB_MAX_RESULT);
   t.endedAt = Date.now();
+  // Passos completos pela transcrição; o último texto é o próprio relatório (já aparece como resposta).
+  try {
+    const dir = run.sdk ? subagentsDir(run.sdk.configDir, run.sdk.cwd, run.sdk.sessionId) : null;
+    const tr = dir ? readSubTranscript(dir, t.id) : null;
+    if (tr) {
+      const items = tr.items;
+      const last = items[items.length - 1];
+      if (last?.k === "text" && t.result && last.text.slice(0, 120) === t.result.slice(0, 120)) items.pop();
+      t.items = items;
+      if (tr.model) t.model = tr.model;
+      emit(run, "sub_items", { id: t.id, items: t.items, ...(t.model ? { model: t.model } : {}) });
+    }
+  } catch {
+    /* sem transcrição: fica o que chegou ao vivo */
+  }
   emit(run, "sub_end", { id: t.id, status: t.status, result: t.result, endedAt: t.endedAt });
+}
+
+/** Progresso ao vivo do subagente: o SDK avisa cada ferramenta nova que ele chama. */
+function subProgress(run: ActiveRun, m: Record<string, unknown>): void {
+  const id = typeof m.tool_use_id === "string" ? m.tool_use_id : "";
+  const t = id ? run.subs.get(id) : undefined;
+  if (!t || t.status !== "running") return;
+  const name = typeof m.last_tool_name === "string" ? m.last_tool_name : "";
+  const uses = Number((m.usage as { tool_uses?: number } | undefined)?.tool_uses ?? 0);
+  const seen = t.items.filter((i) => i.k === "tool").length;
+  if (name && uses > seen && !name.endsWith("__tarefas")) subPush(run, id, { k: "tool", name: prettyToolName(name), summary: typeof m.summary === "string" ? short(m.summary, 120) : "" });
 }
 
 /** Fim da execução: o que ficou aberto foi parado junto ou não devolveu resposta. */
@@ -933,7 +1018,12 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
         sessionId = m.session_id;
         await updateConversation(run.conversationId, { sdk_session_id: sessionId });
       }
-      if (m.type === "system" && m.subtype === "init") {
+      if (typeof m.session_id === "string" && m.session_id && run.sdk?.sessionId !== m.session_id) {
+        run.sdk = { configDir: (options.env?.CLAUDE_CONFIG_DIR as string | undefined) || path.join(process.env.HOME || "/data", ".claude"), cwd, sessionId: m.session_id };
+      }
+      if (m.type === "system" && m.subtype === "task_progress") {
+        subProgress(run, m);
+      } else if (m.type === "system" && m.subtype === "init") {
         authSource = String(m.apiKeySource ?? "");
         emit(run, "init", { auth: authSource === "none" ? "login da máquina" : authSource || "desconhecida", model: String(m.model ?? run.model) });
       } else if (m.type === "rate_limit_event") {
