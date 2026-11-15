@@ -4,6 +4,19 @@
 desta lista. Não travar por inconsistência: aplique a mais nova e corrija o arquivo antigo.
 Decisão nova entra **no topo**, com data e motivo.
 
+## 15/11/2026 (madrugada) — M1 no ar e Fase 5 da Central
+
+| decisão | o que muda |
+|---|---|
+| **Depoimentos fictícios fora do site** (execução da decisão de 15/11) | `lib/institucional.ts`, `lib/institucional-en.ts`, home PT/EN e `/lp/marca` sem a seção; componente `Depoimentos` apagado |
+| **`/diagnostico` aposentado de vez** | Página, formulário, `/api/diagnostico` e `lib/diagnostico.ts` removidos; nenhum CTA restante |
+| **Rastreio de clique fora do site** | `/r/[token]`, `/api/prospeccao/link-clique`, `lib/prospeccao/clique.ts` e `CLIQUE_SECRET` removidos; e-mail usa o link direto do exemplo. `prospCliques` fica só como histórico |
+| **Crons de disparo e webinar fora do `vercel.json`** | Nada de disparo/webinar agendado pela Vercel |
+| **Planejar é quem escolhe o modelo** | Planejar ligado: a triagem escolhe modelo e passos. Desligado: vale o modelo do seletor, inclusive nos passos do workflow. Modo Contexto mantém o modelo próprio |
+| **Sellbird: decisão provisória pelo harness próprio** | Sem acesso ao Sellbird para conferir os critérios de `consolidacao.md`. Fica o harness (Central) para rotinas; revisar só se o Felipe trouxer o acesso |
+| **Fase 5 da Central feita** | Fila única de aprovações (`/aprovacoes`) e tela de registros (`/registros`) com execuções, aprovações e auditoria |
+
+
 ## 15/11/2026 — uma porta só, voz e CLI
 
 | decisão | o que muda |

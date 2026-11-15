@@ -158,3 +158,14 @@ export const IconFolder = ({ size }: P) => (
     <path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.8h6.2A1.5 1.5 0 0 1 17 7.8v6.7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5z" />
   </svg>
 );
+
+export const IconCheck = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M4.5 10.5l3.5 3.5 7.5-8" />
+  </svg>
+);
+export const IconList = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M6.5 5.5h10M6.5 10h10M6.5 14.5h10M3.5 5.5h.01M3.5 10h.01M3.5 14.5h.01" />
+  </svg>
+);

@@ -47,14 +47,24 @@ Depende de: M<x> / decisão do Felipe
 | **M3.2 · Central desktop** | app de computador que roda a Central local: escolher a pasta de trabalho, abrir projetos, git, terminal, tudo na máquina, como o Claude Code (pedido de 15/11) | o Felipe instala no Windows, escolhe uma pasta, conversa com a triagem e um agente edita e faz commit num repositório local; login pelo Claude Code da máquina |
 | **M4 · Rotinas e avisos** | rotinas migradas, uma por vez | `consolidacao.md`: um dia inteiro sem abrir OpenBot, Vercel ou CRM para operar |
 
-Status em 15/11: **M0 virou** (legado tirado ou marcado em todos os arquivos, `decisoes.md` criado, oferta igual em tudo, conferido por busca de termos antigos). Próximo: **M1**.
+Status em 15/11 (madrugada):
+
+- **M0 virou.** Legado tirado ou marcado; `decisoes.md` no ar; oferta igual em tudo.
+- **M1 virou em 15/11** — conferido no site publicado (`www.madebyfelipe.com.br`): home, `/en` e `/lp/marca` sem nenhuma menção a depoimento; `/diagnostico` e `/r/abc` em **404**; `/lp/site` com **R$ 599 / R$ 1.999**; `vercel.json` sem crons. Commit `c5617ce` na `beta`.
+- **M2 em andamento.** Canal de feedback funciona (janela da Central + `fb:` no WhatsApp). Rotina semanal de triagem **ligada** (`routines/resumo-semana.yaml`, domingo 20:00), mas ainda não rodou uma vez. **Trello travado**: o conector está em outra conta (só o Felipe resolve).
+- **M2.5 travado.** Sellbird sem nome/recursos confirmáveis e sem acesso; tabela de `consolidacao.md` preenchida até onde dá. Decisão provisória registrada: harness próprio.
+- **M3 bloqueado no Felipe**: o critério é um áudio com 3 assuntos do celular; os testes automáticos de chat dependem disso.
+- **M3.2 com estrutura pronta.** App Electron monta e abre (testado com display virtual: janela, `/configurar`, ponte de pastas criando e recusando `../`); zip do Windows em `/baixar`. **Falta o Felipe instalar no Windows**, escolher pasta e ver um agente editar e commitar num repo local.
+- **M4 não começou de verdade**: falta migrar rotina por rotina e o teste "um dia sem abrir OpenBot" (depende de Evolution e contas).
+
+Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 
 Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 - **Fase 1 (base)**: feita. Falta o critério de virada conferido pelo Felipe no celular (áudio com 3 assuntos).
 - **Fase 2 (agentes e habilidades)**: feita. Criar, editar, duplicar, pausar e excluir pela tela, com commit; importação do OpenBot como rascunho pausado; agentes também criam agente, habilidade, rotina e app pelo chat, com aprovação.
 - **Fase 3 (rotinas e WhatsApp)**: agendador, tela de rotinas, aviso de saída e monitor de janela feitos. **Canal de entrada do WhatsApp feito** (webhook com token, texto e nota de voz transcrita aqui, resposta de volta, aprovação por "ok"/"não", "pare" interrompe); falta ligar na Evolution com um número que não seja o do Felipe. Janelas de envio de e-mail não começaram.
 - **Fase 4 (cofre e navegadores)**: feita. Cofre com escopo por agente e segredo por referência (`{{vault:NOME}}`, valor só depois da aprovação); navegador por agente com tela ao vivo na tela Navegadores, bloqueio de rede interna, controle pelo Felipe e cofre separado por agente; colar e arrastar arquivo no chat.
-- **Fase 5 (aprovações, registros, demais conectores)**: aprovação no chat e modo automático feitos; fila única e tela de registros não começaram.
+- **Fase 5 (aprovações, registros, demais conectores)**: **feita**. Aprovação no chat e modo automático; fila única em `/aprovacoes` (decide de qualquer conversa, atualiza a cada 5 s) e `/registros` (execuções com modelo/custo/tokens, aprovações e auditoria). Conectores restantes dependem de conta.
 
 ## Entrada (ideias)
 

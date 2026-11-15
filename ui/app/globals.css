@@ -3600,3 +3600,96 @@ details.triage[open] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- Fila de aprovações e registros (Fase 5) ---------- */
+.apv__lista,
+.reg__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.apv__card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--gray-100);
+}
+.apv__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.apv__id {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.apv__sum {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  max-height: 120px;
+  overflow: auto;
+}
+.reg__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--gray-100);
+}
+.reg__main {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.reg__input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reg__erro {
+  color: var(--red);
+  overflow-wrap: anywhere;
+}
+.reg__meta {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+.reg__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.reg__status--running {
+  color: var(--red);
+}
+.reg__status--done {
+  color: #1a7f37;
+}
+.reg__status--error {
+  color: var(--red);
+}
+.reg__status--stopped,
+.reg__status--pending,
+.reg__status--auto {
+  color: var(--muted);
+}

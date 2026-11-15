@@ -25,12 +25,12 @@ Ordem: o que custa venda primeiro._
 
 | o quê | onde | decisão |
 |---|---|---|
-| Publicar R$ 599 / R$ 1.999 na `beta` | repo `lpfds` | 14/11 |
-| Atualizar `EMAIL-PLAYBOOK.md` do Dylan (preço novo, parcelamento liberado, sem link rastreado) | OpenBot | 14/11 e 15/11 |
-| **Tirar os depoimentos fictícios do site** (`lib/institucional.ts` e onde aparecem) — risco de art. 20/CDC | repo `lpfds` | 15/11 |
-| Tirar `/diagnostico` do site e dos CTAs; aposentar `/api/diagnostico` (tem BCC de e-mail pessoal no código, repo público) | repo `lpfds` | 15/11 |
-| Remover rastreio de clique: `/r/[token]`, `/api/prospeccao/link-clique`, `CLIQUE_SECRET` | repo `lpfds` | 15/11 |
-| Remover cron de disparo e de webinar do `vercel.json` | repo `lpfds` | 15/11 |
+| ~~Publicar R$ 599 / R$ 1.999 na `beta`~~ | repo `lpfds` | **feito 15/11** — `/lp/site` no ar |
+| ~~Atualizar `EMAIL-PLAYBOOK.md` do Dylan~~ | OpenBot | **já estava**: preço novo, 12x sem juros, sem link rastreado |
+| ~~Tirar os depoimentos fictícios do site~~ | repo `lpfds` | **feito 15/11** — commit `c5617ce`, conferido no ar |
+| ~~Tirar `/diagnostico` e aposentar `/api/diagnostico`~~ | repo `lpfds` | **feito 15/11** — página e API removidas, 404 no ar |
+| ~~Remover rastreio de clique~~ | repo `lpfds` | **feito 15/11** — `/r`, `link-clique` e `CLIQUE_SECRET` fora |
+| ~~Remover cron de disparo e de webinar~~ | repo `lpfds` | **feito 15/11** — `vercel.json` sem crons |
 | Excluir os 7 agentes do jogo na interface do OpenBot | OpenBot (manual) | 14/11 |
 | Conectar a conta certa do Trello e montar o quadro do harness (M0–M4) | Trello | 15/11 |
 

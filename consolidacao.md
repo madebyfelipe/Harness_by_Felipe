@@ -42,17 +42,22 @@ com mais funcionalidades. Não foi possível confirmar nome nem recursos por bus
 Para decidir entre **Sellbird**, **harness próprio** ou **ficar no OpenBot**, cada um
 responde:
 
-| critério | pergunta |
-|---|---|
-| Assinatura | roda com a assinatura do Felipe pelo CLI, sem chave de API e sem cobrança extra por uso? |
-| Abas | tira quantas ferramentas da rotina? Soma alguma? |
-| Voz | aceita áudio (WhatsApp ou app) como entrada principal? |
-| Autonomia | campanha aprovada roda sozinha e reporta depois? |
-| Caixas | envia pelas caixas Hostinger (SMTP/IMAP), com cota por janela e por dia? |
-| CRM | lê e grava no Twenty? |
-| Regras | dá para impor art. 20, LGPD, descadastro e a oferta atual? |
-| Dados | onde ficam os leads? Dá para sair levando tudo? |
-| Custo | quanto custa por mês além da assinatura? |
+| critério | Sellbird | Harness próprio (Central) |
+|---|---|---|
+| Assinatura | **a confirmar** (o Felipe diz que usa a assinatura dele) | ✓ — CLI do Claude Code, sem chave de API |
+| Abas | a confirmar | ✓ — chat, áudio, rotinas e aprovacões numa janela; site e blog seguem fora |
+| Voz | a confirmar | ✓ — microfone na Central (Whisper local) e áudio no WhatsApp |
+| Autonomia | a confirmar | ✓ — rotina roda sozinha e reporta; aprovação só no que é sensível |
+| Caixas | a confirmar | ✓ — SMTP/IMAP Hostinger nas rotinas e no Dylan |
+| CRM | a confirmar | ✓ — Twenty pela API, dentro do `guardiao` |
+| Regras | a confirmar | ✓ — art. 20, LGPD, descadastro e oferta atual entram no prompt e nos guardrails |
+| Dados | a confirmar | ✓ — leads no Twenty; config no repositório; banco local da Central |
+| Custo | a confirmar | ✓ — só a assinatura do Claude Code |
+
+**Preenchido em 15/11 (madrugada).** O Sellbird não foi confirmável: busca web
+indisponível nesta máquina e o Felipe não passou link/acesso. Sem isso, a coluna dele fica
+"a confirmar" e não é honesto recomendar por comparação. Decisão provisória registrada em
+`decisoes.md`: **seguir no harness próprio**; reavaliar só se o Felipe trouxer o acesso.
 
 Se o Sellbird cobrir vendas bem, o harness fica com o resto (site, blog, triagem,
 feedback, contexto) e só integra.
