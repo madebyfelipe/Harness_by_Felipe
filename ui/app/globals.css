@@ -1805,3 +1805,88 @@ details.fold > summary {
 .notice {
   border-color: var(--line);
 }
+
+/* ---------- uso das contas de IA (faixa lateral) ---------- */
+
+.row--wrap {
+  flex-wrap: wrap;
+}
+.usage__btn {
+  height: auto;
+  min-height: 40px;
+  padding: 6px 0;
+  gap: 4px;
+}
+.ring__track,
+.ring__fill {
+  fill: none;
+  stroke-width: 3;
+}
+.ring__track {
+  stroke: var(--gray-200);
+}
+.ring__fill {
+  stroke: var(--black);
+  stroke-linecap: round;
+}
+.ring--unknown .ring__fill {
+  stroke: var(--gray-300);
+}
+.ring--low .ring__fill {
+  stroke: var(--red-ink);
+}
+.ring--low .ring__track {
+  stroke: var(--red);
+}
+.usage__panel {
+  left: calc(100% + 8px);
+  right: auto;
+  bottom: 0;
+  top: auto;
+  width: min(380px, calc(100vw - 80px));
+}
+.usage__acct {
+  display: grid;
+  gap: 6px;
+}
+.usage__row {
+  display: grid;
+  grid-template-columns: 96px minmax(40px, 1fr) auto 56px;
+  align-items: center;
+  gap: 10px;
+}
+.usage__bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+.usage__bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--black);
+}
+.usage__bar i.unknown {
+  background: var(--gray-300);
+}
+.usage__bar i.low {
+  background: var(--red-ink);
+  min-width: 4px;
+}
+.usage__left {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.usage__left--low {
+  color: var(--red-ink);
+}
+.usage__reset {
+  text-align: right;
+  white-space: nowrap;
+}
+@media (max-width: 860px) {
+  .usage {
+    display: none;
+  }
+}

@@ -11,6 +11,7 @@ import { Markdown } from "./Markdown";
 type ModelOpt = { id: string; label: string; note: string };
 type Approval = { id: string; tool: string; summary: string; agent: string; status: "pending" | "approved" | "denied" };
 type Pending = { id: string; name: string; size: number };
+import { AskCard, type Ask } from "./AskCards";
 type ProviderOpt = { id: string; kind: string; name: string; enabled: boolean; info: { loggedIn?: boolean } };
 
 type Props = {
@@ -168,6 +169,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [triaging, setTriaging] = useState(false);
   const [liveAgent, setLiveAgent] = useState<{ agent: string; model: string } | null>(null);
   const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [asks, setAsks] = useState<Ask[]>([]);
   const [error, setError] = useState("");
   const [text, setText] = useState("");
   const [files, setFiles] = useState<Pending[]>([]);
@@ -226,6 +228,8 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
     on("account", (d) => setSwitchNote(`${String(d.from)} bateu o limite; segui com ${String(d.to)}.`));
     on("tool", (d) => setLiveTools((t) => (t.some((x) => x.id === d.id) ? t : [...t, d as unknown as ToolUse])));
     on("approval", (d) => setApprovals((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Approval), status: "pending" }])));
+    on("ask", (d) => setAsks((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Ask), status: "pending" }])));
+    on("ask_done", (d) => setAsks((a) => a.map((x) => (x.id === d.id ? { ...x, status: "done" } : x))));
     on("approval_done", (d) => setApprovals((a) => a.map((x) => (x.id === d.id ? { ...x, status: d.status as Approval["status"] } : x))));
     on("final", (d) => {
       const msg = d.message as Message;
@@ -269,7 +273,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   useEffect(() => {
     const el = scrollRef.current;
     if (el && stickRef.current) el.scrollTop = el.scrollHeight;
-  }, [messages, liveText, liveTools, approvals, liveTriage, triaging]);
+  }, [messages, liveText, liveTools, approvals, asks, liveTriage, triaging]);
 
   useEffect(() => {
     const ta = taRef.current;
@@ -439,6 +443,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   }
 
   const pendingApprovals = approvals.filter((a) => a.status === "pending");
+  const pendingAsks = asks.filter((a) => a.status === "pending");
   const empty = !messages.length && !running;
 
   return (
@@ -624,7 +629,10 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                   </div>
                 </div>
               ))}
-              {!pendingApprovals.length && !triaging ? (
+              {pendingAsks.map((a) => (
+                <AskCard key={a.id} ask={a} onError={setError} />
+              ))}
+              {!pendingApprovals.length && !pendingAsks.length && !triaging ? (
                 <p className="msg__meta">
                   trabalhando
                   <span className="cursor" aria-hidden="true" />

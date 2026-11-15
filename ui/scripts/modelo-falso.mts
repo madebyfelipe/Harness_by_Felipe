@@ -6,6 +6,7 @@
  *   FALSO:bash:<comando>           chama o terminal
  *   FALSO:read:<arquivo>           lê um arquivo
  *   FALSO:write:<arquivo>          escreve "teste" num arquivo
+ *   FALSO:central:<ferramenta>:<json>  chama uma ferramenta da Central (mcp__central__…)
  *   FALSO:agent:<nome>:<pedido>    delega ao subagente (o pedido pode ter outra marcação)
  *
  * Triagem (pedido com "faça a triagem"): devolve o JSON da triagem. Marcações:
@@ -55,6 +56,14 @@ function decide(body: Body): Reply {
     const name = has("Agent") ? "Agent" : has("Task") ? "Task" : "";
     if (name) return { tool: name, input: { subagent_type: m[1], description: "teste", prompt: m[2].trim() } };
   }
+  m = /FALSO:central:(\w+):(\{[^\n]*\})/.exec(text);
+  if (m) {
+    try {
+      return { tool: `mcp__central__${m[1]}`, input: JSON.parse(m[2]) };
+    } catch {
+      return { text: "resposta-falsa: json inválido" };
+    }
+  }
   m = /FALSO:bash:([^\n]+)/.exec(text);
   if (m && has("Bash")) return { tool: "Bash", input: { command: m[1].trim(), description: "teste" } };
   m = /FALSO:read:(\S+)/.exec(text);
@@ -71,7 +80,7 @@ function triage(msg: string) {
     itens.push({ tipo: m[1], texto: m[2].trim(), ...(m[1] === "feedback" ? { sentimento: /ruim/.test(m[2]) ? "ruim" : "bom" } : {}) });
   }
   const contexto = /FALSO:contexto/.test(msg);
-  const tarefa = contexto || /FALSO:(bash|read|write|agent):/.test(msg) || !/FALSO:/.test(msg);
+  const tarefa = contexto || /FALSO:(bash|read|write|agent|central):/.test(msg) || !/FALSO:/.test(msg);
   if (tarefa) itens.unshift({ tipo: "tarefa", texto: msg.slice(0, 80) });
   const agente = contexto ? "contexto" : /FALSO:agente:([\w-]+)/.exec(msg)?.[1] ?? "orquestrador";
   const workflow = tarefa

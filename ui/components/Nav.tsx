@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { FeedbackButton } from "./FeedbackButton";
 import { IconChat, IconGear } from "./Icons";
 import { ThemeToggle } from "./ThemeToggle";
+import { UsageMeter } from "./UsageMeter";
 
 const CONFIG = ["/inicio", "/provedores", "/conectores", "/agentes", "/skills", "/rotinas", "/contexto", "/conta"];
 const isConfig = (p: string) => CONFIG.some((c) => p === c || (p.startsWith(c + "/") && !/^\/contexto\/[0-9a-f-]{36}$/.test(p)));
@@ -22,6 +23,7 @@ export function Rail() {
         <IconChat />
       </Link>
       <span className="rail__spacer" />
+      <UsageMeter />
       <FeedbackButton />
       <ThemeToggle />
       <Link className="rail__btn" href="/inicio" aria-label="Configurações" title="Configurações" aria-current={isConfig(pathname) ? "page" : undefined}>

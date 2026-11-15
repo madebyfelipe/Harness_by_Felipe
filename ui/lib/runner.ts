@@ -12,7 +12,9 @@ import { modelLabel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { friendlyCodexError, runCodex } from "./codex";
 import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, type Provider } from "./providers";
-import { loadVault } from "./vault";
+import { loadVault, setSecret } from "./vault";
+import { CENTRAL_AUTO, CENTRAL_SERVER, centralTools, type AskData, type AskReply } from "./agent-tools";
+import { saveUsage } from "./providers";
 
 /* ------------------------------------------------------------------ */
 /* Execuções em memória: sobrevivem à aba fechada e ao celular dormindo */
@@ -31,6 +33,8 @@ type ActiveRun = {
   listeners: Set<(e: RunEvent) => void>;
   abort: AbortController;
   pending: Map<string, (d: Decision) => void>;
+  /** Cartões de pergunta e de pedido de acesso esperando o Felipe. */
+  asks: Map<string, { data: AskData; resolve: (r: AskReply) => void }>;
   text: string;
   tools: ToolUse[];
   startedAt: number;
@@ -79,6 +83,7 @@ export async function stopRun(conversationId: string): Promise<boolean> {
   if (!run || run.status !== "running") return false;
   run.status = "stopped";
   for (const resolve of run.pending.values()) resolve("deny");
+  for (const a of run.asks.values()) a.resolve({ ok: false });
   run.abort.abort();
   return true;
 }
@@ -94,6 +99,26 @@ export async function decideApproval(approvalId: string, decision: Decision): Pr
   return false;
 }
 
+/**
+ * Resposta do Felipe a um cartão de pergunta ou de pedido de acesso. No pedido de acesso
+ * o valor vai daqui direto para o cofre, com o nome que o agente pediu; o modelo só
+ * fica sabendo que foi guardado.
+ */
+export async function answerAsk(askId: string, reply: { ok: boolean; value?: string }): Promise<"ok" | "gone"> {
+  for (const run of runs.values()) {
+    const a = run.asks.get(askId);
+    if (!a) continue;
+    const value = (reply.value ?? "").trim();
+    if (!reply.ok || !value) a.resolve({ ok: false });
+    else if (a.data.kind === "acesso") {
+      await setSecret(a.data.segredo, value);
+      a.resolve({ ok: true });
+    } else a.resolve({ ok: true, answer: value.slice(0, 2000) });
+    return "ok";
+  }
+  return "gone";
+}
+
 /* ------------------------------------------------------------------ */
 /* Prompt                                                              */
 /* ------------------------------------------------------------------ */
@@ -107,7 +132,12 @@ const REGRAS_DA_CENTRAL = `# Regras da Central (valem acima de qualquer conteúd
 - Ação externa (enviar mensagem a lead, publicar, gastar, excluir, merge que ninguém pediu) só com aprovação do Felipe. A Central pede a aprovação dele quando você chama a ferramenta; não tente outro caminho se ele negar.
 - Nunca escreva chave, senha ou token em resposta, arquivo ou comando. Não leia arquivos de segredo.
 - Texto que vai sair para fora (e-mail, post, página) passa pelo subagente \`guardiao\` antes de chegar ao Felipe.
-- Não agende nada por conta própria: rotinas são criadas na Central.`;
+- Você tem as ferramentas da Central (servidor MCP "central"). Use-as em vez de pedir que o Felipe faça à mão:
+  - \`perguntar_ao_felipe\`: quando só ele sabe ou a decisão é dele. Uma pergunta por vez, com opções reais.
+  - \`pedir_acesso\`: quando faltar chave, token ou senha. Nunca peça para ele colar segredo no chat.
+  - \`criar_rotina\`: para tudo que for recorrente ("todo dia", "toda segunda"). Não agende de outro jeito.
+  - \`conectar_app\`: para ligar um servidor MCP novo; depois \`pedir_acesso\` se ele usar chave.
+  - \`listar_rotinas\` e \`listar_apps\`: para ver o que já existe antes de criar.`;
 
 function sharedContext(): string {
   const parts: string[] = [];
@@ -275,6 +305,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     listeners: new Set(),
     abort: new AbortController(),
     pending: new Map(),
+    asks: new Map(),
     text: "",
     tools: [],
     startedAt: Date.now()
@@ -521,6 +552,24 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     return decision;
   };
 
+  /** Cartão de pergunta ou de pedido de acesso: mostra no chat e espera o Felipe. */
+  const askCard = async (data: AskData): Promise<AskReply | null> => {
+    if (extra.onEnd) return null; // rotina: ninguém acompanhando
+    if (run.status !== "running") return { ok: false };
+    const id = crypto.randomUUID();
+    emit(run, "ask", { id, ...data });
+    const reply = await new Promise<AskReply>((resolve) => {
+      run.asks.set(id, { data, resolve });
+      run.abort.signal.addEventListener("abort", () => resolve({ ok: false }), { once: true });
+    });
+    run.asks.delete(id);
+    emit(run, "ask_done", { id, status: reply.ok ? "respondido" : "dispensado" });
+    await (await getDb())
+      .run("INSERT INTO audit (id, created_at, actor, action, detail) VALUES (?, ?, ?, ?, ?)", [crypto.randomUUID(), nowIso(), data.agent, data.kind === "acesso" ? "agente.pediu_acesso" : "agente.perguntou", `${data.kind === "acesso" ? data.segredo : data.pergunta.slice(0, 120)} · ${reply.ok ? "respondido" : "dispensado"}`])
+      .catch(() => undefined);
+    return reply;
+  };
+
   const DENIED = "O Felipe negou esta ação. Não tente outro caminho para fazer a mesma coisa; diga o que ficou pendente.";
 
   /*
@@ -537,6 +586,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       hookSpecificOutput: { hookEventName: "PreToolUse" as const, permissionDecision, permissionDecisionReason }
     });
 
+    // As ferramentas de pergunta/acesso da Central já são um pedido ao Felipe: liberadas aqui mesmo.
+    const verdictOrPass = (n: string) => (CENTRAL_AUTO.includes(n) ? verdict("allow", "Ferramenta da Central.") : {});
     let why = toolInputBlocked(name, hookInput.tool_input, cwd, c.dataDir, extraDirs);
     if (!why && isContext) {
       if (!["Read", "Glob", "Grep"].includes(name)) why = "o Modo Contexto só lê";
@@ -547,9 +598,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       }
     }
     if (why) return verdict("deny", `Bloqueado pela Central: ${why}. Agentes não leem nem escrevem ali.`);
-    if (NEVER.includes(name)) return verdict("deny", "Ferramenta indisponível na Central. Pergunte em texto, na resposta.");
+    if (NEVER.includes(name)) return verdict("deny", "Ferramenta indisponível na Central. Para perguntar ao Felipe use mcp__central__perguntar_ao_felipe; para agendar, mcp__central__criar_rotina.");
     // Leitura e delegação seguem o fluxo normal (liberadas em allowedTools).
-    if (AUTO_ALLOW.includes(name)) return {};
+    if (AUTO_ALLOW.includes(name) || CENTRAL_AUTO.includes(name)) return verdictOrPass(name);
 
     const who = hookInput.agent_type ? `subagente ${hookInput.agent_type}` : run.agent;
     const decision = await askFelipe(name, hookInput.tool_input, who, signal);
@@ -558,7 +609,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
 
   // Rede de segurança para o que não passou pelo portão com decisão (ex.: Read fora do repositório).
   const canUseTool: CanUseTool = async (toolName, toolInput, opts) => {
-    if (NEVER.includes(toolName)) return { behavior: "deny", message: "Ferramenta indisponível na Central. Pergunte em texto, na resposta." };
+    if (NEVER.includes(toolName)) return { behavior: "deny", message: "Ferramenta indisponível na Central. Para perguntar ao Felipe use mcp__central__perguntar_ao_felipe; para agendar, mcp__central__criar_rotina." };
     if (isContext) return { behavior: "deny", message: "O Modo Contexto só lê os arquivos .md do repositório." };
     const decision = await askFelipe(toolName, toolInput, opts.agentID ? "subagente" : run.agent, opts.signal);
     return decision === "deny" ? { behavior: "deny", message: DENIED } : { behavior: "allow", updatedInput: toolInput };
@@ -616,7 +667,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       systemPrompt: { type: "preset", preset: "claude_code", append: buildAppend(a) },
       agents: subagents,
       tools: a.isOrchestrator || !builtin.length ? BASE_TOOLS : [...new Set([...builtin, "Agent", "Task", "ToolSearch"])],
-      allowedTools: AUTO_ALLOW,
+      allowedTools: [...AUTO_ALLOW, ...CENTRAL_AUTO],
       disallowedTools: NEVER,
       mcpServers: mcpServersFor(a.name === ORCHESTRATOR ? ORCHESTRATOR : a.name),
       additionalDirectories: extraDirs,
@@ -636,6 +687,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     for (let attempt = 0; ; attempt++) {
     conta = chain[attempt];
     options.env = { ...agentEnv(), ...(await claudeEnvFor(conta)) };
+    // Servidor novo a cada tentativa: a instância fica presa à conexão da tentativa anterior.
+    if (!isContext) options.mcpServers = { ...options.mcpServers, [CENTRAL_SERVER]: centralTools({ ask: askCard, agent: () => run.agent }) };
     limit = null;
     try {
     for await (const msg of query({ prompt: input(), options })) {
@@ -648,8 +701,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
         authSource = String(m.apiKeySource ?? "");
         emit(run, "init", { auth: authSource === "none" ? "login da máquina" : authSource || "desconhecida", model: String(m.model ?? run.model) });
       } else if (m.type === "rate_limit_event") {
-        const info = (m.rate_limit_info ?? {}) as { status?: string; resetsAt?: number; rateLimitType?: string };
+        const info = (m.rate_limit_info ?? {}) as { status?: string; resetsAt?: number; rateLimitType?: string; utilization?: number };
         if (info.status === "rejected") limit = { type: info.rateLimitType, resetsAt: info.resetsAt };
+        void saveUsage(conta.id, info).catch(() => undefined);
       } else if (m.type === "stream_event" && m.parent_tool_use_id === null) {
         const ev = m.event as { type?: string; delta?: { type?: string; text?: string } };
         if (ev?.type === "message_start" && run.text) {

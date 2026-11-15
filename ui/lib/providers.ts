@@ -20,7 +20,9 @@ import { agentEnv } from "./guardrails";
  */
 
 export type ProviderKind = "claude" | "claude-api" | "codex";
-export type ProviderInfo = { loggedIn?: boolean; email?: string; plan?: string; detail?: string; checkedAt?: string; limitedUntil?: string };
+/** Última leitura de uma janela de uso da assinatura (vem do Claude Code durante uma execução). */
+export type UsageWindow = { status: string; usedPct?: number; resetsAt?: string; at: string };
+export type ProviderInfo = { loggedIn?: boolean; email?: string; plan?: string; detail?: string; checkedAt?: string; limitedUntil?: string; usage?: Record<string, UsageWindow> };
 export type Provider = {
   id: string;
   kind: ProviderKind;
@@ -156,6 +158,21 @@ export async function deleteProvider(id: string): Promise<void> {
 export async function saveInfo(id: string, info: ProviderInfo): Promise<void> {
   const db = await getDb();
   await db.run("UPDATE providers SET info = ? WHERE id = ?", [JSON.stringify({ ...info, checkedAt: nowIso() }), id]);
+}
+
+/**
+ * Guarda o que o Claude Code informou sobre uma janela de uso (5 horas, 7 dias…).
+ * O número só vem quando a conta passa do limiar de aviso; abaixo disso chega só "allowed".
+ */
+export async function saveUsage(id: string, info: { status?: string; resetsAt?: number; rateLimitType?: string; utilization?: number }): Promise<void> {
+  if (!info.rateLimitType || !info.status) return;
+  const p = await getProvider(id);
+  if (!p) return;
+  const u = info.utilization;
+  const usedPct = info.status === "rejected" ? 100 : typeof u === "number" && Number.isFinite(u) ? Math.max(0, Math.min(100, Math.round(u <= 1 ? u * 100 : u))) : undefined;
+  const db = await getDb();
+  const usage = { ...(p.info.usage ?? {}), [info.rateLimitType]: { status: info.status, ...(usedPct !== undefined ? { usedPct } : {}), ...(info.resetsAt ? { resetsAt: new Date(info.resetsAt * 1000).toISOString() } : {}), at: nowIso() } };
+  await db.run("UPDATE providers SET info = ? WHERE id = ?", [JSON.stringify({ ...p.info, usage }), id]);
 }
 
 export async function markLimited(id: string, resetsAt?: number): Promise<void> {
