@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
-import { IconPlus, IconSearch } from "./Icons";
+import { IconFolder, IconPlus, IconSearch } from "./Icons";
 import { ModeSelector } from "./ModeSelector";
 
 type Item = {
@@ -18,6 +18,7 @@ type Item = {
   previewRole: string | null;
   running?: boolean;
   route: { agent?: string } | null;
+  project_name?: string | null;
 };
 
 export const REFRESH_EVENT = "central:conversas";
@@ -50,6 +51,21 @@ export function ConversationList({ initialMode, page = false }: { initialMode: "
   const pathname = usePathname();
   const [items, setItems] = useState<Item[] | null>(null);
   const [q, setQ] = useState("");
+  const [searching, setSearching] = useState(false);
+  const qRef = useRef<HTMLInputElement>(null);
+
+  // Ctrl+K (ou ⌘K) abre a busca, como no Claude.
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearching(true);
+        setTimeout(() => qRef.current?.focus(), 0);
+      }
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, []);
 
   const load = useCallback(async (query: string) => {
     try {
@@ -92,17 +108,44 @@ export function ConversationList({ initialMode, page = false }: { initialMode: "
     <aside className={`clist${page ? " clist--page" : ""}`} aria-label="Conversas">
       <div className="clist__head">
         <ModeSelector initialMode={initialMode} />
-        <Link className="rail__btn" href="/" aria-label="Nova conversa" title="Nova conversa">
-          <IconPlus />
+      </div>
+      <nav className="clist__nav" aria-label="Atalhos">
+        <Link className="cnav" href="/" aria-current={pathname === "/" ? "page" : undefined}>
+          <IconPlus size={16} /> <span>Nova conversa</span>
         </Link>
-      </div>
-      <div className="clist__search">
-        <IconSearch size={16} />
-        <label className="sr-only" htmlFor="clist-q">
-          Buscar conversas
-        </label>
-        <input id="clist-q" type="search" placeholder="Buscar" value={q} onChange={(e) => setQ(e.target.value)} />
-      </div>
+        {searching || q ? (
+          <div className="cnav cnav--search">
+            <IconSearch size={16} />
+            <label className="sr-only" htmlFor="clist-q">
+              Buscar conversas
+            </label>
+            <input
+              id="clist-q"
+              ref={qRef}
+              type="search"
+              placeholder="Buscar conversas"
+              value={q}
+              autoFocus
+              onChange={(e) => setQ(e.target.value)}
+              onBlur={() => !q && setSearching(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setQ("");
+                  setSearching(false);
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <button type="button" className="cnav" onClick={() => setSearching(true)}>
+            <IconSearch size={16} /> <span>Buscar</span>
+            <kbd>Ctrl+K</kbd>
+          </button>
+        )}
+        <Link className="cnav" href="/projetos" aria-current={pathname.startsWith("/projetos") ? "page" : undefined}>
+          <IconFolder size={16} /> <span>Projetos</span>
+        </Link>
+      </nav>
       <div className="clist__scroll">
         {items === null ? <p className="small muted clist__empty">Carregando…</p> : null}
         {items && !items.length ? <p className="small muted clist__empty">{q ? "Nada encontrado." : "Nenhuma conversa ainda. Fale ou escreva no chat."}</p> : null}
@@ -126,7 +169,7 @@ export function ConversationList({ initialMode, page = false }: { initialMode: "
                           <span className="citem__time">{hora(c.updated_at)}</span>
                         </span>
                         <span className="citem__sub">
-                          <span className="citem__tag">{agentName(who)}</span>
+                          <span className="citem__tag">{c.project_name ? c.project_name : agentName(who)}</span>
                           <span className="citem__preview">{c.running ? "trabalhando…" : c.preview || "sem mensagens"}</span>
                         </span>
                       </span>

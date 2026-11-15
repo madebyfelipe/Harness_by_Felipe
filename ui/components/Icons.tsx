@@ -153,3 +153,8 @@ export const IconArrowLeft = ({ size }: P) => (
     <path d="M12 5l-5 5 5 5" />
   </svg>
 );
+export const IconFolder = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.8h6.2A1.5 1.5 0 0 1 17 7.8v6.7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5z" />
+  </svg>
+);

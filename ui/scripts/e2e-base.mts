@@ -158,7 +158,7 @@ log("configuração inicial fechada depois da primeira conta");
 const pages: [string, string, string][] = [
   ["/", "chat", "#composer"],
   ["/inicio", "inicio", 'h1:has-text("Bom te ver")'],
-  ["/chat", "conversas", "#clist-q"],
+  ["/chat", "conversas", ".clist__nav"],
   ["/contexto", "contexto", 'h1:has-text("Contexto")'],
   ["/contexto/arquivo?f=contexto.md", "arquivo", 'h1:has-text("Contexto do negócio")'],
   ["/agentes", "agentes", 'h1:has-text("Agentes")'],
@@ -194,7 +194,7 @@ log(`${nAgents} agentes lidos do repositório`);
 
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "pt-BR", storageState: await context.storageState() });
 const m = await mobile.newPage();
-for (const [url, name, sel] of [["/", "chat", "#composer"], ["/chat", "conversas", "#clist-q"], ["/inicio", "inicio", "h1"], ["/agentes", "agentes", "h1"], ["/conectores", "conectores", "h1"], ["/contexto", "contexto", "h1"]] as const) {
+for (const [url, name, sel] of [["/", "chat", "#composer"], ["/chat", "conversas", ".clist__nav"], ["/inicio", "inicio", "h1"], ["/agentes", "agentes", "h1"], ["/conectores", "conectores", "h1"], ["/contexto", "contexto", "h1"]] as const) {
   await m.goto(URL_ + url);
   await m.waitForSelector(sel);
   const overflow = await m.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

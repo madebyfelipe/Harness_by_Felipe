@@ -9,6 +9,9 @@ import { IconBack, IconMic, IconMore, IconPanel, IconPlus, IconSend, IconStop, I
 import { BrowserSide } from "./BrowserSide";
 import { ContextMeter } from "./ContextMeter";
 import { ModelPicker } from "./ModelPicker";
+import { Welcome } from "./Welcome";
+import { Lightbox, type LbImage } from "./Lightbox";
+import { filterMentions, MentionMenu, type MentionItem } from "./MentionMenu";
 import { Markdown } from "./Markdown";
 
 type ModelOpt = { id: string; label: string; note: string };
@@ -23,6 +26,8 @@ type Props = {
   backHref: string;
   /** Conversa nova: "chat" (triagem) ou "contexto". */
   draftMode?: "chat" | "contexto";
+  /** Conversa nova já dentro de um projeto (/?projeto=slug). */
+  projectId?: string | null;
 };
 
 const fmtCost = (v?: number) => (typeof v === "number" ? `US$ ${v < 0.01 ? v.toFixed(4) : v.toFixed(2)}` : "");
@@ -178,8 +183,39 @@ async function toPcm16k(blob: Blob): Promise<Float32Array> {
   }
 }
 
-export function ChatView({ initial, models, backHref, draftMode = "chat" }: Props) {
+type Att = { id: string; name: string; size: number; mime?: string };
+const isImage = (a: Att) => (a.mime ? a.mime.startsWith("image/") : /\.(png|jpe?g|webp|gif)$/i.test(a.name));
+
+/** Imagens de uma mensagem: miniaturas que abrem o visualizador. */
+function Gallery({ cid, items, onOpen }: { cid: string; items: Att[]; onOpen: (images: LbImage[], start: number) => void }) {
+  const images = items.map((a) => ({ src: `/api/chat/${cid}/attachments/${a.id}`, name: a.name }));
+  return (
+    <div className={`gallery${items.length === 1 ? " gallery--one" : ""}`}>
+      {images.map((im, n) => (
+        <button key={im.src} type="button" className="gallery__item" onClick={() => onOpen(images, n)} aria-label={`Abrir ${im.name}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={im.src} alt={im.name} loading="lazy" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function ChatView({ initial, models, backHref, draftMode = "chat", projectId = null }: Props) {
   const [conv, setConv] = useState<Conversation | null>(initial.conversation);
+  const [projects, setProjects] = useState<{ id: string; slug: string; name: string }[]>([]);
+  const [projectSel, setProjectSel] = useState<string | null>(initial.conversation?.project_id ?? projectId);
+  useEffect(() => {
+    api<{ projects: { id: string; slug: string; name: string }[] }>("/api/projetos")
+      .then((r) => setProjects(r.projects))
+      .catch(() => undefined);
+  }, []);
+  const project = projects.find((x) => x.id === projectSel);
+  async function changeProject(next: string) {
+    setProjectSel(next || null);
+    if (conv) await api(`/api/chat/${conv.id}`, { method: "PATCH", body: { project: next } }).catch(() => undefined);
+    refreshList();
+  }
   const isContext = (conv?.mode ?? draftMode) === "contexto";
   const isAuto = !conv || conv.agent === "auto";
   const [messages, setMessages] = useState<Message[]>(initial.messages);
@@ -188,6 +224,8 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [running, setRunning] = useState(initial.active?.status === "running");
   const [liveText, setLiveText] = useState("");
   const [liveTools, setLiveTools] = useState<ToolUse[]>([]);
+  const [liveImages, setLiveImages] = useState<Att[]>([]);
+  const [lb, setLb] = useState<{ images: LbImage[]; start: number } | null>(null);
   const [liveTriage, setLiveTriage] = useState<TriageView | null>(null);
   const [triaging, setTriaging] = useState(false);
   const [liveAgent, setLiveAgent] = useState<{ agent: string; model: string } | null>(null);
@@ -223,6 +261,32 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(true);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  // @menção: projeto, agente ou conector.
+  const [mentionItems, setMentionItems] = useState<MentionItem[] | null>(null);
+  const [mention, setMention] = useState<{ start: number; end: number; q: string } | null>(null);
+  const [mentionIdx, setMentionIdx] = useState(0);
+  const mentionList = mention && mentionItems ? filterMentions(mentionItems, mention.q) : [];
+  const detectMention = (value: string, caret: number) => {
+    const m = /(?:^|[\s(])@([a-z0-9_-]*)$/i.exec(value.slice(0, caret));
+    if (!m || isContext) return setMention(null);
+    if (!mentionItems)
+      api<{ items: MentionItem[] }>("/api/mencoes")
+        .then((r) => setMentionItems(r.items))
+        .catch(() => setMentionItems([]));
+    setMention({ start: caret - m[1].length - 1, end: caret, q: m[1] });
+    setMentionIdx(0);
+  };
+  const pickMention = (i: MentionItem) => {
+    if (!mention) return;
+    const next = `${text.slice(0, mention.start)}@${i.tag} ${text.slice(mention.end)}`;
+    const caret = mention.start + i.tag.length + 2;
+    setText(next);
+    setMention(null);
+    requestAnimationFrame(() => {
+      taRef.current?.focus();
+      taRef.current?.setSelectionRange(caret, caret);
+    });
+  };
   const fileRef = useRef<HTMLInputElement>(null);
   const recRef = useRef<{ mr: MediaRecorder; chunks: Blob[]; stream: MediaStream; timer: ReturnType<typeof setInterval>; cancel: boolean } | null>(null);
 
@@ -238,6 +302,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
     esRef.current?.close();
     setLiveText("");
     setLiveTools([]);
+    setLiveImages([]);
     setApprovals([]);
     setLiveTriage(null);
     setTriaging(false);
@@ -281,6 +346,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
       setActivity(`${t.agent ? `${t.agent} › ` : ""}${t.name}${t.summary ? ` · ${t.summary}` : ""}`.slice(0, 140));
       setLiveTools((l) => (l.some((x) => x.id === d.id) ? l : [...l, t]));
     });
+    on("image", (d) => setLiveImages((l) => (l.some((x) => x.id === d.id) ? l : [...l, d as unknown as Att])));
     on("approval", (d) => setApprovals((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Approval), status: "pending" }])));
     on("ask", (d) => setAsks((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Ask), status: "pending" }])));
     on("ask_done", (d) => setAsks((a) => a.map((x) => (x.id === d.id ? { ...x, status: "done" } : x))));
@@ -290,6 +356,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
       setMessages((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       setLiveText("");
       setLiveTools([]);
+      setLiveImages([]);
       setLiveTriage(null);
     });
     on("error", (d) => setError(String(d.message ?? "Erro na execução.")));
@@ -348,7 +415,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   /** Conversa nova: cria no primeiro envio e troca a URL sem recarregar. */
   async function ensureConversation(): Promise<Conversation> {
     if (conv) return conv;
-    const r = await api<{ conversation: Conversation }>("/api/chat", { body: { mode: draftMode } });
+    const r = await api<{ conversation: Conversation }>("/api/chat", { body: { mode: draftMode, projectId: projectSel } });
     setConv(r.conversation);
     setModel(r.conversation.model);
     window.history.replaceState(null, "", `/${draftMode === "contexto" ? "contexto" : "chat"}/${r.conversation.id}`);
@@ -520,7 +587,17 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
           <IconBack />
         </a>
         <div className="chat__title">
-          <span className="kicker">{headAgent}</span>
+          <span className="kicker">
+            {project ? (
+              <>
+                <a className="chat__proj" href={`/projetos/${project.slug}`}>
+                  {project.name}
+                </a>{" "}
+                ·{" "}
+              </>
+            ) : null}
+            {headAgent}
+          </span>
           <strong>{title}</strong>
         </div>
         <div className="chat__modelbar">
@@ -552,6 +629,21 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
             <IconMore />
           </summary>
           <div className="pop__panel">
+            {!isContext ? (
+              <>
+                <label className="label" htmlFor="conv-project">
+                  Projeto
+                </label>
+                <select id="conv-project" className="field field--sm" value={projectSel ?? ""} onChange={(e) => void changeProject(e.target.value)}>
+                  <option value="">Sem projeto</option>
+                  {projects.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
             <label className="row small" style={{ gap: 6 }}>
               <input
                 type="checkbox"
@@ -620,14 +712,16 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                 </>
               ) : (
                 <>
-                  <button type="button" className="bigmic" onClick={() => (rec.state === "rec" ? stopRec() : void startRec())} disabled={rec.state === "trans"} aria-label={rec.state === "rec" ? "Parar e enviar o áudio" : "Falar"}>
-                    {rec.state === "rec" ? <IconStop size={40} /> : <IconMic size={40} />}
-                  </button>
-                  <p className="h2">{rec.state === "rec" ? `Gravando ${fmtClock(rec.secs)} · toque para enviar` : rec.state === "trans" ? "Transcrevendo…" : "Fale ou escreva."}</p>
-                  <p className="muted">Pode misturar assuntos. A triagem separa tarefa, ideia, feedback e decisão, escolhe agente e modelo e já executa.</p>
-                  <p className="small muted">
-                    <code>fb:</code> anota feedback · <code>planejar:</code> mostra o plano e espera o “vai”
-                  </p>
+                  <Welcome
+                    projectName={project?.name}
+                    onPick={(t) => {
+                      setText(t);
+                      requestAnimationFrame(() => {
+                        taRef.current?.focus();
+                        taRef.current?.setSelectionRange(t.length, t.length);
+                      });
+                    }}
+                  />
                 </>
               )}
             </div>
@@ -641,9 +735,10 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                   {m.meta.redo ? <span className="kicker kicker--plain">subir de modelo · </span> : null}
                   {m.content}
                 </div>
-                {m.meta.attachments?.length ? (
+                {conv && m.meta.attachments?.some(isImage) ? <Gallery cid={conv.id} items={m.meta.attachments.filter(isImage)} onOpen={(images, start) => setLb({ images, start })} /> : null}
+                {m.meta.attachments?.some((a) => !isImage(a)) ? (
                   <div className="tags">
-                    {m.meta.attachments.map((a) => (
+                    {m.meta.attachments.filter((a) => !isImage(a)).map((a) => (
                       <span className="tag" key={a.id}>
                         {a.name} · {fmtSize(a.size)}
                       </span>
@@ -663,6 +758,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                     <Markdown text={m.content} />
                   </div>
                 ) : null}
+                {conv && m.meta.attachments?.some(isImage) ? <Gallery cid={conv.id} items={m.meta.attachments.filter(isImage)} onOpen={(images, start) => setLb({ images, start })} /> : null}
                 {m.meta.error ? (
                   <p className="notice" role="alert">
                     {m.meta.error}
@@ -707,6 +803,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                   <Markdown text={liveText} />
                 </div>
               ) : null}
+              {conv && liveImages.length ? <Gallery cid={conv.id} items={liveImages} onOpen={(images, start) => setLb({ images, start })} /> : null}
               {pendingApprovals.map((a) => (
                 <div className="approval" key={a.id} role="group" aria-label="Pedido de aprovação">
                   <span className="kicker">Precisa de você · {a.agent}</span>
@@ -747,6 +844,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
 
       <div className="composer">
         <div className="composer__inner">
+          {mention && mentionItems ? <MentionMenu items={mentionList} active={mentionIdx} onPick={pickMention} onHover={setMentionIdx} /> : null}
           {redoOpen && upper ? (
             <form
               className="approval"
@@ -806,7 +904,11 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                   rows={1}
                   value={text}
                   placeholder={isContext ? "Qual é a oferta atual do site?" : "Fale ou escreva…"}
-                  onChange={(e) => setText(e.target.value)}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    detectMention(e.target.value, e.target.selectionStart ?? e.target.value.length);
+                  }}
+                  onBlur={() => setTimeout(() => setMention(null), 120)}
                   onPaste={(e) => {
                     // Imagem ou arquivo copiado: vira anexo. Texto segue o colar normal.
                     const pasted = Array.from(e.clipboardData?.items ?? [])
@@ -819,6 +921,23 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                     void upload(pasted.map((f, i) => (/^image\.\w+$/.test(f.name) ? new File([f], `colado-${stamp}${pasted.length > 1 ? `-${i + 1}` : ""}.${f.name.split(".").pop()}`, { type: f.type }) : f)));
                   }}
                   onKeyDown={(e) => {
+                    if (mention && mentionList.length) {
+                      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setMentionIdx((n) => (n + (e.key === "ArrowDown" ? 1 : mentionList.length - 1)) % mentionList.length);
+                        return;
+                      }
+                      if (e.key === "Enter" || e.key === "Tab") {
+                        e.preventDefault();
+                        pickMention(mentionList[Math.min(mentionIdx, mentionList.length - 1)]);
+                        return;
+                      }
+                    }
+                    if (mention && e.key === "Escape") {
+                      e.preventDefault();
+                      setMention(null);
+                      return;
+                    }
                     // No computador, Enter envia; no celular, Enter quebra linha e o botão envia.
                     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !window.matchMedia("(pointer: coarse)").matches) {
                       e.preventDefault();
@@ -876,6 +995,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
       </div>
     </div>
     {side ? <BrowserSide onClose={() => toggleSide(false)} /> : null}
+    {lb ? <Lightbox images={lb.images} start={lb.start} onClose={() => setLb(null)} /> : null}
     </div>
   );
 }

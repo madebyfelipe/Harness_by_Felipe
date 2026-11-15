@@ -210,6 +210,22 @@ export const MIGRATIONS: Migration[] = [
         used_at TEXT NOT NULL
       )`
     ]
+  },
+  {
+    // Projetos: agrupam conversas e levam instruções próprias; chamados no chat com @.
+    id: "006_projetos",
+    statements: [
+      `CREATE TABLE projects (
+        id TEXT PRIMARY KEY,
+        slug TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        instructions TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+      "ALTER TABLE conversations ADD COLUMN project_id TEXT"
+    ]
   }
 ];
 

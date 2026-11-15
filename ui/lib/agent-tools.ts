@@ -19,7 +19,7 @@ import { getAgent, listSkills } from "./repo";
 export const CENTRAL_SERVER = "central";
 const T = (n: string) => `mcp__${CENTRAL_SERVER}__${n}`;
 /** Não pedem aprovação: só leem, ou já são um pedido ao Felipe. */
-export const CENTRAL_AUTO = [T("perguntar_ao_felipe"), T("pedir_acesso"), T("listar_rotinas"), T("listar_apps")];
+export const CENTRAL_AUTO = [T("perguntar_ao_felipe"), T("pedir_acesso"), T("listar_rotinas"), T("listar_apps"), T("mostrar_imagem")];
 
 export type AskReply = { ok: boolean; answer?: string };
 export type AskData =
@@ -32,6 +32,8 @@ export type ToolsCtx = {
   agent: () => string;
   /** O agente desta execução pode usar o navegador? */
   canBrowse: () => boolean;
+  /** Mostra uma imagem ao Felipe no chat (vira anexo da resposta). Devolve o texto para o agente. */
+  showImage?: (a: { caminho?: string; legenda?: string; captura?: boolean }) => Promise<string>;
 };
 
 const text = (t: string, isError = false) => ({ content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) });
@@ -194,6 +196,22 @@ export function centralTools(ctx: ToolsCtx) {
             return { content: [{ type: "image" as const, data: img.toString("base64"), mimeType: "image/jpeg" }] };
           } catch (e) {
             return text(`Navegador: ${e instanceof Error ? e.message.split("\n")[0] : "erro"}`, true);
+          }
+        },
+        { alwaysLoad: true }
+      ),
+      tool(
+        "mostrar_imagem",
+        "Mostra uma imagem ao Felipe no chat (ele vê na resposta e abre em tela cheia). Passe o caminho de um arquivo PNG, JPG, WebP ou GIF da pasta de trabalho, dos anexos ou de /tmp; ou captura=true para mandar a tela atual do seu navegador. Use para mostrar resultado visual (arte, print, gráfico).",
+        { caminho: z.string().max(500).optional(), legenda: z.string().max(200).optional(), captura: z.boolean().optional() },
+        async (a) => {
+          if (!ctx.showImage) return text("Aqui não dá para mostrar imagem.", true);
+          if (!a.caminho && !a.captura) return text("Passe o caminho do arquivo ou captura=true.", true);
+          if (a.captura && !ctx.canBrowse()) return text(SEM_NAVEGADOR, true);
+          try {
+            return text(await ctx.showImage(a));
+          } catch (e) {
+            return text(`Não mostrei a imagem: ${e instanceof Error ? e.message.split("\n")[0] : "erro"}`, true);
           }
         },
         { alwaysLoad: true }

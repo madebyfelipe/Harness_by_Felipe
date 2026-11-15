@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { query, type CanUseTool, type HookCallback, type Options, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
+import { resolveMentions } from "./mentions";
 import { addMessage, getAttachments, listMessages, updateConversation, type ContextUsage, type Conversation, type Message, type MessageMeta, type Route, type ToolUse, type TriageView } from "./chat";
 import { writeNotes, type NoteKind, type Sentimento } from "./notes";
 import { AUTO_AGENT, routeFor, runTriage, toView, TRIAGE_MODEL, workflowBrief, type Workflow } from "./triage";
@@ -8,12 +9,13 @@ import { cfg, fmtBrasilia, nowIso } from "./config";
 import { mcpServersFor } from "./connectors";
 import { getDb } from "./db";
 import { agentEnv, toolInputBlocked } from "./guardrails";
-import { modelLabel } from "./models";
+import { modelLabel, resolveModel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { friendlyCodexError, runCodex } from "./codex";
 import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, apiKeyOf, deepseekBase, type Provider } from "./providers";
 import { runOpenAi } from "./openai";
 import { injectVault, loadVault, logUse, setSecret, vaultRefs } from "./vault";
+import { agentShot } from "./browsers";
 import { CENTRAL_AUTO, CENTRAL_SERVER, centralTools, type AskData, type AskReply } from "./agent-tools";
 import { saveUsage } from "./providers";
 import { classifyTool } from "./autoapprove";
@@ -40,6 +42,8 @@ type ActiveRun = {
   asks: Map<string, { data: AskData; resolve: (r: AskReply) => void }>;
   text: string;
   tools: ToolUse[];
+  /** Imagens que o agente mostrou ao Felipe nesta resposta. */
+  images: { id: string; name: string; size: number; mime: string }[];
   startedAt: number;
   endedAt?: number;
 };
@@ -264,7 +268,7 @@ export type StartInput = {
 
 export type RunEnd = { status: string; text: string; error: string; conversationId: string; runId: string };
 
-type Extra = { auto: boolean; redo: boolean; rawText: string; history: string; onEnd?: StartInput["onEnd"]; onApproval?: StartInput["onApproval"] };
+type Extra = { mentionAgent?: string; auto: boolean; redo: boolean; rawText: string; history: string; onEnd?: StartInput["onEnd"]; onApproval?: StartInput["onApproval"] };
 
 export async function startRun(input: StartInput): Promise<{ runId: string; userMessage: Message }> {
   const { conversation } = input;
@@ -320,6 +324,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     asks: new Map(),
     text: "",
     tools: [],
+    images: [],
     startedAt: Date.now()
   };
   runs.set(conversation.id, run);
@@ -342,7 +347,10 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     prompt = `[Histórico desta conversa, para você continuar de onde parou]\n${history}\n\n[Mensagem nova do Felipe]\n${prompt}`;
   }
 
-  const extra: Extra = { onEnd: input.onEnd, onApproval: input.onApproval, auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
+  // Projeto da conversa e @menções (projeto, agente, conector).
+  const mentions = isContext ? { blocks: [] } : await resolveMentions(input.text, conversation.project_id);
+  if (mentions.blocks.length) prompt = `${mentions.blocks.join("\n\n")}\n\n${prompt}`;
+  const extra: Extra = { mentionAgent: mentions.agent, onEnd: input.onEnd, onApproval: input.onApproval, auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
   void execute(run, conversation, agent, prompt, attachments.length ? [path.dirname(attachments[0].path)] : [], extra).catch((e) => {
     console.error("[central] execução falhou fora do previsto:", e);
   });
@@ -411,7 +419,11 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   if (extra.auto && !codexP) {
     let route: Route | null = null;
     const vai = Boolean(conversation.route?.planejado) && /^\s*(vai|pode ir|manda ver|manda|segue|ok|bora|roda)\b/i.test(extra.rawText);
-    if (extra.redo) {
+    const chamado = extra.mentionAgent ? getAgent(extra.mentionAgent) : undefined;
+    if (chamado && !extra.redo) {
+      // @agente: vai direto para ele, sem triagem.
+      route = { agent: chamado.name, model: resolveModel(chamado.model, conversation.model), planejado: false, pedido: extra.rawText };
+    } else if (extra.redo) {
       route = { ...(conversation.route ?? { agent: ORCHESTRATOR }), model: conversation.model, planejado: false };
     } else if (extra.history && !/^\s*planejar\s*:/i.test(extra.rawText) && !(vai && conversation.route)) {
       // Triagem só na primeira mensagem: depois a conversa segue com o agente e o modelo já escolhidos.
@@ -780,7 +792,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     conta = chain[attempt];
     options.env = { ...agentEnv(), ...(await claudeEnvFor(conta)) };
     // Servidor novo a cada tentativa: a instância fica presa à conexão da tentativa anterior.
-    if (!isContext) options.mcpServers = { ...options.mcpServers, [CENTRAL_SERVER]: centralTools({ ask: askCard, agent: () => run.agent, canBrowse: () => Boolean(getAgent(run.agent)?.browser) }) };
+    if (!isContext) options.mcpServers = { ...options.mcpServers, [CENTRAL_SERVER]: centralTools({ ask: askCard, agent: () => run.agent, canBrowse: () => Boolean(getAgent(run.agent)?.browser), showImage: (a) => showImage(run, a, [cwd, ...extraDirs]) }) };
     limit = null;
     try {
     const q = query({ prompt: input(), options });
@@ -908,6 +920,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     model: run.model,
     agent: run.agent,
     tools: run.tools,
+    ...(run.images.length ? { attachments: run.images } : {}),
     costUsd: result.cost !== undefined || extraCost ? (result.cost ?? 0) + extraCost : undefined,
     inputTokens: result.inTok,
     outputTokens: result.outTok,
@@ -963,6 +976,45 @@ class SkipExecutor extends Error {}
 const LIMIT_TEXT = /hit your .*limit|usage limit|rejected \(429\)|rate.?limit/i;
 
 /** Pasta de anexos de uma conversa (fora do repositório). */
+const IMG_EXT: Record<string, string> = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
+
+/** Copia a imagem para os anexos da conversa e manda para a tela na hora. */
+async function showImage(run: ActiveRun, a: { caminho?: string; legenda?: string; captura?: boolean }, roots: string[]): Promise<string> {
+  let buf: Buffer;
+  let name: string;
+  let mime: string;
+  if (a.captura) {
+    buf = await agentShot(run.agent);
+    name = `navegador-${new Date().toTimeString().slice(0, 8).replace(/:/g, "")}.jpg`;
+    mime = "image/jpeg";
+  } else {
+    const raw = String(a.caminho ?? "").trim();
+    const abs = fs.realpathSync(path.isAbsolute(raw) ? raw : path.resolve(roots[0], raw));
+    const allowed = [...roots, path.join(cfg().dataDir, "uploads"), "/tmp"].map((d) => {
+      try {
+        return fs.realpathSync(d);
+      } catch {
+        return d;
+      }
+    });
+    if (!allowed.some((d) => abs === d || abs.startsWith(d + path.sep))) throw new Error("o arquivo precisa estar na pasta de trabalho, nos anexos ou em /tmp");
+    mime = IMG_EXT[path.extname(abs).toLowerCase()] ?? "";
+    if (!mime) throw new Error("só PNG, JPG, WebP ou GIF");
+    const st = fs.statSync(abs);
+    if (st.size > 15 * 1024 * 1024) throw new Error("imagem acima de 15 MB");
+    buf = fs.readFileSync(abs);
+    name = path.basename(abs).replace(/[^\w.\- ]+/g, "_").slice(-80);
+  }
+  const id = crypto.randomUUID();
+  const dest = path.join(uploadsDir(run.conversationId), `${id.slice(0, 8)}-${name}`);
+  fs.writeFileSync(dest, buf, { mode: 0o600 });
+  await (await getDb()).run("INSERT INTO attachments (id, conversation_id, name, path, mime, size, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", [id, run.conversationId, a.legenda?.slice(0, 120) || name, dest, mime, buf.length, nowIso()]);
+  const img = { id, name: a.legenda?.slice(0, 120) || name, size: buf.length, mime };
+  run.images.push(img);
+  emit(run, "image", img);
+  return `Imagem mostrada ao Felipe no chat (${img.name}). Não precisa descrever o arquivo de novo.`;
+}
+
 export function uploadsDir(conversationId: string): string {
   const dir = path.join(cfg().dataDir, "uploads", conversationId);
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });

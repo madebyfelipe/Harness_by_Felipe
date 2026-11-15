@@ -13,6 +13,8 @@ export type Conversation = {
   route: Route | null;
   /** Provedor escolhido à mão (menu ⋯). Vazio = contas Claude na ordem da tela Provedores. */
   provider: string | null;
+  /** Projeto da conversa (tela Projetos). */
+  project_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -25,7 +27,7 @@ export type MessageMeta = {
   model?: string;
   agent?: string;
   tools?: ToolUse[];
-  attachments?: { id: string; name: string; size: number }[];
+  attachments?: { id: string; name: string; size: number; mime?: string }[];
   costUsd?: number;
   inputTokens?: number;
   outputTokens?: number;
@@ -76,13 +78,13 @@ type MsgRow = Omit<Message, "meta"> & { meta: string };
 const toConv = (r: ConvRow): Conversation => ({ ...r, allowed_tools: parseJson<string[]>(r.allowed_tools, []), route: r.route ? parseJson<Route | null>(r.route, null) : null });
 const toMsg = (r: MsgRow): Message => ({ ...r, meta: parseJson<MessageMeta>(r.meta, {}) });
 
-export async function createConversation(input: { mode: "chat" | "contexto"; agent: string; model: string; title?: string }): Promise<Conversation> {
+export async function createConversation(input: { mode: "chat" | "contexto"; agent: string; model: string; title?: string; projectId?: string | null }): Promise<Conversation> {
   const db = await getDb();
   const now = nowIso();
   const id = crypto.randomUUID();
   await db.run(
-    "INSERT INTO conversations (id, title, mode, agent, model, sdk_session_id, allowed_tools, archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, '[]', 0, ?, ?)",
-    [id, input.title || "Nova conversa", input.mode, input.agent, input.model, now, now]
+    "INSERT INTO conversations (id, title, mode, agent, model, sdk_session_id, allowed_tools, archived, project_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NULL, '[]', 0, ?, ?, ?)",
+    [id, input.title || "Nova conversa", input.mode, input.agent, input.model, input.projectId ?? null, now, now]
   );
   return (await getConversation(id))!;
 }
@@ -102,30 +104,31 @@ export async function listConversations(mode: "chat" | "contexto" | "todas", lim
   return rows.map(toConv);
 }
 
-export type ConversationPreview = Conversation & { preview: string; previewRole: string | null };
+export type ConversationPreview = Conversation & { preview: string; previewRole: string | null; project_name: string | null };
 
 /** Lista da coluna lateral: conversas com a última mensagem, como no OpenBot. */
-export async function listConversationPreviews(limit = 60, q = ""): Promise<ConversationPreview[]> {
+export async function listConversationPreviews(limit = 60, q = "", projectId = ""): Promise<ConversationPreview[]> {
   const db = await getDb();
   const like = `%${q.replace(/[%_]/g, "")}%`;
-  const rows = await db.all<ConvRow & { preview: string | null; preview_role: string | null }>(
-    `SELECT c.*,
+  const rows = await db.all<ConvRow & { preview: string | null; preview_role: string | null; project_name: string | null }>(
+    `SELECT c.*, (SELECT p.name FROM projects p WHERE p.id = c.project_id) AS project_name,
        (SELECT m.content FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS preview,
        (SELECT m.role FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS preview_role
      FROM conversations c
-     WHERE c.archived = 0 ${q ? "AND (c.title LIKE ? OR EXISTS (SELECT 1 FROM messages m2 WHERE m2.conversation_id = c.id AND m2.content LIKE ?))" : ""}
+     WHERE c.archived = 0 ${projectId ? "AND c.project_id = ?" : ""} ${q ? "AND (c.title LIKE ? OR EXISTS (SELECT 1 FROM messages m2 WHERE m2.conversation_id = c.id AND m2.content LIKE ?))" : ""}
      ORDER BY c.updated_at DESC LIMIT ?`,
-    q ? [like, like, limit] : [limit]
+    [...(projectId ? [projectId] : []), ...(q ? [like, like] : []), limit]
   );
-  return rows.map((r) => ({ ...toConv(r), preview: (r.preview ?? "").replace(/\s+/g, " ").slice(0, 140), previewRole: r.preview_role }));
+  return rows.map((r) => ({ ...toConv(r), preview: (r.preview ?? "").replace(/\s+/g, " ").slice(0, 140), previewRole: r.preview_role, project_name: r.project_name }));
 }
 
-export async function updateConversation(id: string, patch: Partial<Pick<Conversation, "title" | "model" | "sdk_session_id" | "allowed_tools" | "route" | "provider">>): Promise<void> {
+export async function updateConversation(id: string, patch: Partial<Pick<Conversation, "title" | "model" | "sdk_session_id" | "allowed_tools" | "route" | "provider" | "project_id">>): Promise<void> {
   const db = await getDb();
   const sets: string[] = ["updated_at = ?"];
   const params: unknown[] = [nowIso()];
   if (patch.title !== undefined) (sets.push("title = ?"), params.push(patch.title.slice(0, 120)));
   if (patch.model !== undefined) (sets.push("model = ?"), params.push(patch.model));
+  if (patch.project_id !== undefined) (sets.push("project_id = ?"), params.push(patch.project_id || null));
   if (patch.sdk_session_id !== undefined) (sets.push("sdk_session_id = ?"), params.push(patch.sdk_session_id));
   if (patch.allowed_tools !== undefined) (sets.push("allowed_tools = ?"), params.push(JSON.stringify(patch.allowed_tools)));
   if (patch.route !== undefined) (sets.push("route = ?"), params.push(patch.route ? JSON.stringify(patch.route) : null));

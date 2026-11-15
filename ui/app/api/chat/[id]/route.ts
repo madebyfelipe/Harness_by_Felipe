@@ -1,6 +1,7 @@
 import { archiveConversation, getConversation, listMessages, updateConversation } from "@/lib/chat";
 import { fail, guard, json, readJson, str } from "@/lib/http";
 import { isKnownModel } from "@/lib/models";
+import { getProject } from "@/lib/projects";
 import { getProvider } from "@/lib/providers";
 import { activeRun, stopRun } from "@/lib/runner";
 
@@ -30,7 +31,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     provider = str(body.provider, 60);
     if (provider && !(await getProvider(provider))) return fail("Provedor não encontrado.");
   }
-  await updateConversation(id, { ...(model ? { model } : {}), ...(title ? { title } : {}), ...(provider !== undefined ? { provider } : {}) });
+  let project_id: string | undefined;
+  if (typeof body.project === "string") {
+    const pid = str(body.project, 60);
+    if (pid && !(await getProject(pid))) return fail("Projeto não encontrado.");
+    project_id = pid ? (await getProject(pid))!.id : "";
+  }
+  await updateConversation(id, { ...(project_id !== undefined ? { project_id } : {}), ...(model ? { model } : {}), ...(title ? { title } : {}), ...(provider !== undefined ? { provider } : {}) });
   return json({ conversation: await getConversation(id) });
 }
 
