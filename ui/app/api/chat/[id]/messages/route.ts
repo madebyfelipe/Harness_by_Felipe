@@ -1,7 +1,8 @@
 import { addMessage, getConversation, listMessages, updateConversation } from "@/lib/chat";
 import { fail, guard, json, readJson, str } from "@/lib/http";
 import { writeNotes } from "@/lib/notes";
-import { startRun } from "@/lib/runner";
+import { enqueue } from "@/lib/queue";
+import { activeRun, startRun } from "@/lib/runner";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const g = await guard(req);
@@ -32,6 +33,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     return json({ userMessage, reply });
   }
 
+  // Ainda rodando (ou fechando): a mensagem entra na fila e sai quando terminar.
+  if (activeRun(id)?.status === "running" && text && !attachmentIds.length) return json({ queued: await enqueue(id, text) });
   try {
     const started = await startRun({ conversation, text: text || "Veja os anexos.", attachmentIds, audio: body.audio === true });
     return json(started);

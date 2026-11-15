@@ -494,7 +494,15 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
     stickRef.current = true;
     try {
       const c = await ensureConversation();
-      const r = await api<{ userMessage: Message; reply?: Message }>(`/api/chat/${c.id}/messages`, { body: { text: body, attachmentIds: files.map((f) => f.id), audio } });
+      const r = await api<{ userMessage: Message; reply?: Message; queued?: unknown }>(`/api/chat/${c.id}/messages`, { body: { text: body, attachmentIds: files.map((f) => f.id), audio } });
+      if (r.queued) {
+        // A execução anterior ainda estava fechando: entrou na fila.
+        if (override === undefined) setText("");
+        setRunning(false);
+        loadQueue(c.id);
+        setAfterEnd((n) => n + 1);
+        return;
+      }
       if (!messages.length) setTitle(body.replace(/^\s*fb\s*:\s*/i, "").slice(0, 70) || title);
       setMessages((m) => [...m, r.userMessage, ...(r.reply ? [r.reply] : [])]);
       if (override === undefined) setText("");
@@ -640,270 +648,9 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const pendingAsks = asks.filter((a) => a.status === "pending");
   const empty = !messages.length && !running;
 
-  return (
-    <div className={`chatshell${side ? " chatshell--side" : ""}`}>
-    <div className="chat">
-      <header className="chat__head">
-        <a className="rail__btn chat__back" href={backHref} aria-label="Voltar para a lista">
-          <IconBack />
-        </a>
-        <div className="chat__title">
-          <span className="kicker">
-            {project ? (
-              <>
-                <a className="chat__proj" href={`/projetos/${project.slug}`}>
-                  {project.name}
-                </a>{" "}
-                ·{" "}
-              </>
-            ) : null}
-            {headAgent}
-          </span>
-          <strong>{title}</strong>
-        </div>
-        <div className="chat__modelbar">
-          <ModelPicker
-            models={models}
-            providers={providers}
-            model={model}
-            provider={provider}
-            disabled={running}
-            autoNote={isAuto && !isContext ? "Na primeira mensagem a triagem escolhe o modelo; este vale para as seguintes e para subir de modelo." : undefined}
-            onModel={(id) => void changeModel(id)}
-            onProvider={(id) => void changeProvider(id)}
-          />
-        </div>
-        {running ? (
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => conv && void api(`/api/chat/${conv.id}/stop`, { method: "POST" }).catch(() => undefined)}>
-            Parar
-          </button>
-        ) : hasAnswer && upper ? (
-          <button type="button" className="btn btn--ghost btn--sm" title={`Refaz a última resposta com ${upper.label}`} onClick={() => setRedoOpen((o) => !o)}>
-            Subir de modelo
-          </button>
-        ) : null}
-        <button type="button" className={`rail__btn${side ? " rail__btn--on" : ""}`} aria-label="Painel do navegador" aria-pressed={side} title="Painel do navegador" onClick={() => toggleSide()}>
-          <IconPanel />
-        </button>
-        <details className="pop">
-          <summary className="rail__btn" aria-label="Mais opções" title="Mais opções">
-            <IconMore />
-          </summary>
-          <div className="pop__panel">
-            {!isContext ? (
-              <>
-                <label className="label" htmlFor="conv-project">
-                  Projeto
-                </label>
-                <select id="conv-project" className="field field--sm" value={projectSel ?? ""} onChange={(e) => void changeProject(e.target.value)}>
-                  <option value="">Sem projeto</option>
-                  {projects.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.name}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : null}
-            <label className="row small" style={{ gap: 6 }}>
-              <input
-                type="checkbox"
-                data-testid="auto-approve"
-                checked={autoApprove ?? false}
-                disabled={autoApprove === null}
-                onChange={async (e) => {
-                  const r = await api<{ autoApprove: boolean }>("/api/config", { body: { autoApprove: e.target.checked } }).catch(() => null);
-                  if (r) setAutoApprove(r.autoApprove);
-                }}
-              />
-              Aprovar sozinho o que é seguro
-            </label>
-            <label className="row small" style={{ gap: 6 }}>
-              <input
-                type="checkbox"
-                data-testid="browser-auto"
-                checked={browserAuto ?? false}
-                disabled={browserAuto === null}
-                onChange={async (e) => {
-                  const r = await api<{ browserAuto: boolean }>("/api/config", { body: { browserAuto: e.target.checked } }).catch(() => null);
-                  if (r) setBrowserAuto(r.browserAuto ?? false);
-                }}
-              />
-              Navegador: deixar o agente agir sozinho (fica registrado)
-            </label>
-            <p className="small muted">Leitura, git local e arquivos de conteúdo rodam sem perguntar. Apagar, enviar, publicar, instalar e mexer em agentes ou rotinas continuam pedindo você.</p>
-            <a className="link small" href="/provedores">
-              Gerenciar provedores
-            </a>
-            <a className="link small" href="/agentes">
-              Falar direto com um agente
-            </a>
-            {conv ? (
-              <button
-                type="button"
-                className="link small"
-                onClick={async () => {
-                  if (!window.confirm("Arquivar esta conversa? Ela sai da lista.")) return;
-                  await api(`/api/chat/${conv.id}`, { method: "DELETE" }).catch(() => undefined);
-                  window.location.href = "/";
-                }}
-              >
-                Arquivar conversa
-              </button>
-            ) : null}
-          </div>
-        </details>
-      </header>
-
-      <div
-        className="chat__scroll"
-        ref={scrollRef}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-        }}
-      >
-        <div className="chat__inner" aria-live="polite">
-          {empty ? (
-            <div className="hello">
-              {isContext ? (
-                <>
-                  <p className="h2">Pergunte sobre o negócio.</p>
-                  <p className="muted">A resposta vem só dos arquivos .md do repositório, com o arquivo citado. Se não estiver lá, ele diz que não está no contexto.</p>
-                </>
-              ) : (
-                <>
-                  <Welcome
-                    projectName={project?.name}
-                    onPick={(t) => {
-                      setText(t);
-                      requestAnimationFrame(() => {
-                        taRef.current?.focus();
-                        taRef.current?.setSelectionRange(t.length, t.length);
-                      });
-                    }}
-                  />
-                </>
-              )}
-            </div>
-          ) : null}
-
-          {messages.map((m) =>
-            m.role === "user" ? (
-              <article key={m.id} className="msg msg--user">
-                <div className="msg__body">
-                  {m.meta.audio ? <span className="kicker kicker--plain">áudio · </span> : null}
-                  {m.meta.redo ? <span className="kicker kicker--plain">subir de modelo · </span> : null}
-                  {m.content}
-                </div>
-                {conv && m.meta.attachments?.some(isImage) ? <Gallery cid={conv.id} items={m.meta.attachments.filter(isImage)} onOpen={(images, start) => setLb({ images, start })} /> : null}
-                {m.meta.attachments?.some((a) => !isImage(a)) ? (
-                  <div className="tags">
-                    {m.meta.attachments.filter((a) => !isImage(a)).map((a) => (
-                      <span className="tag" key={a.id}>
-                        {a.name} · {fmtSize(a.size)}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </article>
-            ) : (
-              <article key={m.id} className="msg">
-                {m.meta.triage ? <TriageCard t={m.meta.triage} modelLabel={label} /> : null}
-                <span className="kicker">
-                  {agentName(m.meta.agent ?? (isContext ? "contexto" : conv?.agent ?? "auto"))}
-                  {m.meta.model ? ` · ${label(m.meta.model)}` : ""}
-                </span>
-                {m.content ? (
-                  <div className="msg__bubble">
-                    <Markdown text={m.content} />
-                  </div>
-                ) : null}
-                {conv && m.meta.attachments?.some(isImage) ? <Gallery cid={conv.id} items={m.meta.attachments.filter(isImage)} onOpen={(images, start) => setLb({ images, start })} /> : null}
-                {m.meta.error ? (
-                  <p className="notice" role="alert">
-                    {m.meta.error}
-                  </p>
-                ) : null}
-                {m.meta.stopped ? <p className="notice notice--plain">Execução parada por você.</p> : null}
-                {m.meta.trocas?.length ? <p className="small muted">Troca de conta: {m.meta.trocas.join("; ")}</p> : null}
-                <Steps tools={m.meta.tools ?? []} />
-                <p className="msg__meta">
-                  <span>{[fmtSecs(m.meta.durationMs), fmtCost(m.meta.costUsd), fmtTokens((m.meta.inputTokens ?? 0) + (m.meta.outputTokens ?? 0)), m.meta.conta ?? m.meta.auth].filter(Boolean).join(" · ")}</span>
-                  {!m.meta.feedback ? <FeedbackRow onde={`Central · chat · ${m.meta.agent ?? ""} ${label(m.meta.model)} · "${title.slice(0, 60)}"`} /> : null}
-                </p>
-              </article>
-            )
-          )}
-
-          {running ? (
-            <article className="msg" data-testid="live">
-              <LiveLine
-                since={since}
-                label={
-                  pendingApprovals.length || pendingAsks.length
-                    ? "Esperando você"
-                    : triaging
-                      ? "Triagem · lendo o pedido e escolhendo agente e modelo…"
-                      : `${liveAgent ? `${agentName(liveAgent.agent)} (${label(liveAgent.model)}) · ` : ""}${activity || "Trabalhando…"}`
-                }
-              />
-              {switchNote ? <p className="small muted">{switchNote}</p> : null}
-              {liveTriage || liveTools.length || thought ? (
-                <details className="fold live__more">
-                  <summary>
-                    Detalhes{liveTools.length ? ` · ${liveTools.length} ${liveTools.length === 1 ? "ação" : "ações"}` : ""}
-                  </summary>
-                  {liveTriage ? <TriageCard t={liveTriage} modelLabel={label} /> : null}
-                  {thought ? <p className="small muted live__thought">{thought.slice(-1200)}</p> : null}
-                  <Steps tools={liveTools} live />
-                </details>
-              ) : null}
-              {liveText ? (
-                <div className="msg__bubble">
-                  <Markdown text={liveText} />
-                </div>
-              ) : null}
-              {conv && liveImages.length ? <Gallery cid={conv.id} items={liveImages} onOpen={(images, start) => setLb({ images, start })} /> : null}
-              {pendingApprovals.map((a) => (
-                <div className="approval" key={a.id} role="group" aria-label="Pedido de aprovação">
-                  <span className="kicker">Precisa de você · {a.agent}</span>
-                  <p>
-                    <strong>{a.tool}</strong>
-                  </p>
-                  {a.summary ? <pre className="pre">{a.summary}</pre> : null}
-                  {a.motivo && (autoApprove || a.semSempre) ? <p className="small muted">Perguntei porque: {a.motivo}.</p> : null}
-                  <div className="row">
-                    <button type="button" className="btn btn--sm" onClick={() => void decide(a.id, "allow")}>
-                      Permitir
-                    </button>
-                    {a.semSempre ? null : (
-                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "allow_always")}>
-                        Sempre nesta conversa
-                      </button>
-                    )}
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "deny")}>
-                      Negar
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {pendingAsks.map((a) => (
-                <AskCard key={a.id} ask={a} onError={setError} />
-              ))}
-
-            </article>
-          ) : null}
-
-          {error ? (
-            <p className="notice" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="composer">
+  const hero = empty && !isContext;
+  const composerEl = (
+      <div className={`composer${hero ? " composer--hero" : ""}`}>
         <div className="composer__inner">
           {queue.length ? (
             <ul className="pending" aria-label="Mensagens pendentes">
@@ -1040,6 +787,11 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
                 )}
               </p>
             )}
+            {hero ? (
+              <span className="composer__hint">
+                <span aria-hidden="true">✳</span> {label(model)} · acessa agentes, projetos e apps conectados · <code>@</code> para chamar
+              </span>
+            ) : null}
             {rec.state === "idle" ? <ContextMeter ctx={liveCtx ?? lastCtx} onNewChat={() => (window.location.href = "/")} /> : null}
             {!isContext ? (
               <button
@@ -1070,6 +822,273 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
           </div>
         </div>
       </div>
+  );
+
+  return (
+    <div className={`chatshell${side ? " chatshell--side" : ""}`}>
+    <div className="chat">
+      <header className="chat__head">
+        <a className="rail__btn chat__back" href={backHref} aria-label="Voltar para a lista">
+          <IconBack />
+        </a>
+        <div className="chat__title">
+          <span className="kicker">
+            {project ? (
+              <>
+                <a className="chat__proj" href={`/projetos/${project.slug}`}>
+                  {project.name}
+                </a>{" "}
+                ·{" "}
+              </>
+            ) : null}
+            {headAgent}
+          </span>
+          <strong>{title}</strong>
+        </div>
+        <div className="chat__modelbar">
+          <ModelPicker
+            models={models}
+            providers={providers}
+            model={model}
+            provider={provider}
+            disabled={running}
+            autoNote={isAuto && !isContext ? "Na primeira mensagem a triagem escolhe o modelo; este vale para as seguintes e para subir de modelo." : undefined}
+            onModel={(id) => void changeModel(id)}
+            onProvider={(id) => void changeProvider(id)}
+          />
+        </div>
+        {running ? (
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => conv && void api(`/api/chat/${conv.id}/stop`, { method: "POST" }).catch(() => undefined)}>
+            Parar
+          </button>
+        ) : hasAnswer && upper ? (
+          <button type="button" className="btn btn--ghost btn--sm" title={`Refaz a última resposta com ${upper.label}`} onClick={() => setRedoOpen((o) => !o)}>
+            Subir de modelo
+          </button>
+        ) : null}
+        <button type="button" className={`rail__btn${side ? " rail__btn--on" : ""}`} aria-label="Painel do navegador" aria-pressed={side} title="Painel do navegador" onClick={() => toggleSide()}>
+          <IconPanel />
+        </button>
+        <details className="pop">
+          <summary className="rail__btn" aria-label="Mais opções" title="Mais opções">
+            <IconMore />
+          </summary>
+          <div className="pop__panel">
+            {!isContext ? (
+              <>
+                <label className="label" htmlFor="conv-project">
+                  Projeto
+                </label>
+                <select id="conv-project" className="field field--sm" value={projectSel ?? ""} onChange={(e) => void changeProject(e.target.value)}>
+                  <option value="">Sem projeto</option>
+                  {projects.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
+            <label className="row small" style={{ gap: 6 }}>
+              <input
+                type="checkbox"
+                data-testid="auto-approve"
+                checked={autoApprove ?? false}
+                disabled={autoApprove === null}
+                onChange={async (e) => {
+                  const r = await api<{ autoApprove: boolean }>("/api/config", { body: { autoApprove: e.target.checked } }).catch(() => null);
+                  if (r) setAutoApprove(r.autoApprove);
+                }}
+              />
+              Aprovar sozinho o que é seguro
+            </label>
+            <label className="row small" style={{ gap: 6 }}>
+              <input
+                type="checkbox"
+                data-testid="browser-auto"
+                checked={browserAuto ?? false}
+                disabled={browserAuto === null}
+                onChange={async (e) => {
+                  const r = await api<{ browserAuto: boolean }>("/api/config", { body: { browserAuto: e.target.checked } }).catch(() => null);
+                  if (r) setBrowserAuto(r.browserAuto ?? false);
+                }}
+              />
+              Navegador: deixar o agente agir sozinho (fica registrado)
+            </label>
+            <p className="small muted">Leitura, git local e arquivos de conteúdo rodam sem perguntar. Apagar, enviar, publicar, instalar e mexer em agentes ou rotinas continuam pedindo você.</p>
+            <a className="link small" href="/provedores">
+              Gerenciar provedores
+            </a>
+            <a className="link small" href="/agentes">
+              Falar direto com um agente
+            </a>
+            {conv ? (
+              <button
+                type="button"
+                className="link small"
+                onClick={async () => {
+                  if (!window.confirm("Arquivar esta conversa? Ela sai da lista.")) return;
+                  await api(`/api/chat/${conv.id}`, { method: "DELETE" }).catch(() => undefined);
+                  window.location.href = "/";
+                }}
+              >
+                Arquivar conversa
+              </button>
+            ) : null}
+          </div>
+        </details>
+      </header>
+
+      <div
+        className="chat__scroll"
+        ref={scrollRef}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        }}
+      >
+        <div className="chat__inner" aria-live="polite">
+          {empty ? (
+            <div className="hello">
+              {isContext ? (
+                <>
+                  <p className="h2">Pergunte sobre o negócio.</p>
+                  <p className="muted">A resposta vem só dos arquivos .md do repositório, com o arquivo citado. Se não estiver lá, ele diz que não está no contexto.</p>
+                </>
+              ) : (
+                <>
+                  <Welcome
+                    composer={composerEl}
+                    projectName={project?.name}
+                    onPick={(t) => {
+                      setText(t);
+                      requestAnimationFrame(() => {
+                        taRef.current?.focus();
+                        taRef.current?.setSelectionRange(t.length, t.length);
+                      });
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          ) : null}
+
+          {messages.map((m) =>
+            m.role === "user" ? (
+              <article key={m.id} className="msg msg--user">
+                <div className="msg__body">
+                  {m.meta.audio ? <span className="kicker kicker--plain">áudio · </span> : null}
+                  {m.meta.redo ? <span className="kicker kicker--plain">subir de modelo · </span> : null}
+                  {m.content}
+                </div>
+                {conv && m.meta.attachments?.some(isImage) ? <Gallery cid={conv.id} items={m.meta.attachments.filter(isImage)} onOpen={(images, start) => setLb({ images, start })} /> : null}
+                {m.meta.attachments?.some((a) => !isImage(a)) ? (
+                  <div className="tags">
+                    {m.meta.attachments.filter((a) => !isImage(a)).map((a) => (
+                      <span className="tag" key={a.id}>
+                        {a.name} · {fmtSize(a.size)}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            ) : (
+              <article key={m.id} className="msg">
+                {m.meta.triage ? <TriageCard t={m.meta.triage} modelLabel={label} /> : null}
+                <span className="kicker">
+                  {agentName(m.meta.agent ?? (isContext ? "contexto" : conv?.agent ?? "auto"))}
+                  {m.meta.model ? ` · ${label(m.meta.model)}` : ""}
+                </span>
+                {m.content ? (
+                  <div className="msg__bubble">
+                    <Markdown text={m.content} />
+                  </div>
+                ) : null}
+                {conv && m.meta.attachments?.some(isImage) ? <Gallery cid={conv.id} items={m.meta.attachments.filter(isImage)} onOpen={(images, start) => setLb({ images, start })} /> : null}
+                {m.meta.error ? (
+                  <p className="notice" role="alert">
+                    {m.meta.error}
+                  </p>
+                ) : null}
+                {m.meta.stopped ? <p className="notice notice--plain">Execução parada por você.</p> : null}
+                {m.meta.trocas?.length ? <p className="small muted">Troca de conta: {m.meta.trocas.join("; ")}</p> : null}
+                <Steps tools={m.meta.tools ?? []} />
+                <p className="msg__meta">
+                  <span>{[fmtSecs(m.meta.durationMs), fmtCost(m.meta.costUsd), fmtTokens((m.meta.inputTokens ?? 0) + (m.meta.outputTokens ?? 0)), m.meta.conta ?? m.meta.auth].filter(Boolean).join(" · ")}</span>
+                  {!m.meta.feedback ? <FeedbackRow onde={`Central · chat · ${m.meta.agent ?? ""} ${label(m.meta.model)} · "${title.slice(0, 60)}"`} /> : null}
+                </p>
+              </article>
+            )
+          )}
+
+          {running ? (
+            <article className="msg" data-testid="live">
+              <LiveLine
+                since={since}
+                label={
+                  pendingApprovals.length || pendingAsks.length
+                    ? "Esperando você"
+                    : triaging
+                      ? "Triagem · lendo o pedido e escolhendo agente e modelo…"
+                      : `${liveAgent ? `${agentName(liveAgent.agent)} (${label(liveAgent.model)}) · ` : ""}${activity || "Trabalhando…"}`
+                }
+              />
+              {switchNote ? <p className="small muted">{switchNote}</p> : null}
+              {liveTriage || liveTools.length || thought ? (
+                <details className="fold live__more">
+                  <summary>
+                    Detalhes{liveTools.length ? ` · ${liveTools.length} ${liveTools.length === 1 ? "ação" : "ações"}` : ""}
+                  </summary>
+                  {liveTriage ? <TriageCard t={liveTriage} modelLabel={label} /> : null}
+                  {thought ? <p className="small muted live__thought">{thought.slice(-1200)}</p> : null}
+                  <Steps tools={liveTools} live />
+                </details>
+              ) : null}
+              {liveText ? (
+                <div className="msg__bubble">
+                  <Markdown text={liveText} />
+                </div>
+              ) : null}
+              {conv && liveImages.length ? <Gallery cid={conv.id} items={liveImages} onOpen={(images, start) => setLb({ images, start })} /> : null}
+              {pendingApprovals.map((a) => (
+                <div className="approval" key={a.id} role="group" aria-label="Pedido de aprovação">
+                  <span className="kicker">Precisa de você · {a.agent}</span>
+                  <p>
+                    <strong>{a.tool}</strong>
+                  </p>
+                  {a.summary ? <pre className="pre">{a.summary}</pre> : null}
+                  {a.motivo && (autoApprove || a.semSempre) ? <p className="small muted">Perguntei porque: {a.motivo}.</p> : null}
+                  <div className="row">
+                    <button type="button" className="btn btn--sm" onClick={() => void decide(a.id, "allow")}>
+                      Permitir
+                    </button>
+                    {a.semSempre ? null : (
+                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "allow_always")}>
+                        Sempre nesta conversa
+                      </button>
+                    )}
+                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "deny")}>
+                      Negar
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {pendingAsks.map((a) => (
+                <AskCard key={a.id} ask={a} onError={setError} />
+              ))}
+
+            </article>
+          ) : null}
+
+          {error ? (
+            <p className="notice" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {hero ? null : composerEl}
     </div>
     {side ? <BrowserSide onClose={() => toggleSide(false)} /> : null}
     {lb ? <Lightbox images={lb.images} start={lb.start} onClose={() => setLb(null)} /> : null}

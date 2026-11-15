@@ -3380,3 +3380,67 @@ details.triage[open] {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* caixa no meio da tela inicial (como a referência) */
+.composer--hero {
+  padding: 4px 0 0;
+  background: transparent;
+}
+.composer--hero .composer__inner {
+  max-width: none;
+}
+.composer--hero .composer__box {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 6px;
+  padding: 14px 12px 10px 16px;
+  border-radius: 22px;
+  background: var(--gray-100);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+.composer--hero .composer__box textarea {
+  order: -1;
+  flex: 1 0 100%;
+  min-height: 64px;
+  padding: 2px 2px 8px;
+  font-size: 1rem;
+}
+.composer--hero .composer__box > .round:first-of-type {
+  width: 32px;
+  height: 32px;
+}
+.composer--hero .composer__hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.composer--hero .composer__hint > span {
+  color: #d97757;
+}
+.composer--hero .composer__box > * {
+  align-self: center;
+  margin-bottom: 0;
+}
+.composer--hero .mention {
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+.composer--hero .sendpill__menu {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+.composer--hero .ctxm__pop {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+.sendpill__form > button.btn--on {
+  display: inline-flex;
+  justify-content: center;
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--on-red);
+}

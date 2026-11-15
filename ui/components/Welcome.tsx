@@ -39,7 +39,7 @@ function saudacao(): string {
 }
 
 /** Tela inicial do chat: data e fila, saudação e atalhos em pílula. */
-export function Welcome({ projectName, onPick }: { projectName?: string; onPick: (text: string) => void }) {
+export function Welcome({ projectName, onPick, composer }: { projectName?: string; onPick: (text: string) => void; composer?: React.ReactNode }) {
   const [hello, setHello] = useState("Olá");
   const [day, setDay] = useState("");
   const [fila, setFila] = useState<number | null>(null);
@@ -74,6 +74,7 @@ export function Welcome({ projectName, onPick }: { projectName?: string; onPick:
         {hello}, Felipe.
         <span>{projectName ? `O que vamos fazer em ${projectName}?` : "O que vamos fazer hoje?"}</span>
       </h1>
+      {composer}
       <ul className="welcome__chips">
         {(sug && sug.length ? sug : sug ? CHIPS.slice(0, 6) : []).map((c) => (
           <li key={c.label}>
@@ -86,9 +87,6 @@ export function Welcome({ projectName, onPick }: { projectName?: string; onPick:
           </li>
         ))}
       </ul>
-      <p className="welcome__tip small muted">
-        <code>@</code> chama projeto, agente ou conector · <code>fb:</code> anota feedback · fale pelo microfone na caixa
-      </p>
     </div>
   );
 }
