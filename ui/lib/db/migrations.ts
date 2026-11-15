@@ -196,6 +196,20 @@ export const MIGRATIONS: Migration[] = [
         ended_at TEXT
       )`
     ]
+  },
+  {
+    // Fase 4: escopo do segredo por agente e registro de uso.
+    id: "005_cofre_escopo",
+    statements: [
+      "ALTER TABLE secrets ADD COLUMN agents TEXT",
+      `CREATE TABLE secret_uses (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        agent TEXT NOT NULL,
+        onde TEXT NOT NULL,
+        used_at TEXT NOT NULL
+      )`
+    ]
   }
 ];
 

@@ -109,3 +109,15 @@ export const IconGear = ({ size }: P) => (
     <path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" />
   </svg>
 );
+export const IconKey = ({ size }: P) => (
+  <svg {...s(size)}>
+    <circle cx="7" cy="13" r="3" />
+    <path d="M9.2 10.8 16 4M13.5 6.5l2 2M11.5 8.5l1.5 1.5" />
+  </svg>
+);
+export const IconGlobe = ({ size }: P) => (
+  <svg {...s(size)}>
+    <circle cx="10" cy="10" r="7" />
+    <path d="M3 10h14M10 3c2.2 2 3.2 4.3 3.2 7S12.2 15 10 17c-2.2-2-3.2-4.3-3.2-7S7.8 5 10 3Z" />
+  </svg>
+);

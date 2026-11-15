@@ -9,7 +9,7 @@ import { IconBack, IconMic, IconMore, IconPlus, IconSend, IconStop, IconTool } f
 import { Markdown } from "./Markdown";
 
 type ModelOpt = { id: string; label: string; note: string };
-type Approval = { id: string; tool: string; summary: string; agent: string; motivo?: string; status: "pending" | "approved" | "denied" };
+type Approval = { id: string; tool: string; summary: string; agent: string; motivo?: string; semSempre?: boolean; status: "pending" | "approved" | "denied" };
 type Pending = { id: string; name: string; size: number };
 import { AskCard, type Ask } from "./AskCards";
 type ProviderOpt = { id: string; kind: string; name: string; enabled: boolean; info: { loggedIn?: boolean } };
@@ -401,7 +401,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
     }
   }
 
-  async function upload(list: FileList | null) {
+  async function upload(list: FileList | File[] | null) {
     if (!list?.length) return;
     setUploading(true);
     setError("");
@@ -686,14 +686,16 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                     <strong>{a.tool}</strong>
                   </p>
                   {a.summary ? <pre className="pre">{a.summary}</pre> : null}
-                  {a.motivo && autoApprove ? <p className="small muted">Perguntei porque: {a.motivo}.</p> : null}
+                  {a.motivo && (autoApprove || a.semSempre) ? <p className="small muted">Perguntei porque: {a.motivo}.</p> : null}
                   <div className="row">
                     <button type="button" className="btn btn--sm" onClick={() => void decide(a.id, "allow")}>
                       Permitir
                     </button>
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "allow_always")}>
-                      Sempre nesta conversa
-                    </button>
+                    {a.semSempre ? null : (
+                      <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "allow_always")}>
+                        Sempre nesta conversa
+                      </button>
+                    )}
                     <button type="button" className="btn btn--ghost btn--sm" onClick={() => void decide(a.id, "deny")}>
                       Negar
                     </button>
@@ -746,7 +748,17 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
               ))}
             </div>
           ) : null}
-          <div className={`composer__box${rec.state === "rec" ? " composer__box--rec" : ""}`}>
+          <div
+            className={`composer__box${rec.state === "rec" ? " composer__box--rec" : ""}`}
+            onDragOver={(e) => {
+              if (!isContext && e.dataTransfer.types.includes("Files")) e.preventDefault();
+            }}
+            onDrop={(e) => {
+              if (isContext || !e.dataTransfer.files.length) return;
+              e.preventDefault();
+              void upload(Array.from(e.dataTransfer.files));
+            }}
+          >
             {!isContext ? (
               <>
                 <input ref={fileRef} type="file" multiple hidden onChange={(e) => void upload(e.target.files)} data-testid="file-input" />
@@ -767,6 +779,17 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                   value={text}
                   placeholder={isContext ? "Qual é a oferta atual do site?" : "Fale ou escreva…"}
                   onChange={(e) => setText(e.target.value)}
+                  onPaste={(e) => {
+                    // Imagem ou arquivo copiado: vira anexo. Texto segue o colar normal.
+                    const pasted = Array.from(e.clipboardData?.items ?? [])
+                      .filter((i) => i.kind === "file")
+                      .map((i) => i.getAsFile())
+                      .filter((f): f is File => Boolean(f));
+                    if (!pasted.length || isContext) return;
+                    e.preventDefault();
+                    const stamp = new Date().toTimeString().slice(0, 8).replace(/:/g, "");
+                    void upload(pasted.map((f, i) => (/^image\.\w+$/.test(f.name) ? new File([f], `colado-${stamp}${pasted.length > 1 ? `-${i + 1}` : ""}.${f.name.split(".").pop()}`, { type: f.type }) : f)));
+                  }}
                   onKeyDown={(e) => {
                     // No computador, Enter envia; no celular, Enter quebra linha e o botão envia.
                     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !window.matchMedia("(pointer: coarse)").matches) {

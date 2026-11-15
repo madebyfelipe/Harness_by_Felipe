@@ -16,7 +16,7 @@ const TOOL_RE = /^([A-Za-z][A-Za-z0-9]*|mcp__[A-Za-z0-9_-]+__[A-Za-z0-9_*-]+)$/;
 /** Sem estes a Central não funciona: dá para editar, não para excluir nem pausar. */
 export const PROTECTED = [ORCHESTRATOR, "triagem", "guardiao"];
 
-export type AgentInput = { name: string; description: string; model: string; tools: string[]; prompt: string; paused: boolean };
+export type AgentInput = { name: string; description: string; model: string; tools: string[]; prompt: string; paused: boolean; browser: boolean };
 
 export function normalizeAgent(raw: unknown): AgentInput {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -35,7 +35,7 @@ export function normalizeAgent(raw: unknown): AgentInput {
   if (prompt.length > 60_000) throw new Error("Prompt grande demais (máx. 60 mil caracteres).");
   const paused = r.paused === true;
   if (paused && PROTECTED.includes(name)) throw new Error(`O agente ${name} não pode ser pausado: a Central depende dele.`);
-  return { name, description: description.slice(0, 600), model: model.alias, tools: [...new Set(tools)], prompt, paused };
+  return { name, description: description.slice(0, 600), model: model.alias, tools: [...new Set(tools)], prompt, paused, browser: r.browser === true };
 }
 
 export async function saveAgent(a: AgentInput, who: string, isNew: boolean): Promise<CommitResult> {
@@ -55,6 +55,8 @@ export async function saveAgent(a: AgentInput, who: string, isNew: boolean): Pro
     else delete data.tools;
     if (a.paused) data.pausado = true;
     else delete data.pausado;
+    if (a.browser) data.navegador = true;
+    else delete data.navegador;
     text = stringifyFrontmatter(data, a.prompt + "\n");
   }
   fs.mkdirSync(path.dirname(abs), { recursive: true });

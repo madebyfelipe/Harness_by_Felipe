@@ -1974,3 +1974,41 @@ details.triage[open] {
   border-radius: var(--radius-lg);
   background: var(--gray-100);
 }
+
+/* ---------- navegadores (tela ao vivo por agente) ---------- */
+
+.browsers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 28px;
+}
+.browser {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.browser__head {
+  align-items: center;
+}
+.browser__url {
+  min-width: 0;
+  max-width: 46ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.browser__screen {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--gray-100);
+}
+.browser__screen--live {
+  cursor: crosshair;
+  outline: 2px solid var(--red-ink);
+  outline-offset: 2px;
+}

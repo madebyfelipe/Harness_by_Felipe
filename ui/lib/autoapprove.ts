@@ -97,7 +97,11 @@ export function classifyTool(name: string, input: unknown, cwd: string): Verdict
   }
   const m = /^mcp__(.+?)__(.+)$/.exec(name);
   if (m) {
-    if (m[1] === "central") return ask("cria configuração da Central");
+    if (m[1] === "central") {
+      if (/^navegador_(abrir|ler|captura|fechar)$/.test(m[2])) return ok("navegador: só abre e lê");
+      if (/^navegador_/.test(m[2])) return ask("ação num site (pode enviar formulário, comprar ou publicar)");
+      return ask("cria configuração da Central");
+    }
     return MCP_READ.test(m[2]) ? ok("consulta em app conectado") : ask("ação em app conectado (pode criar, enviar ou apagar)");
   }
   return ask("ferramenta sem regra de segurança");

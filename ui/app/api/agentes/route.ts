@@ -17,6 +17,7 @@ export async function GET(req: Request) {
       tools: a.tools,
       prompt: a.prompt,
       paused: a.paused,
+      browser: a.browser,
       file: a.file,
       protected: PROTECTED.includes(a.name),
       apps: connectors.filter((c) => allowedFor(c, a.name)).map((c) => c.titulo)

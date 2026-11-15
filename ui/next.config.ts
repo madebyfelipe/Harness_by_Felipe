@@ -14,7 +14,7 @@ const config: NextConfig = {
   poweredByHeader: false,
   // O runner de agentes, o Postgres e o cliente MCP rodam só no servidor e
   // não devem ser empacotados.
-  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk", "pg", "@modelcontextprotocol/sdk", "@huggingface/transformers", "onnxruntime-node"],
+  serverExternalPackages: ["@anthropic-ai/claude-agent-sdk", "pg", "@modelcontextprotocol/sdk", "@huggingface/transformers", "onnxruntime-node", "playwright-core"],
   turbopack: { root: path.resolve(__dirname) },
   outputFileTracingRoot: path.resolve(__dirname),
   async headers() {

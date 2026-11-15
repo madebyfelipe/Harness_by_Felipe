@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { IconBook, IconBot, IconClock, IconGrid, IconLayers, IconPlug, IconSpark, IconUser } from "./Icons";
+import { IconBook, IconBot, IconClock, IconGlobe, IconGrid, IconKey, IconLayers, IconPlug, IconSpark, IconUser } from "./Icons";
 
 const ITEMS = [
   { href: "/inicio", label: "Visão geral", icon: IconGrid },
@@ -13,6 +13,8 @@ const ITEMS = [
   { href: "/agentes", label: "Agentes", icon: IconBot },
   { href: "/skills", label: "Habilidades", icon: IconSpark },
   { href: "/rotinas", label: "Rotinas", icon: IconClock },
+  { href: "/navegadores", label: "Navegadores", icon: IconGlobe },
+  { href: "/cofre", label: "Cofre", icon: IconKey },
   { href: "/contexto", label: "Contexto", icon: IconBook },
   { href: "/conta", label: "Conta e segurança", icon: IconUser }
 ];

@@ -5,7 +5,7 @@ import { cfg, nowIso } from "./config";
 import { getDb } from "./db";
 import { commitPaths, type CommitResult } from "./git";
 import { listYamlFiles, repoDir } from "./repo";
-import { vaultValue } from "./vault";
+import { secretAllowed, vaultValue } from "./vault";
 
 /*
  * Um conector = um arquivo connectors/<nome>.yaml. O arquivo guarda só o NOME do
@@ -173,6 +173,7 @@ export function mcpServersFor(agent: string): Record<string, { type: "http" | "s
   const out: Record<string, { type: "http" | "sse"; url: string; headers?: Record<string, string> }> = {};
   for (const c of listConnectors().connectors) {
     if (!c.mcp || !allowedFor(c, agent)) continue;
+    if (c.segredo && !secretAllowed(c.segredo, agent)) continue; // o Cofre restringe este segredo a outros agentes
     const secret = resolveSecret(c.segredo);
     if (c.segredo && !secret) continue; // sem segredo o servidor só devolveria 401
     out[c.mcp.nome] = { type: c.mcp.transporte, url: c.mcp.url, ...(secret ? { headers: { Authorization: `Bearer ${secret}` } } : {}) };

@@ -41,6 +41,8 @@ export type MessageMeta = {
   /** Conta/provedor que respondeu (tela Provedores). */
   conta?: string;
   trocas?: string[];
+  /** Execução fechada no arranque porque o servidor reiniciou no meio. */
+  interrupted?: boolean;
 };
 
 /** O que a tela mostra da triagem: resumo, nível, passos e o que foi anotado. */

@@ -165,6 +165,8 @@ const pages: [string, string, string][] = [
   ["/skills", "habilidades", 'h1:has-text("Habilidades")'],
   ["/conectores", "conectores", 'h1:has-text("Apps")'],
   ["/rotinas", "rotinas", 'h1:has-text("Rotinas")'],
+  ["/navegadores", "navegadores", 'h1:has-text("Navegadores")'],
+  ["/cofre", "cofre", 'h1:has-text("Cofre")'],
   ["/provedores", "provedores", "[data-testid=provider-maquina]"],
   ["/conta", "conta", 'h1:has-text("Conta")']
 ];

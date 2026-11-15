@@ -19,6 +19,8 @@ export type AgentDef = {
   isOrchestrator: boolean;
   /** Pausado ou rascunho: aparece na tela, mas a triagem e o orquestrador não o usam. */
   paused: boolean;
+  /** Pode usar o navegador da Central (cabeçalho `navegador: true`; o orquestrador pode por padrão). */
+  browser: boolean;
 };
 
 export type SkillDef = { name: string; description: string; file: string; body: string };
@@ -83,7 +85,8 @@ export function listAgents(): AgentDef[] {
       prompt: body.trim(),
       file: `agents/${f}`,
       isOrchestrator,
-      paused: data.pausado === true
+      paused: data.pausado === true,
+      browser: data.navegador === true || (isOrchestrator && data.navegador !== false)
     });
   }
   return agents.sort((a, b) => Number(b.isOrchestrator) - Number(a.isOrchestrator) || a.name.localeCompare(b.name));

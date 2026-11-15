@@ -5,9 +5,9 @@ import { api } from "./api";
 import { IconPlus } from "./Icons";
 import { NewChatButton } from "./NewChat";
 
-type Agent = { name: string; description: string; model: string; tools: string[]; prompt: string; paused: boolean; file: string; protected: boolean; apps: string[] };
+type Agent = { name: string; description: string; model: string; tools: string[]; prompt: string; paused: boolean; browser: boolean; file: string; protected: boolean; apps: string[] };
 type Model = { alias: string; label: string; note: string };
-type Draft = { name: string; description: string; model: string; tools: string; prompt: string; paused: boolean };
+type Draft = { name: string; description: string; model: string; tools: string; prompt: string; paused: boolean; browser: boolean };
 const CORES = ["#24292F", "#673DE6", "#0079BF", "#2C7A4B", "#B45309", "#6B21A8", "#0F766E", "#9D174D"];
 
 function Form({ initial, isNew, models, locked, onDone, onCancel }: { initial: Draft; isNew: boolean; models: Model[]; locked: boolean; onDone: (note: string) => void; onCancel: () => void }) {
@@ -61,6 +61,9 @@ function Form({ initial, isNew, models, locked, onDone, onCancel }: { initial: D
         Prompt
         <textarea className="field field--sm mono" name="prompt" rows={14} value={d.prompt} onChange={(e) => set("prompt", e.target.value)} placeholder="Você é… Faça… Não faça… Pronto quando…" />
       </label>
+      <label className="row" style={{ gap: 6 }}>
+        <input type="checkbox" checked={d.browser} onChange={(e) => set("browser", e.target.checked)} /> pode usar o navegador da Central
+      </label>
       {!locked ? (
         <label className="row" style={{ gap: 6 }}>
           <input type="checkbox" checked={d.paused} onChange={(e) => set("paused", e.target.checked)} /> pausado (a triagem e o orquestrador não usam)
@@ -84,8 +87,8 @@ function Form({ initial, isNew, models, locked, onDone, onCancel }: { initial: D
   );
 }
 
-const toDraft = (a: Agent): Draft => ({ name: a.name, description: a.description, model: a.model, tools: a.tools.join(", "), prompt: a.prompt, paused: a.paused });
-const EMPTY: Draft = { name: "", description: "", model: "sonnet", tools: "", prompt: "", paused: false };
+const toDraft = (a: Agent): Draft => ({ name: a.name, description: a.description, model: a.model, tools: a.tools.join(", "), prompt: a.prompt, paused: a.paused, browser: a.browser });
+const EMPTY: Draft = { name: "", description: "", model: "sonnet", tools: "", prompt: "", paused: false, browser: false };
 
 export function AgentsPanel() {
   const [agents, setAgents] = useState<Agent[] | null>(null);
