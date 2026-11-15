@@ -32,4 +32,5 @@ Registrar as palavras do Felipe como ele disse. O encaminhamento é preenchido n
 
 ## Registros
 
-_(vazio)_
+- 14/11/2026 · Central · tela / · Chat · Central · ideia · "pode arredondar mais as bordas, está tudo muito quadrado, deixar mais agradável de olhar, etc"
+  → (a encaminhar na triagem semanal)
