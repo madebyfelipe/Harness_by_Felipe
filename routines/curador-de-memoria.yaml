@@ -1,0 +1,27 @@
+# Rotina da Central. Agenda em America/Sao_Paulo. Rotina roda sozinha e reporta depois.
+nome: curador-de-memoria
+titulo: Curador de memória e habilidades
+quando: domingo às 21:00
+cron: 0 21 * * 0
+agente: orquestrador
+modo: vps
+ativa: true
+silencio: false
+whatsapp: true
+limite_minutos: 20
+liberadas:
+  - Read
+  - Glob
+  - Grep
+  - Edit
+  - Write
+instrucoes: |
+  Você é o curador da memória dos agentes (memória + habilidades, no estilo Hermes).
+  1. Leia memoria/*.md (um arquivo por agente).
+  2. Junte entradas repetidas ou quase iguais, mantendo a mais completa; apague o resto com Edit.
+  3. Se uma lição aparecer 2+ vezes (em qualquer agente) e for procedural, crie
+     skills/<slug>/SKILL.md com frontmatter name/description e os passos de "como fazer";
+     troque as linhas repetidas por "ver skill <slug>".
+  4. Cada arquivo: no máximo 40 linhas, frases curtas, sem segredo nem dado de lead.
+  5. Não invente fato novo: só consolide o que está escrito. Não mexa em agents/*.md.
+  Responda em até 6 linhas: quantas entradas juntou, quais skills criou, o que ficou duvidoso.

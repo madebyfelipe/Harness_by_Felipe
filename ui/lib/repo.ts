@@ -21,13 +21,20 @@ export type AgentDef = {
   paused: boolean;
   /** Pode usar o navegador da Central (cabeçalho `navegador: true`; o orquestrador pode por padrão). */
   browser: boolean;
+  /**
+   * Autonomia (cabeçalho `autonomia:`):
+   *  - assistido (padrão): escrita e terminal pedem aprovação;
+   *  - livre: o que o classificador já considera seguro roda sem cartão (fica registrado);
+   *  - consultivo: só lê e responde, não escreve, não roda comando, não delega.
+   */
+  autonomy: "livre" | "assistido" | "consultivo";
 };
 
 export type SkillDef = { name: string; description: string; file: string; body: string };
 export type ContextFile = { file: string; title: string; size: number; updatedAt: string };
 export type SearchHit = { file: string; line: number; text: string; heading: string };
 
-const SKIP_DIRS = new Set(["ui", "node_modules", ".git", ".next", ".claude", "data"]);
+const SKIP_DIRS = new Set(["ui", "node_modules", ".git", ".next", ".claude", "data", "memoria"]);
 
 export function repoDir(): string {
   return cfg().repoDir;
@@ -86,7 +93,11 @@ export function listAgents(): AgentDef[] {
       file: `agents/${f}`,
       isOrchestrator,
       paused: data.pausado === true,
-      browser: data.navegador === true || (isOrchestrator && data.navegador !== false)
+      browser: data.navegador === true || (isOrchestrator && data.navegador !== false),
+      autonomy: (() => {
+        const a = String(data.autonomia ?? "").toLowerCase();
+        return a === "livre" || a === "consultivo" ? (a as "livre" | "consultivo") : "assistido";
+      })()
     });
   }
   return agents.sort((a, b) => Number(b.isOrchestrator) - Number(a.isOrchestrator) || a.name.localeCompare(b.name));

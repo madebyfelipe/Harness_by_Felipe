@@ -1,5 +1,6 @@
 ---
 name: programador
+autonomia: livre
 description: Faz qualquer alteração no site www.madebyfelipe.com.br (repo madebyfelipe/lpfds) — copy, páginas, componentes, posts, correções. Entrega em branch, com build passando.
 tools: Read, Edit, Write, Bash, Glob, Grep, WebFetch
 model: sonnet

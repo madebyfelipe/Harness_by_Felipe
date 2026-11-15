@@ -1,5 +1,6 @@
 ---
 name: analista-mercado
+autonomia: consultivo
 description: Pesquisa preços do mercado de uma iniciativa (por cidade/estado/país) e valida a oferta contra a oferta principal da Made by Felipe. Use antes de abrir uma campanha nova ou mudar preço.
 tools: Read, Write, WebSearch, WebFetch, mcp__Twenty__execute_tool
 model: sonnet

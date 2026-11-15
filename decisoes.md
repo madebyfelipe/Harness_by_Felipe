@@ -4,6 +4,16 @@
 desta lista. Não travar por inconsistência: aplique a mais nova e corrija o arquivo antigo.
 Decisão nova entra **no topo**, com data e motivo.
 
+## 15/11/2026 (madrugada) — memória, crescimento e autonomia dos agentes
+
+| decisão | o que muda |
+|---|---|
+| **Memória durável por agente** (estilo Hermes Agent) | `memoria/<agente>.md` entra no prompt de cada execução; ferramentas `lembrar`, `minha_memoria` e `esquecer`; regras em `memoria/README.md` |
+| **Crescimento automático** | ao fim de execução com 6+ ferramentas ou erro, uma revisão Haiku grava até 3 lições (máx. 1 a cada 20 min por agente); curador semanal liga repetidas e promove lição procedural a `skills/<slug>/SKILL.md` |
+| **Autonomia por agente** | `autonomia: assistido` (padrão), `livre` (o que o classificador já considera seguro roda sem cartão, registrado) e `consultivo` (só lê e responde). Hoje: `programador` e `qa-site` livres; `analista-mercado` consultivo |
+| **Nada de segredo na memória** | filtro recusa texto com cara de chave/senha; segredo continua só no cofre |
+
+
 ## 15/11/2026 (madrugada) — M1 no ar e Fase 5 da Central
 
 | decisão | o que muda |

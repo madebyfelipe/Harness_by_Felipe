@@ -1,5 +1,6 @@
 ---
 name: qa-site
+autonomia: livre
 description: Verifica o site depois de uma mudança ou na rotina semanal — build, axe-core (0 violações), consentimento de cookies, celular e desktop, formulários e se o deploy foi para Produção. Só relata, não corrige.
 tools: Read, Bash, Glob, Grep
 model: sonnet

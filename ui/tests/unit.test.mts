@@ -9,6 +9,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "central-test-"));
 process.env.CENTRAL_DATA_DIR = tmp;
 process.env.CENTRAL_REPO_DIR = path.resolve(import.meta.dirname, "..", "..");
 process.env.CENTRAL_PROJECTS_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "central-projetos-"));
+process.env.CENTRAL_MEMORY_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "central-memoria-"));
 
 const { hotp, verifyTotp, base32Encode, base32Decode, totpCounter } = await import("../lib/totp");
 const { encrypt, decrypt, hashPassword, verifyPassword, safeEqual } = await import("../lib/crypto");
@@ -264,4 +265,25 @@ test("modelo: Planejar liga a escolha da triagem; desligado vale o modelo do sel
   assert.deepEqual((sem.workflow as { passos: { modelo: string }[] }).passos.map((p) => p.modelo), ["claude-fable-5-2", "claude-fable-5-2"], "os passos também");
   const ctx = withUserModel({ agent: "contexto", model: "claude-sonnet-5-5", contexto: true }, "claude-fable-5-2", false);
   assert.equal(ctx.model, "claude-sonnet-5-5", "Modo Contexto mantém o modelo próprio");
+});
+
+test("memória do agente: grava, deduplica, lê com teto e esquece", async () => {
+  const { remember, listMemory, readMemory, forget, memoryFile } = await import("../lib/agent-memory");
+  const ag = "programador-teste";
+  assert.equal(remember(ag, "licao", "curta").added, false, "texto curto não entra");
+  assert.equal(remember(ag, "licao", "  ").added, false);
+  assert.equal(remember(ag, "licao", "Rodar next build antes de push na beta").added, true);
+  assert.equal(remember(ag, "licao", "rodar NEXT build antes de push na beta!").added, false, "quase igual não duplica");
+  assert.equal(remember(ag, "fato", "Deploy do lpfds sai pela branch beta").added, true);
+  assert.equal(remember(ag, "preferencia", "Resposta curta, sem jargão").added, true);
+  assert.equal(listMemory(ag).length, 3);
+  const lido = readMemory(ag, 200);
+  assert.ok(lido.includes("beta"));
+  assert.ok(lido.length <= 200, "respeita o teto de caracteres");
+  assert.ok(!readMemory("ninguem"), "agente sem memória devolve vazio");
+  assert.equal(remember(ag, "licao", "Minha senha é hunter2x").added, false, "parece segredo");
+  assert.equal(forget(ag, "next build"), 1);
+  assert.equal(listMemory(ag).length, 2);
+  assert.ok(!fs.readFileSync(memoryFile(ag), "utf8").includes("next build"));
+  assert.equal(forget(ag, "nada a ver"), 0);
 });

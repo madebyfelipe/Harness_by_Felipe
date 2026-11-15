@@ -56,6 +56,7 @@ Status em 15/11 (madrugada):
 - **M3 bloqueado no Felipe**: o critério é um áudio com 3 assuntos do celular; os testes automáticos de chat dependem disso.
 - **M3.2 com estrutura pronta.** App Electron monta e abre (testado com display virtual: janela, `/configurar`, ponte de pastas criando e recusando `../`); zip do Windows em `/baixar`. **Falta o Felipe instalar no Windows**, escolher pasta e ver um agente editar e commitar num repo local.
 - **M4 não começou de verdade**: falta migrar rotina por rotina e o teste "um dia sem abrir OpenBot" (depende de Evolution e contas).
+- **Base de memória e autonomia** (pedido de 15/11): memória durável por agente, revisão automática de aprendizado, curador semanal e autonomia por agente em `memoria/README.md` e `decisoes.md`. Não é milestone; é fundação para o M4.
 
 Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 

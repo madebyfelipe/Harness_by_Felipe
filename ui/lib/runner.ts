@@ -12,6 +12,7 @@ import { agentEnv, toolInputBlocked } from "./guardrails";
 import { modelLabel, resolveModel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { getProject, projectFolder } from "./projects";
+import { readMemory } from "./agent-memory";
 import { expandPath, extraAllowedDirs, insideAny, sandboxRoots } from "./paths";
 import { friendlyCodexError, runCodex } from "./codex";
 import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, apiKeyOf, deepseekBase, type Provider } from "./providers";
@@ -172,12 +173,14 @@ function ambiente(atual?: string): string {
 }
 
 export function buildAppend(agent: AgentDef, cwd?: string): string {
-  return [agent.prompt, REGRAS_DA_CENTRAL, ambiente(cwd), "# Banco de contexto (carregado em todo agente)", sharedContext()].join("\n\n");
+  const memoria = readMemory(agent.name);
+  return [agent.prompt, REGRAS_DA_CENTRAL, ambiente(cwd), "# Banco de contexto (carregado em todo agente)", sharedContext(), ...(memoria ? [`# Sua memória (aprendida em execuções anteriores)\n${memoria}`] : [])].join("\n\n");
 }
 
 function subagentPrompt(agent: AgentDef): string {
   // Subagente recebe só o pedido do orquestrador: o banco de contexto ele lê se precisar.
-  return [agent.prompt, REGRAS_DA_CENTRAL, "# Banco de contexto", CONTEXT_INDEX].join("\n\n");
+  const memoria = readMemory(agent.name, 900);
+  return [agent.prompt, REGRAS_DA_CENTRAL, "# Banco de contexto", CONTEXT_INDEX, ...(memoria ? [`# Sua memória\n${memoria}`] : [])].join("\n\n");
 }
 
 export function contextSystemPrompt(): string {
@@ -577,7 +580,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const db = await getDb();
     // Modo automático: o que a regra classifica como seguro roda sem cartão, e fica registrado.
     const verdict = await classifyTool(toolName, toolInput, cwd);
-    if (!force && verdict.auto && (await autoApproveOn())) {
+    // Autonomia "livre" do agente: o que o classificador já considera seguro roda sem cartão.
+    const autonomiaLivre = getAgent(run.agent)?.autonomy === "livre";
+    if (!force && verdict.auto && ((await autoApproveOn()) || autonomiaLivre)) {
       await db
         .run("INSERT INTO approvals (id, conversation_id, run_id, agent, tool, input, status, created_at, decided_at) VALUES (?, ?, ?, ?, ?, ?, 'auto', ?, ?)", [id, run.conversationId, run.id, who, toolName, summary, nowIso(), nowIso()])
         .catch(() => undefined);
@@ -665,6 +670,12 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     if (why) return verdict("deny", `Bloqueado pela Central: ${why}. Agentes não leem nem escrevem ali.`);
     if (NEVER.includes(name)) return verdict("deny", "Ferramenta indisponível na Central. Para perguntar ao Felipe use mcp__central__perguntar_ao_felipe; para agendar, mcp__central__criar_rotina.");
     const who = hookInput.agent_type ? `subagente ${hookInput.agent_type}` : run.agent;
+
+    // Autonomia "consultivo": só leitura e pergunta; não escreve, não roda comando, não delega.
+    const autonomia = getAgent(hookInput.agent_type || run.agent)?.autonomy ?? "assistido";
+    if (autonomia === "consultivo" && !["Read", "Glob", "Grep", "WebSearch", "WebFetch", "ToolSearch", "Skill"].includes(name) && !CENTRAL_AUTO.includes(name)) {
+      return verdict("deny", "Este agente é consultivo: só lê e responde. Para executar, o Felipe troca a autonomia dele em Configurações → Agentes.");
+    }
 
     // Fora da pasta de trabalho (projeto, repositório, liberadas, anexos): ler também pede cartão.
     // É o que deixa a VPS operar fora do repositório sem abrir a máquina inteira sozinha.
@@ -1006,6 +1017,22 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     } catch (e) {
       console.error("[central] fim de execução (rotina) falhou:", e);
     }
+  }
+  // Aprendizado: ao fim de uma execução longa (ou que falhou), uma revisão leve extrai lições
+  // duráveis para a memória do agente. Não bloqueia a resposta e tem teto de custo próprio.
+  if (!isContext) {
+    void import("./learning")
+      .then((l) =>
+        l.reviewRun({
+          agent: run.agent,
+          pedido: extra.rawText,
+          resultado: run.text,
+          ferramentas: run.tools.map((t) => `${t.name}: ${t.summary}`),
+          erro: errorText,
+          voltas: result.turns ?? 0
+        })
+      )
+      .catch((e) => console.error("[central] aprendizado:", e instanceof Error ? e.message : e));
   }
   // Mensagem que o Felipe mandou enquanto rodava: sai agora (se ele não parou a execução).
   if (run.status !== "stopped") void import("./queue").then((q) => q.dispatch(run.conversationId)).catch(() => undefined);

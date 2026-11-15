@@ -6,6 +6,7 @@ import { injectVault, loadVault, logUse, vaultRefs } from "./vault";
 import { agentClick, agentOpen, agentPress, agentRead, agentScroll, agentShot, agentType, agentUpload, agentWait, closeBrowser } from "./browsers";
 import { normalizeAgent, normalizeSkill, saveAgent, saveSkill } from "./agents-store";
 import { getAgent, listSkills } from "./repo";
+import { forget, readMemory, remember } from "./agent-memory";
 
 /*
  * Ferramentas próprias da Central, entregues a todo agente como o servidor MCP "central".
@@ -19,7 +20,7 @@ import { getAgent, listSkills } from "./repo";
 export const CENTRAL_SERVER = "central";
 const T = (n: string) => `mcp__${CENTRAL_SERVER}__${n}`;
 /** Não pedem aprovação: só leem, ou já são um pedido ao Felipe. */
-export const CENTRAL_AUTO = [T("perguntar_ao_felipe"), T("pedir_acesso"), T("listar_rotinas"), T("listar_apps"), T("mostrar_imagem")];
+export const CENTRAL_AUTO = [T("perguntar_ao_felipe"), T("pedir_acesso"), T("listar_rotinas"), T("listar_apps"), T("mostrar_imagem"), T("lembrar"), T("minha_memoria"), T("esquecer")];
 
 export type AskReply = { ok: boolean; answer?: string };
 export type AskData =
@@ -101,6 +102,32 @@ export function centralTools(ctx: ToolsCtx) {
             : "Nenhum app conectado."
         );
       }),
+      tool(
+        "lembrar",
+        "Guarda na sua memória durável um fato estável, uma lição de um erro ou uma preferência do Felipe. Use quando a informação vai mudar o próximo trabalho e não é óbvia. Uma frase curta; nada de resumo da conversa, segredo, dado pessoal de lead ou coisa que o banco de contexto já diz.",
+        { texto: z.string().min(8).max(400), tipo: z.enum(["fato", "licao", "preferencia"]).optional() },
+        async (a) => {
+          const r = remember(ctx.agent(), a.tipo ?? "licao", a.texto);
+          return text(r.added ? "Anotado na sua memória durável." : `Não anotei: ${r.reason}.`);
+        },
+        { alwaysLoad: true }
+      ),
+      tool(
+        "minha_memoria",
+        "Mostra a memória durável deste agente (o que ele aprendeu em execuções anteriores). Leia antes de refazer algo que já deu errado.",
+        {},
+        async () => text(readMemory(ctx.agent(), 3000) || "Sua memória ainda está vazia."),
+        { alwaysLoad: true }
+      ),
+      tool(
+        "esquecer",
+        "Remove da memória deste agente as entradas que contêm o trecho informado. Use quando uma lição ficou errada ou defasada.",
+        { trecho: z.string().min(3).max(120) },
+        async (a) => {
+          const n = forget(ctx.agent(), a.trecho);
+          return text(n ? `Removi ${n} entrada(s).` : "Não achei nada com esse trecho.");
+        }
+      ),
       tool(
         "criar_rotina",
         'Cria (ou substitui) uma rotina agendada da Central. O Felipe aprova no chat antes de gravar. "quando" em português: "todo dia às 08:00", "dias úteis às 07:30", "segunda às 09:00", "a cada 2 horas". As instruções precisam ser autocontidas: a rotina roda sozinha, sem esta conversa. Dentro da rotina, terminal e escrita de arquivo continuam pedindo aprovação.',
