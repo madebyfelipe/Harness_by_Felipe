@@ -6,7 +6,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * banco, origem do pedido) é refeita em cada página e em cada rota de API —
  * se o matcher mudar, nada abre junto.
  */
-const PUBLIC = ["/entrar", "/configurar", "/api/health", "/api/auth/login", "/api/auth/passkey/login", "/api/setup"];
+// O webhook do WhatsApp fala com a Evolution, não com o navegador: ele se protege pelo token na URL.
+const PUBLIC = ["/entrar", "/configurar", "/api/health", "/api/auth/login", "/api/auth/passkey/login", "/api/setup", "/api/whatsapp/webhook"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
