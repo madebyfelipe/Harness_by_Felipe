@@ -1,56 +1,49 @@
 /* ==========================================================================
-   Central — tokens do design system do site Made by Felipe (lpfds).
-   Quatro cores (cream, black, red, cinzas), raio 2px, Neue Haas Grotesk
-   Display. Nunca valor cru nos componentes: falta token → cria token aqui.
+   Central — tokens no padrão visual do OpenBot (pedido do Felipe, 15/11):
+   neutros cinza, azul de destaque, Inter, cantos 12/14 px, escuro por padrão.
+   Os nomes dos tokens são os de antes (cream = fundo, black = texto, red =
+   destaque) para não mexer nos componentes. Nunca valor cru nos componentes.
    ========================================================================== */
 
 @font-face {
-  font-family: "Neue Haas Grotesk Display";
-  src: url("/fonts/NeueHaasDisplayRoman.ttf") format("truetype");
-  font-weight: 400;
+  font-family: "Inter Variable";
+  src: url("/fonts/inter-latin-ext.woff2") format("woff2-variations");
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: "Neue Haas Grotesk Display";
-  src: url("/fonts/NeueHaasDisplayMedium.ttf") format("truetype");
-  font-weight: 500;
+  font-family: "Inter Variable";
+  src: url("/fonts/inter-latin.woff2") format("woff2-variations");
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
-}
-@font-face {
-  font-family: "Neue Haas Grotesk Display";
-  src: url("/fonts/NeueHaasDisplayBold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Escuro (padrão do OpenBot). */
 :root {
-  color-scheme: light;
-  --cream: #e8e8e3;
-  --black: #080807;
-  --red: #bc0319;
-  --red-dark: #8f0313;
-  /* Vermelho como tinta: marcador, filete, anel de foco. Sobre o escuro rende
-     ~3:1, então nunca é cor de texto pequeno — texto usa --black ou --muted. */
-  --red-ink: #bc0319;
-  --on-red: #f6f6f6;
-  --gray-100: #ddddd5;
-  --gray-200: #d1d1c7;
-  --gray-300: #b8b8b8;
-  --gray-500: #6b645c;
-  --gray-700: #454545;
-  /* Texto secundário. gray-700 passa de 4.5:1 sobre cream e sobre gray-100,
-     nos dois temas (gray-500 não passa sobre gray-100 no claro). */
+  color-scheme: dark;
+  --cream: #1a1a1a;
+  --black: #ffffff;
+  /* Destaque: azul. Como preenchimento com texto branco usa o tom que passa de 4.5:1. */
+  --red: #006ad4;
+  --red-dark: #0064c8;
+  --red-ink: #42a0ff;
+  --on-red: #ffffff;
+  --gray-100: #212121;
+  --gray-200: #2a2a2a;
+  --gray-300: #5a5a5a;
+  --gray-500: #979797;
+  --gray-700: #a6a6a6;
   --muted: var(--gray-700);
-  --line: rgba(8, 8, 7, 0.16);
-  --line-strong: rgba(8, 8, 7, 0.42);
-  /* Feedback do Felipe (15/11): mais arredondado que o site (que segue com 2px). */
-  --radius: 10px;
-  --radius-lg: 16px;
-  --font: "Neue Haas Grotesk Display", Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --radius: 12px;
+  --radius-lg: 14px;
+  --font: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
   --pad: clamp(16px, 8.2px + 1.24vw, 28px);
   --bar-h: 56px;
   --rail-w: 64px;
@@ -58,18 +51,18 @@
   --tabs-h: 60px;
 }
 
-/* Tema escuro: a paleta troca os papéis (superfície vira tinta). O vermelho não muda. */
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --cream: #080807;
-  --black: #e8e8e3;
-  --gray-100: #181715;
-  --gray-200: #2a2925;
-  --gray-300: #5f5f5f;
-  --gray-500: #9a9a9a;
-  --gray-700: #b8b8b8;
-  --line: rgba(232, 232, 227, 0.18);
-  --line-strong: rgba(232, 232, 227, 0.44);
+:root[data-theme="light"] {
+  color-scheme: light;
+  --cream: #f5f5f6;
+  --black: #141414;
+  --red-ink: #0064c8;
+  --gray-100: #ffffff;
+  --gray-200: #e8e8eb;
+  --gray-300: #c2c2c7;
+  --gray-500: #6b6b70;
+  --gray-700: #5c5c61;
+  --line: rgba(20, 20, 20, 0.1);
+  --line-strong: rgba(20, 20, 20, 0.24);
 }
 
 *,
@@ -90,7 +83,7 @@ body {
   background: var(--cream);
   color: var(--black);
   font-family: var(--font);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -143,8 +136,6 @@ p {
   font-family: var(--mono);
   font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--muted);
 }
 .kicker::before {
@@ -190,8 +181,6 @@ p {
   display: block;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   margin-bottom: 6px;
 }
 .link {
@@ -217,8 +206,6 @@ p {
   color: var(--cream);
   font-size: 0.875rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
@@ -364,8 +351,6 @@ select.field {
   border-radius: var(--radius);
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   cursor: pointer;
   user-select: none;
 }
@@ -621,7 +606,6 @@ summary > .dot {
   margin: 14px 8px 6px;
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
   color: var(--muted);
 }
 .citem {
@@ -771,8 +755,6 @@ summary > .dot {
     place-items: center;
     font-size: 0.66rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
     text-decoration: none;
     border-top: 3px solid transparent;
   }
@@ -852,8 +834,6 @@ details.fold > summary {
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   padding: 6px 0;
 }
 .pre {
@@ -1360,8 +1340,6 @@ details.fold > summary {
 }
 .md th {
   font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   background: var(--gray-100);
 }
 
@@ -1388,7 +1366,6 @@ details.fold > summary {
   .tabs a {
     padding: 0 2px;
     font-size: 0.625rem;
-    letter-spacing: 0.02em;
     word-spacing: 0;
   }
 }
@@ -1632,4 +1609,68 @@ details.fold > summary {
   .card__detail {
     margin-left: 0;
   }
+}
+
+/* ---------- ajustes de forma no padrão do OpenBot ---------- */
+
+.title {
+  font-size: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.kicker {
+  font-family: var(--font);
+  font-size: 0.75rem;
+}
+.kicker::before {
+  border-radius: 50%;
+}
+.btn {
+  min-height: 40px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+.btn:hover:not(:disabled) {
+  background: var(--black);
+  color: var(--cream);
+  opacity: 0.86;
+}
+.btn--ghost {
+  border-color: var(--line-strong);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--gray-200);
+  color: var(--black);
+  opacity: 1;
+}
+.btn--sm {
+  min-height: 34px;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+}
+.btn,
+.tabs a,
+.mode > summary {
+  word-spacing: normal;
+}
+.field {
+  min-height: 42px;
+  padding: 9px 12px;
+  border-color: var(--line);
+  background: var(--gray-100);
+}
+.rail__logo {
+  border-radius: 12px;
+}
+.grid {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }

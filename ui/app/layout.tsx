@@ -12,13 +12,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#e8e8e3" },
-    { media: "(prefers-color-scheme: dark)", color: "#080807" }
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1a1a" }
   ]
 };
 
 // Aplica o tema antes da primeira pintura, para a tela não piscar.
-const themeScript = `try{var t=localStorage.getItem("central-theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}`;
+const themeScript = `try{var t=localStorage.getItem("central-theme");if(t!=="light"&&t!=="dark"){t="dark"}document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

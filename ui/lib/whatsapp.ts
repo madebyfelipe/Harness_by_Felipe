@@ -60,12 +60,40 @@ async function call(path: string, init: RequestInit = {}): Promise<{ status: num
   return { status: res.status, data };
 }
 
-export async function waState(): Promise<{ ok: boolean; state: string; detail: string }> {
+/** Mesmo número, com ou sem o 9 depois do DDD. */
+function sameNumber(a: string, b: string): boolean {
+  const n = (x: string) => {
+    const d = x.replace(/\D/g, "");
+    return d.length === 13 && d.startsWith("55") ? d.slice(0, 4) + d.slice(5) : d;
+  };
+  return Boolean(a && b) && n(a) === n(b);
+}
+
+/**
+ * O número da instância é o mesmo do destino? Então o aviso sai "de você para você":
+ * a Evolution aceita, a mensagem aparece na conversa "Você", mas o WhatsApp não notifica.
+ */
+async function sendsToSelf(c: WaConfig): Promise<boolean> {
+  if (!c.numero) return false;
+  try {
+    const r = await call("/instance/fetchInstances");
+    const list = Array.isArray(r.data) ? (r.data as { name?: string; ownerJid?: string; instance?: { instanceName?: string; owner?: string } }[]) : [];
+    const me = list.find((i) => (i.name ?? i.instance?.instanceName) === c.instancia);
+    return sameNumber(String(me?.ownerJid ?? me?.instance?.owner ?? "").split("@")[0], c.numero);
+  } catch {
+    return false;
+  }
+}
+
+export const SELF_WARNING = 'o número de destino é o mesmo da instância: a mensagem cai na conversa "Você" e o WhatsApp não notifica. Para o aviso tocar, a instância precisa ser de outro número';
+
+export async function waState(): Promise<{ ok: boolean; state: string; detail: string; self?: boolean }> {
   try {
     const c = await waConfig();
     const r = await call(`/instance/connectionState/${encodeURIComponent(c.instancia)}`);
     const state = String((r.data as { instance?: { state?: string } } | null)?.instance?.state ?? (r.status === 401 ? "chave recusada" : `HTTP ${r.status}`));
-    return { ok: state === "open", state, detail: state === "open" ? "conectado" : `estado: ${state}` };
+    const self = state === "open" && (await sendsToSelf(c));
+    return { ok: state === "open", state, self, detail: state !== "open" ? `estado: ${state}` : self ? `conectado, mas ${SELF_WARNING}` : "conectado" };
   } catch (e) {
     return { ok: false, state: "erro", detail: e instanceof Error ? e.message : "sem resposta" };
   }
@@ -81,7 +109,7 @@ export async function notifyFelipe(text: string, who = "central"): Promise<{ sen
   const r = await call(`/message/sendText/${encodeURIComponent(c.instancia)}`, { method: "POST", body: JSON.stringify({ number: c.numero, text: body }) });
   const ok = r.status >= 200 && r.status < 300;
   await audit(who, "whatsapp.aviso", ok ? `aceito (HTTP ${r.status})` : `recusado (HTTP ${r.status})`);
-  return { sent: ok, detail: ok ? "aceito pela Evolution (status PENDING = ainda não confirmado como entregue)" : `HTTP ${r.status}` };
+  return { sent: ok, detail: !ok ? `HTTP ${r.status}` : st.self ? `aceito, mas ${SELF_WARNING}.` : "aceito pela Evolution (status PENDING = ainda não confirmado como entregue)" };
 }
 
 export function centralLink(pathname: string): string {

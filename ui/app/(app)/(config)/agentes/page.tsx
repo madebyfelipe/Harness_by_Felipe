@@ -5,7 +5,7 @@ import { listAgents } from "@/lib/repo";
 
 export const metadata = { title: "Agentes" };
 
-const CORES = ["#bc0319", "#24292F", "#673DE6", "#0079BF", "#2C7A4B", "#B45309", "#6B21A8", "#0F766E", "#9D174D"];
+const CORES = ["#24292F", "#673DE6", "#0079BF", "#2C7A4B", "#B45309", "#6B21A8", "#0F766E", "#9D174D"];
 
 export default function AgentesPage() {
   const agents = listAgents();

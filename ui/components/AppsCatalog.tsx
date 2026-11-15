@@ -18,7 +18,7 @@ type Connector = {
   secretState: "nao_usa" | "definido" | "ausente";
   status: { ok: number; detail: string; checked_at: string } | null;
 };
-type Wa = { config: { url: string; instancia: string; numero: string; temChave: boolean }; state: { ok: boolean; state: string; detail: string } };
+type Wa = { config: { url: string; instancia: string; numero: string; temChave: boolean }; state: { ok: boolean; state: string; detail: string; self?: boolean } };
 
 const when = (iso: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
@@ -212,7 +212,7 @@ export function AppsCatalog({ agents }: { agents: string[] }) {
         const r = await api<Wa>("/api/whatsapp", { body: { url, instancia: inst, numero: num, chave: key } });
         setWa(r);
         setKey("");
-        setMsg(r.state.ok ? "Salvo. WhatsApp conectado." : `Salvo. ${r.state.detail}`);
+        setMsg(r.state.ok && !r.state.self ? "Salvo. WhatsApp conectado." : `Salvo. ${r.state.detail}`);
       } catch (e) {
         setMsg(e instanceof Error ? e.message : "Não salvou.");
       }
@@ -265,7 +265,7 @@ export function AppsCatalog({ agents }: { agents: string[] }) {
   function Card({ item }: { item: CatalogItem }) {
     const c = item.conector ? byName[item.conector] : undefined;
     const isWa = item.acao === "whatsapp";
-    const waState = wa ? (wa.state.ok ? { dot: "", text: "conectado" } : wa.config.temChave ? { dot: "dot--alert", text: wa.state.detail } : null) : null;
+    const waState = wa ? (wa.state.ok ? (wa.state.self ? { dot: "dot--alert", text: "conectado, mas não notifica" } : { dot: "", text: "conectado" }) : wa.config.temChave ? { dot: "dot--alert", text: wa.state.detail } : null) : null;
     const st = isWa ? waState : c ? stateOf(c) : null;
     const expanded = open === item.id;
     return (
