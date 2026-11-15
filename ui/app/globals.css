@@ -3128,3 +3128,13 @@ details.triage[open] {
     padding: 8px 8px 24px;
   }
 }
+
+/* compositor: todos os botões presos à base, centrados na última linha do texto (não pulam ao quebrar linha) */
+.composer__box > .round,
+.composer__box > .chip-toggle,
+.composer__box > .ctxm,
+.composer__box > label.round,
+.composer__box > .chip-toggle:disabled {
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
