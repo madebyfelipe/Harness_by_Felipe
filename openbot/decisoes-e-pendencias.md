@@ -1,11 +1,15 @@
 # Decisões do Felipe e pendências
 
+> ⚠️ **Snapshot de 14/11/2026, feito pelo Harbinger.** Pode estar defasado. Onde discordar
+> dos arquivos da raiz, vale `decisoes.md` (o mais recente). Já mudou desde então: preço do
+> site agora é R$ 599 / R$ 1.999 até 12x; rastreio de clique e diagnóstico descartados;
+> clientes externos fora do harness.
+
 Levantamento em 14/11/2026.
 
 ## Decisões já tomadas (cronologia)
 | Data | Decisão |
 |---|---|
-| 10/11 | Rotina editorial automática do advocacia_an continua (terça/quinta); Blake não cria posts, só arte de Instagram e SEO técnico. |
 | Após 10/11 (data exata não registrada) | WhatsApp e Instagram DM de prospecção ficam pausados; canal único é o e-mail. |
 | 11/11 | Envios de e-mail liberados para 12/11 com seleção mais rígida de Gmail vindo do Instagram. |
 | 11/11 | Textos de DM aprovados e plano de aquecimento (envio de DM segue pausado). |
@@ -21,9 +25,7 @@ Levantamento em 14/11/2026.
 1. **Limite de e-mails gratuitos** (6 por conta por dia) travou os envios de 13/11, e as 18 linhas restantes da fila são todas de e-mail gratuito. Decidir se muda o limite.
 2. **Recarregar o Apify com teto de gasto.** Sem saldo, a Quinn não repõe leads; a fila acaba em poucos dias úteis.
 3. **Excluir na interface os 7 agentes do jogo** (Rex, Nova, Kai, Ada, Iris, Milo, Lyra). Não há ferramenta para o Harbinger excluir agente.
-4. **Primeira tarefa do Wren** (agente de web do site Alves & Nabuco, em espera).
 5. **Segurados aguardando decisão:** 154 leads com site fraco, 169 do Google Maps com site próprio e 39 leads de conteúdo/webinar sem campanha (sem evidência de serem psicólogas). Dois leads aguardam confirmação de CRP.
-6. **SEO do advocacia_an:** decidir `noindex` ou diferenciar as páginas `/bio-*`; encurtar títulos de artigo; ajustar imagens sem dimensões.
 7. **Manutenção, renovação e domínio:** valor não definido; sem isso a equipe só responde "vou confirmar".
 8. **Campanha gringa:** depende de lista de leads do Felipe e de criação de campos novos no CRM.
 

@@ -1,5 +1,10 @@
 # Vendas: como funciona a prospecção da Made by Felipe
 
+> ⚠️ **Snapshot de 14/11/2026, feito pelo Harbinger.** Pode estar defasado. Onde discordar
+> dos arquivos da raiz, vale `decisoes.md` (o mais recente). Já mudou desde então: preço do
+> site agora é R$ 599 / R$ 1.999 até 12x; rastreio de clique e diagnóstico descartados;
+> clientes externos fora do harness.
+
 Levantamento em 14/11/2026. Fontes: `EMAIL-PLAYBOOK.md`, `PLAYBOOK.md` (outreach do Dylan), `campanha-email/`, `apify-leads.md`, `campanha-email-v2-free-preview.md`, `campanha-gringa/`.
 
 ## O negócio e a oferta de entrada

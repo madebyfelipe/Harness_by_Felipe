@@ -4,6 +4,9 @@ _Proposta de 14/11/2026, a partir de como você já trabalha (OpenBot + Claude) 
 quer: um orquestrador forte que delega para executores mais baratos e sobe de modelo
 quando o resultado não fica bom._
 
+> 15/11/2026: prospecção e disparo **já rodam no OpenBot** (Quinn + Dylan). Os papéis de
+> vendas abaixo são o desenho de referência; não abrir uma segunda esteira em paralelo.
+
 ## A ideia em uma tela
 
 ```
@@ -42,7 +45,8 @@ conversa para coordenar; uma skill a mais é só um arquivo.
 | **orquestrador** (sessão principal) | **Fable 5.2** | — | tudo, mais delegação | plano, delegação, revisão final, resposta para você | executar trabalho braçal que um executor faz |
 | **pesquisador-leads** | Sonnet 5.5 | — | navegador (Google Maps, sites), API do Twenty | leads novos no Twenty com `iniciativa`, fonte e dados públicos | inventar e-mail/telefone; gravar sem checar duplicado |
 | **enriquecedor** | Haiku 5.5 (volume) | Sonnet 5.5 | navegador/fetch, Twenty | por lead: o que o site tem, se está adequado, 3 pontos de melhoria, gancho | escrever o e-mail |
-| **redator-vendas** | Sonnet 5.5 | Fable 5.2 | Twenty, skill `email-personalizado` | 1º e-mail + follow-ups por lead, em fila para o bloco | **enviar** (quem envia é o código de disparo) |
+| **triagem** | Sonnet 5.5 | — | só leitura (contexto, repo, CRM) | workflow: passos, agente e modelo por passo, complexidade (`triagem.md`) | executar a tarefa |
+| **redator-vendas** | Sonnet 5.5 | Fable 5.2 | Twenty, skill `email-personalizado` | 1º e-mail + follow-ups por lead, em fila para o bloco | mudar oferta/lista (o envio é do código, automático) |
 | **analista-mercado** | Sonnet 5.5 | Fable 5.2 | busca web, navegador, skills `pesquisa-de-preco` e `validacao-de-oferta` | relatório de preço por mercado/estado e veredito da oferta | publicar preço; mudar oferta |
 | **programador** | Sonnet 5.5 | **Fable 5.2** | repo, terminal, navegador | branch + PR (ou commit na branch) com build passando | merge na `beta`; mexer no que não foi pedido |
 | **qa-site** | Sonnet 5.5 | — | navegador (desktop e celular), axe-core, `gh` | relatório: passou/falhou, com print | corrigir (devolve para o programador) |
@@ -95,7 +99,6 @@ A estrutura acima é a que vale; o OpenBot complementa (detalhe em `equipe-e-age
 | Quinn (Apify / Google Maps) | pesquisador-leads |
 | Dylan (cold mail) | redator-vendas + código de disparo |
 | Casey (blog) | programador (+ skill `post-blog-psico`) |
-| Wren (web/UX) | programador com escalada para Fable + qa-site |
 | — (falta) | enriquecedor, analista-mercado, guardião, qa-site |
 
 ## Janelas de uso (importante para a sua rotina)
@@ -103,12 +106,13 @@ A estrutura acima é a que vale; o OpenBot complementa (detalhe em `equipe-e-age
 Sua rotina de "reset" assume que o limite da assinatura é uma janela de ~5h contada a
 partir do **primeiro uso** depois da janela anterior. Se for assim:
 
-- **Quem roda primeiro abre a janela.** As duas rotinas editoriais da Alves & Nabuco
-  disparam às **05:00** e o bot de e-mail às 05:00 — então a janela já abre às 05:00 e
-  reseta por volta de **10:00**, não 10:30. O "Oi" das 05:30 cai dentro dela e não muda nada.
+- **Quem roda primeiro abre a janela.** Rotinas de clientes externos às **05:00** e o blog
+  da Casey (00:30/03:00, se usar a assinatura) abrem a janela antes — o reset cai antes das
+  10:30. O "Oi" das 05:30 só funciona se nada rodar antes.
 - Para o reset cair às 10:30: nada que use a assinatura entre ~00:30 e 05:30, e o "Oi" (ou
   o 1º bloco de e-mail) exatamente às 05:30.
-- Trabalho pesado de agente na madrugada (01h–05h) **empurra** o seu reset. Se precisar
-  de madrugada, use chave de API para esses jobs, não a assinatura.
+- Trabalho pesado de agente na madrugada (01h–05h) **empurra** o seu reset. Como tudo roda
+  na assinatura pelo CLI (decisão de 15/11), concentre o pesado logo depois das 05:30 ou
+  aceite o reset mais cedo; o monitor de janela da Central mostra quem está consumindo.
 
 Detalhe das definições prontas: pasta `agents/`. Skills: pasta `skills/`.

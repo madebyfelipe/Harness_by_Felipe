@@ -1,5 +1,10 @@
 # Skills
 
+> ⚠️ **Snapshot de 14/11/2026, feito pelo Harbinger.** Pode estar defasado. Onde discordar
+> dos arquivos da raiz, vale `decisoes.md` (o mais recente). Já mudou desde então: preço do
+> site agora é R$ 599 / R$ 1.999 até 12x; rastreio de clique e diagnóstico descartados;
+> clientes externos fora do harness.
+
 Levantamento em 14/11/2026. Skill = procedimento reutilizável que um agente carrega para fazer uma tarefa do mesmo jeito sempre. Há 16 na biblioteca local. A coluna "Quem usa" mostra o que consegui confirmar; os demais agentes podem ter acesso pela biblioteca compartilhada.
 
 ## Vendas e CRM
@@ -25,8 +30,7 @@ Levantamento em 14/11/2026. Skill = procedimento reutilizável que um agente car
 |---|---|---|
 | carrossel-made-by-felipe (v4) | Carrossel de Instagram 1080x1350 para @madebyfelipe.com.br no estilo do feed (Neue Haas, creme/vermelho/preto), copy para salvar e gerar DM, dentro das regras do CFP. Gera slides PNG e legenda. | Tyler tem instalada. |
 | carousel-writer-sms | Texto slide a slide para carrosséis (Instagram, LinkedIn etc.). Só texto. | Skill de terceiros (blacktwist, MIT). Tyler tem instalada. |
-| Arte de Instagram para posts de blog | Arte 1080x1350 e legenda de um post de blog já publicado, no estilo do perfil de referência do escritório. | Para o blog Alves & Nabuco. |
-| Redesign de site por referência | Recria página ou seção a partir de uma referência (ex.: One Page Love), seção por seção, sem hero próprio, verificando cada seção. | Pensada para o Wren/design. |
+| Redesign de site por referência | Recria página ou seção a partir de uma referência (ex.: One Page Love), seção por seção, sem hero próprio, verificando cada seção. | Design. |
 
 ## Skills padrão do OpenBot
 `openbot-data` (banco compartilhado), `openbot-site-hosting` (sites estáticos em openbot.site), `openbot-skill-creator` (criar skills). Estão instaladas em todos os agentes.

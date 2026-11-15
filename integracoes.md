@@ -15,15 +15,14 @@
 | **Twenty CRM** | banco de leads, campanhas (`campanhaProspeccao`), notas de operação, workflows | Conector MCP (`execute_tool`) · REST `crm.madebyfelipe.agency/rest` com `TWENTY_API_KEY` (servidor) |
 | **Vercel** | hospedagem, crons, env vars, deploy (`beta` = produção) | `gh api .../deployments` para conferir; painel pelo navegador |
 | **Hostinger** | e-mail (MX `mx1/mx2.hostinger.com`), SMTP `smtp.hostinger.com:465`, IMAP; hPanel (DNS, caixas) | só por credencial no servidor ou navegador |
-| **Make** | automação antiga: fallback do cadastro de newsletter/e-book | webhook chamado pela rota `/api/newsletter` |
+| **Make** | **defasado**: fallback antigo do cadastro de newsletter/e-book | webhook chamado pela rota `/api/newsletter` |
 | **Evolution API** | WhatsApp do estúdio (instância `mbf`), operado pelo Harbinger | servidor do OpenBot |
 | **Mirror de arquivos** | download do e-book (`file.madebyfelipe.agency/api/shares/ebook/...`) | URL só sai na resposta da API após opt-in |
 | **Magnific / Freepik** | fotos de banco licenciadas | conector MCP |
 | **Google** (`alo@`) | Agenda, Drive | conectores MCP (Gmail **não** — caixa é Hostinger) |
-| **ClickUp** | tarefas (Comercial / Operacional) | conector MCP |
+| **Trello** | kanban de projetos por milestones (`milestones.md`) | conector MCP — conectar a conta do Felipe (a conectada hoje é outra) |
 | **Meta Pixel** | conversão, **só com consentimento** | `components/CookieConsent.tsx` |
-| **Anthropic API** | IA opcional do painel (reescrever, ler resposta) | `ANTHROPIC_API_KEY` (testada só sem chave) |
-| **GitHub** | `madebyfelipe/lpfds` (público), `advocacia_an`, `blackberry-dashboard` | MCP do GitHub; Actions: `cold-call-preflight.yml` (manual) |
+| **GitHub** | `madebyfelipe/lpfds` (público), este harness (privado) | MCP do GitHub |
 
 ## Twenty — o essencial
 
@@ -36,23 +35,23 @@ operação), `tasks`, `opportunities` (pouco usado: 2 registros), `companies`.
 - Origem: `origem` (E_BOOK, INDICACAO, NEWSLETTER, CONTATO_DO_SITE, WEBINAR, PROSPECCAO),
   `iniciativa` (WHATSAPP, EMAIL, INSTAGRAM, COLD_CALL, SITE_ORGANICO, INDICACAO,
   PROSPECCAO_GRINGA…), `utm*`, `lote`, `responsavel`.
-- Diagnóstico: `indiceAtual`, `bandaAtual` (PONTO_DE_PARTIDA, EM_CONSTRUCAO, TERRITORIO).
+- Diagnóstico (**legado**, 15/11): `indiceAtual`, `bandaAtual` — não preencher.
 - Prospecção: `prospStatus` (PESQUISAR, REVISAR, PRONTO, ENVIADO, FOLLOWUP_ENVIADO,
   RESPONDEU, REUNIAO, DESCADASTRADO, BOUNCE, DESCARTADO, LISTA_FRIA, PREVIA_ENVIADA,
   ACEITE, GANHO, PERDIDO, PAUSA), `prospCampanha` (slug), `prospPrioridade` (A/B/C),
   `prospScore`, `prospFonte`, `prospEvidencia`, `prospHipotese`, `prospLimite`,
   `prospAssunto(B)`, `prospMensagem`, `prospFollowup/2/3`, `prospCaixa`,
   `prospVariante`, `prospEtapa`, `prospEnviadoEm`, `prospClassificacao`,
-  `prospResposta`, `prospRespostaSugerida`, `prospCliques`, `prospUltimoCliqueEm`,
-  `optOut`, `motivoPerda`, `proximaAcao`, `ultimoContatoEm`.
+  `prospResposta`, `prospRespostaSugerida`, `optOut`, `motivoPerda`, `proximaAcao`,
+  `ultimoContatoEm`. Legado: `prospCliques`, `prospUltimoCliqueEm` (rastreio descartado),
+  status `PESQUISAR`/`REVISAR` (painel).
 
-**Opportunity:** `stage` (RECEBIDA, EM_ANALISE, ANALISE_ENVIADA, DIAGNOSTICO_AGENDADO,
-PROPOSTA, CLIENTE, NAO_AGORA), `indice`, `banda`, `gargalo`, `nps`.
+**Opportunity:** `stage` (RECEBIDA, EM_ANALISE, PROPOSTA, CLIENTE, NAO_AGORA; os estágios
+de análise/diagnóstico e `indice`/`banda`/`gargalo` são legado), `nps`.
 
-**Notas com título fixo (o painel lê):** `Prospecção · PAUSADA`, `Prospecção · caixa
-pausada · <email>`, `Prospecção · bloqueios`, `Prospecção · execução · …`,
-`Cold call · …` (envelope JSON v1). Dylan/Harbinger: "E-mail D0 enviado (…)",
-"E-mail devolvido (BOUNCE)", "Resposta recebida (…)", "Envio avulso…".
+**Notas do Dylan/Harbinger** (as que valem): "E-mail D0 enviado (…)", "E-mail devolvido
+(BOUNCE)", "Resposta recebida (…)", "Envio avulso…". As notas `Prospecção · …` e
+`Cold call · …` eram do painel (legado); `Prospecção · PAUSADA` só mantém o cron antigo parado.
 
 **Workflows:** `email_listing_hub` (entrega do e-book) e um de confirmação de newsletter;
 escolhidos pelo `source` na rota `/api/newsletter`. Ver `docs/newsletter-twenty.md`.

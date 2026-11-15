@@ -1,5 +1,10 @@
 # Rotinas (OpenBot)
 
+> ⚠️ **Snapshot de 14/11/2026, feito pelo Harbinger.** Pode estar defasado. Onde discordar
+> dos arquivos da raiz, vale `decisoes.md` (o mais recente). Já mudou desde então: preço do
+> site agora é R$ 599 / R$ 1.999 até 12x; rastreio de clique e diagnóstico descartados;
+> clientes externos fora do harness.
+
 Levantamento em 14/11/2026. Horários em Brasília. Todas rodam no OpenBot; cada execução começa sem memória do chat, por isso as instruções são longas e autocontidas.
 
 ## Resumo
@@ -18,11 +23,9 @@ Levantamento em 14/11/2026. Horários em Brasília. Todas rodam no OpenBot; cada
 | 10 | Blog madebyfelipe.com.br, rodada A (até 5 artigos) | Casey | diária 00:30 | ativa | Blog |
 | 11 | Blog madebyfelipe.com.br, rodada B (até 5 artigos) | Casey | diária 03:00 | ativa | Blog |
 | 12 | Blog: ampliar os 3 posts mais curtos | Casey | diária 05:30 | **pausada** | Blog |
-| 13 | Arte de Instagram e SEO do advocacia_an | Blake | diária 08:00 | ativa | Blog Alves & Nabuco |
-| 14 | Resumo semanal de artigos no grupo WhatsApp "Marketing \| Alves Nabuco" | Harbinger | sexta 17:00 | ativa | Blog Alves & Nabuco |
 
-Sem rotina própria: Tyler, Taylor, Wren, Cameron, Morgan, Jason, Parker, Avery, Jordan.
-Fora do OpenBot: o repositório advocacia_an tem uma rotina editorial automática (GitHub Actions) com post toda terça (tributário) e quinta (trabalhista). Ver `blog-seo.md`.
+Sem rotina própria: Tyler, Taylor, Cameron, Morgan, Jason, Parker, Avery, Jordan.
+Rotinas de clientes externos (13 e 14 no levantamento original) saíram deste harness em 15/11.
 
 ---
 
@@ -53,11 +56,6 @@ Sexta 10:00. Mede a fila (`queue-email.sh | wc -l`). Meta: 150 elegíveis; se j�
 - **Rodadas A (00:30) e B (03:00):** juntas até 10 artigos novos e longos por dia, em pt-BR, com capa, em um pull request para a branch `beta` do repositório `madebyfelipe/lpfds`, com merge na `beta` (que publica em Produção na Vercel). Só artigos novos. Fluxo: clonar e resetar a beta, ler o guia `blog-escrita.md`, pegar as 5 primeiras pautas da Fila em `blog-pauta.md`, pesquisar a SERP, escrever, gerar capa (API Magnific, foto sem pessoas), rodar build, `tsc`, contagem de palavras e verificação de acessibilidade (axe), abrir o PR, passar pela "trava de Produção" (confere de qual branch é o deploy atual antes de dar merge), conferir o deploy, atualizar a pauta e avisar o Tyler.
 - **Ampliar posts curtos (05:30):** pausada. Estendia os 3 posts abaixo do padrão longo.
 - Regras editoriais não negociáveis: art. 20 do Código de Ética do psicólogo e Resolução CFP 10/2005 (sem preço, promessa de resultado, superlativo, depoimento de paciente ou foto de criança). Nada de números ou fontes inventados.
-
-## Blog Alves & Nabuco (Blake e Harbinger, rotinas 13 e 14)
-
-- **Blake, diária 08:00:** não cria posts (a rotina editorial do repositório já publica). Gera a arte de Instagram 1080x1350 e a legenda do post mais recente e faz manutenção de SEO técnico do site. A arte fica no workspace dele, nunca no repositório, porque o deploy por FTP publicaria a pasta. Não publica no Instagram.
-- **Harbinger, sexta 17:00:** monta a lista dos artigos novos da semana (título, autor, link) lendo o repositório e envia ao grupo de WhatsApp pela Evolution API, se a instância estiver conectada. Se não estiver, reporta a falha e entrega o texto pronto.
 
 ## Como criar ou alterar uma rotina
 Peça ao Harbinger, ou ao agente dono, com horário, o que fazer e quando ficar em silêncio. Rotinas agendadas existem só no OpenBot.
