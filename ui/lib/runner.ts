@@ -254,11 +254,13 @@ export type StartInput = {
   origin?: "chat" | "rotina";
   /** Chamado quando a execução termina (rotinas: gravar resultado e avisar). */
   onEnd?: (r: RunEnd) => void | Promise<void>;
+  /** Chamado quando um cartão de aprovação aparece (canal de entrada: avisar no WhatsApp). */
+  onApproval?: (a: { id: string; tool: string; summary: string; conversationId: string }) => void | Promise<void>;
 };
 
 export type RunEnd = { status: string; text: string; error: string; conversationId: string; runId: string };
 
-type Extra = { auto: boolean; redo: boolean; rawText: string; history: string; onEnd?: StartInput["onEnd"] };
+type Extra = { auto: boolean; redo: boolean; rawText: string; history: string; onEnd?: StartInput["onEnd"]; onApproval?: StartInput["onApproval"] };
 
 export async function startRun(input: StartInput): Promise<{ runId: string; userMessage: Message }> {
   const { conversation } = input;
@@ -335,7 +337,7 @@ export async function startRun(input: StartInput): Promise<{ runId: string; user
     prompt = `[Histórico desta conversa, para você continuar de onde parou]\n${history}\n\n[Mensagem nova do Felipe]\n${prompt}`;
   }
 
-  const extra: Extra = { onEnd: input.onEnd, auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
+  const extra: Extra = { onEnd: input.onEnd, onApproval: input.onApproval, auto: isAuto, redo: Boolean(input.redo), rawText: input.text, history: previous.length ? previous.slice(-8).map((m) => `${m.role === "user" ? "Felipe" : "Central"}: ${m.content.slice(0, 1500)}`).join("\n\n") : "" };
   void execute(run, conversation, agent, prompt, attachments.length ? [path.dirname(attachments[0].path)] : [], extra).catch((e) => {
     console.error("[central] execução falhou fora do previsto:", e);
   });
@@ -549,6 +551,13 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       nowIso()
     ]);
     emit(run, "approval", { id, tool: prettyToolName(toolName), rawTool: toolName, summary, agent: who, motivo: force ? "usa um segredo do cofre" : verdict.why, semSempre: force });
+    if (extra.onApproval) {
+      try {
+        void Promise.resolve(extra.onApproval({ id, tool: prettyToolName(toolName), summary, conversationId: run.conversationId })).catch(() => undefined);
+      } catch {
+        /* avisar fora da Central é opcional */
+      }
+    }
 
     const decision = await new Promise<Decision>((resolve) => {
       run.pending.set(id, resolve);

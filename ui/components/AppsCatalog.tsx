@@ -18,7 +18,12 @@ type Connector = {
   secretState: "nao_usa" | "definido" | "ausente";
   status: { ok: number; detail: string; checked_at: string } | null;
 };
-type Wa = { config: { url: string; instancia: string; numero: string; temChave: boolean }; state: { ok: boolean; state: string; detail: string; self?: boolean } };
+type Wa = {
+  config: { url: string; instancia: string; numero: string; temChave: boolean };
+  state: { ok: boolean; state: string; detail: string; self?: boolean };
+  entrada?: { enabled: boolean; detail: string; url: string };
+  entradaMsg?: string;
+};
 
 const when = (iso: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
@@ -226,6 +231,16 @@ export function AppsCatalog({ agents }: { agents: string[] }) {
         setMsg(e instanceof Error ? e.message : "Não enviou.");
       }
     };
+    const entrada = async (on: boolean) => {
+      setMsg("");
+      try {
+        const r = await api<Wa>("/api/whatsapp", { body: { entrada: on } });
+        setWa(r);
+        setMsg(r.entradaMsg ? `${r.entradaMsg}. ${r.entrada?.detail ?? ""}` : (r.entrada?.detail ?? ""));
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "Não mudou.");
+      }
+    };
     return (
       <form
         className="card__detail stack"
@@ -256,8 +271,28 @@ export function AppsCatalog({ agents }: { agents: string[] }) {
           <button type="button" className="btn btn--ghost btn--sm" disabled={!wa?.state.ok || !num} onClick={() => void test()}>
             Enviar teste para mim
           </button>
+          <button type="button" className="btn btn--ghost btn--sm" disabled={!wa?.state.ok} onClick={() => void entrada(!wa?.entrada?.enabled)}>
+            {wa?.entrada?.enabled ? "Desligar a entrada" : "Ligar a entrada"}
+          </button>
         </div>
         {msg ? <p className="small">{msg}</p> : null}
+        <div className="divider" />
+        <p className="small muted">
+          <strong>Entrada.</strong> Com a entrada ligada, o que você manda para o seu número vira uma conversa na Central: texto ou nota de voz (transcrita aqui, sem
+          serviço de fora). A resposta volta no WhatsApp, e o pedido fica registrado na conversa &quot;WhatsApp&quot;. Aprovação de comando pode ser respondida com
+          <code> ok</code> ou <code>não</code>; <code>pare</code> interrompe.
+        </p>
+        <p className="small muted">
+          Estado: {wa?.entrada?.detail ?? "sem chave"}.
+        </p>
+        {wa?.entrada?.url ? (
+          <>
+            <label className="label" htmlFor="wa-hook">
+              Endereço do webhook (segredo na URL)
+            </label>
+            <input id="wa-hook" className="field field--sm" readOnly value={wa.entrada.url} onFocus={(e) => e.currentTarget.select()} />
+          </>
+        ) : null}
       </form>
     );
   }

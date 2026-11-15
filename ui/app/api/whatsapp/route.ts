@@ -1,16 +1,20 @@
 import { audit } from "@/lib/db";
 import { fail, guard, json, readJson, str } from "@/lib/http";
 import { setSecret } from "@/lib/vault";
-import { SECRET, saveWaConfig, waConfig, waState } from "@/lib/whatsapp";
+import { SECRET, inboundState, saveWaConfig, setInbound, waConfig, waState } from "@/lib/whatsapp";
 
 export async function GET(req: Request) {
   const g = await guard(req);
   if (g.error) return g.error;
   const c = await waConfig();
-  return json({ config: c, state: c.temChave ? await waState() : { ok: false, state: "sem chave", detail: "falta a chave da Evolution API" } });
+  return json({
+    config: c,
+    state: c.temChave ? await waState() : { ok: false, state: "sem chave", detail: "falta a chave da Evolution API" },
+    entrada: c.temChave ? await inboundState() : { enabled: false, detail: "falta a chave da Evolution API", url: "" }
+  });
 }
 
-/** Salva URL, instância, número do Felipe e, se veio, a chave (no cofre). */
+/** Salva URL, instância, número do Felipe e, se veio, a chave (no cofre). Liga/desliga a entrada. */
 export async function POST(req: Request) {
   const g = await guard(req);
   if (g.error) return g.error;
@@ -23,9 +27,19 @@ export async function POST(req: Request) {
     });
     const key = str(body.chave, 400).trim();
     if (key) await setSecret(SECRET, key);
+    let entradaMsg = "";
+    if (typeof body.entrada === "boolean") {
+      const r = await setInbound(body.entrada, g.user.name);
+      entradaMsg = r.detail;
+    }
     await audit(g.user.name, "whatsapp.config", key ? "com chave nova" : "sem chave nova");
     const c = await waConfig();
-    return json({ config: c, state: c.temChave ? await waState() : { ok: false, state: "sem chave", detail: "falta a chave" } });
+    return json({
+      config: c,
+      state: c.temChave ? await waState() : { ok: false, state: "sem chave", detail: "falta a chave" },
+      entrada: c.temChave ? await inboundState() : { enabled: false, detail: "falta a chave", url: "" },
+      ...(entradaMsg ? { entradaMsg } : {})
+    });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "Não foi possível salvar.");
   }

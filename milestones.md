@@ -52,6 +52,6 @@ Status em 15/11: **M0 virou** (legado tirado ou marcado em todos os arquivos, `d
 Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 - **Fase 1 (base)**: feita. Falta o critério de virada conferido pelo Felipe no celular (áudio com 3 assuntos).
 - **Fase 2 (agentes e habilidades)**: feita. Criar, editar, duplicar, pausar e excluir pela tela, com commit; importação do OpenBot como rascunho pausado; agentes também criam agente, habilidade, rotina e app pelo chat, com aprovação.
-- **Fase 3 (rotinas e WhatsApp)**: agendador, tela de rotinas, aviso de saída e monitor de janela feitos. Faltam o canal de entrada do WhatsApp (webhook) e as janelas de envio de e-mail. O aviso só notifica quando a instância da Evolution for de outro número.
-- **Fase 4 (cofre e navegadores)**: cofre feito (sem escopo por agente). Navegadores não começou.
+- **Fase 3 (rotinas e WhatsApp)**: agendador, tela de rotinas, aviso de saída e monitor de janela feitos. **Canal de entrada do WhatsApp feito** (webhook com token, texto e nota de voz transcrita aqui, resposta de volta, aprovação por "ok"/"não", "pare" interrompe); falta ligar na Evolution com um número que não seja o do Felipe. Janelas de envio de e-mail não começaram.
+- **Fase 4 (cofre e navegadores)**: feita. Cofre com escopo por agente e segredo por referência (`{{vault:NOME}}`, valor só depois da aprovação); navegador por agente com tela ao vivo na tela Navegadores, bloqueio de rede interna, controle pelo Felipe e cofre separado por agente; colar e arrastar arquivo no chat.
 - **Fase 5 (aprovações, registros, demais conectores)**: aprovação no chat e modo automático feitos; fila única e tela de registros não começaram.
