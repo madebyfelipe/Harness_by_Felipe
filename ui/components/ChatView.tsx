@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Conversation, Message, ToolUse, TriageView } from "@/lib/chat";
+import type { Conversation, Message, SubThread, TaskItem, ToolUse, TriageView } from "@/lib/chat";
+import { TasksPanel } from "./TasksPanel";
+import { applySubEvent, mergeSubs, SubChips, SubTabs, SubView } from "./SubagentTabs";
 import { api } from "./api";
 import { agentName, REFRESH_EVENT } from "./ConversationList";
 import { sendFeedback } from "./FeedbackButton";
@@ -226,6 +228,10 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const [liveText, setLiveText] = useState("");
   const [liveTools, setLiveTools] = useState<ToolUse[]>([]);
   const [liveImages, setLiveImages] = useState<Att[]>([]);
+  const [liveSubs, setLiveSubs] = useState<SubThread[]>([]);
+  const [liveTasks, setLiveTasks] = useState<TaskItem[]>([]);
+  /** Aba aberta no topo: null = conversa principal; senão, o id do subagente. */
+  const [tab, setTab] = useState<string | null>(null);
   // Mensagens pendentes: na fila (enquanto roda) ou agendadas.
   const [queue, setQueue] = useState<{ id: string; text: string; run_at: string | null }[]>([]);
   const [afterEnd, setAfterEnd] = useState(0);
@@ -302,12 +308,23 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const hasAnswer = messages.some((m) => m.role === "assistant" && !m.meta.feedback);
   const headAgent = isContext ? "Modo Contexto" : isAuto ? (conv?.route?.agent ? `Central · ${agentName(conv.route.agent)}` : "Central") : agentName(conv!.agent);
   const refreshList = () => window.dispatchEvent(new Event(REFRESH_EVENT));
+  const allSubs = mergeSubs(
+    messages.flatMap((m) => m.meta.subagents ?? []),
+    liveSubs
+  );
+  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant" && !m.meta.feedback);
+  // Durante a execução, a lista ao vivo; depois, como ficou na última resposta.
+  const shownTasks = running && liveTasks.length ? liveTasks : running ? [] : (lastAssistant?.meta.tasks ?? []);
+  const openSub = tab ?(allSubs.find((t) => t.id === tab) ?? null) : null;
+  const mainAgent = isContext ? "contexto" : isAuto ? (conv?.route?.agent ?? "orquestrador") : conv!.agent;
 
   const connect = useCallback((cid: string) => {
     esRef.current?.close();
     setLiveText("");
     setLiveTools([]);
     setLiveImages([]);
+    setLiveSubs([]);
+    setLiveTasks([]);
     setApprovals([]);
     setLiveTriage(null);
     setTriaging(false);
@@ -351,6 +368,8 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
       setActivity(`${t.agent ? `${t.agent} › ` : ""}${t.name}${t.summary ? ` · ${t.summary}` : ""}`.slice(0, 140));
       setLiveTools((l) => (l.some((x) => x.id === d.id) ? l : [...l, t]));
     });
+    for (const type of ["sub_start", "sub_item", "sub_end"]) on(type, (d) => setLiveSubs((l) => applySubEvent(l, type, d)));
+    on("tasks", (d) => setLiveTasks(Array.isArray(d.items) ? (d.items as TaskItem[]) : []));
     on("context", (d) => setLiveCtx(d as unknown as NonNullable<Message["meta"]["context"]>));
     on("image", (d) => setLiveImages((l) => (l.some((x) => x.id === d.id) ? l : [...l, d as unknown as Att])));
     on("approval", (d) => setApprovals((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Approval), status: "pending" }])));
@@ -363,6 +382,8 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
       setLiveText("");
       setLiveTools([]);
       setLiveImages([]);
+      setLiveSubs([]);
+      setLiveTasks([]);
       setLiveCtx(null);
       setLiveTriage(null);
     });
@@ -473,6 +494,8 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
 
   async function send(override?: string, audio = false) {
     const raw = (override ?? text).trim();
+    // A caixa fala com a conversa principal: volta para ela ao enviar.
+    if (raw) setTab(null);
     if (running && conv && raw && !uploading) {
       // Rodando: vai para a fila e sai quando a execução atual terminar.
       if (files.length) return setError("Anexo só depois que a execução terminar; o texto pode ir para a fila.");
@@ -652,6 +675,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   const composerEl = (
       <div className={`composer${hero ? " composer--hero" : ""}`}>
         <div className="composer__inner">
+          {shownTasks.length ? <TasksPanel key={running ? "live" : (lastAssistant?.id ?? "")} items={shownTasks} live={running} /> : null}
           {queue.length ? (
             <ul className="pending" aria-label="Mensagens pendentes">
               {queue.map((q) => (
@@ -827,6 +851,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
   return (
     <div className={`chatshell${side ? " chatshell--side" : ""}`}>
     <div className="chat">
+      <div className="chat__top">
       <header className="chat__head">
         <a className="rail__btn chat__back" href={backHref} aria-label="Voltar para a lista">
           <IconBack />
@@ -938,9 +963,17 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
           </div>
         </details>
       </header>
+      {conv && !empty ? <SubTabs mainAgent={mainAgent} mainLabel={headAgent} subs={allSubs} active={openSub ? openSub.id : null} onPick={setTab} /> : null}
+      </div>
 
+      {openSub ? (
+        <div className="chat__scroll">
+          <SubView thread={openSub} all={allSubs} mainAgent={mainAgent} modelLabel={label} onPick={setTab} />
+        </div>
+      ) : null}
       <div
         className="chat__scroll"
+        hidden={Boolean(openSub)}
         ref={scrollRef}
         onScroll={(e) => {
           const el = e.currentTarget;
@@ -1012,6 +1045,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
                 ) : null}
                 {m.meta.stopped ? <p className="notice notice--plain">Execução parada por você.</p> : null}
                 {m.meta.trocas?.length ? <p className="small muted">Troca de conta: {m.meta.trocas.join("; ")}</p> : null}
+                {m.meta.subagents?.length ? <SubChips subs={m.meta.subagents} onPick={setTab} /> : null}
                 <Steps tools={m.meta.tools ?? []} />
                 <p className="msg__meta">
                   <span>{[fmtSecs(m.meta.durationMs), fmtCost(m.meta.costUsd), fmtTokens((m.meta.inputTokens ?? 0) + (m.meta.outputTokens ?? 0)), m.meta.conta ?? m.meta.auth].filter(Boolean).join(" · ")}</span>
@@ -1034,6 +1068,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
                 }
               />
               {switchNote ? <p className="small muted">{switchNote}</p> : null}
+              {liveSubs.length ? <SubChips subs={liveSubs} onPick={setTab} /> : null}
               {liveTriage || liveTools.length || thought ? (
                 <details className="fold live__more">
                   <summary>

@@ -4,7 +4,22 @@ O app de computador da Central: a mesma interface da web, rodando na máquina do
 
 **O que ele é:** uma janela do Electron que sobe o servidor da Central em `127.0.0.1`, numa porta livre, e abre o app. Não é uma segunda Central: usa o mesmo código de `ui/`.
 
-## O que precisa na máquina
+## Dois modos
+
+Na primeira vez o app pergunta onde a Central roda. Dá para trocar depois no menu **Modo** (o app reinicia).
+
+| Modo | O que abre | Login |
+| --- | --- | --- |
+| **Na VPS** | `https://chat.madebyfelipe.agency` dentro da janela | a mesma conta da web (senha ou passkey); a sessão fica guardada no perfil `persist:central-vps` e sobrevive a fechar o app |
+| **Nesta máquina** | servidor local em `127.0.0.1` | conta da Central local (`~/.central`) |
+
+- No modo VPS não precisa de Node nem de Claude Code no computador: os agentes rodam na VPS.
+- No modo VPS o seletor de pastas nativo some (as pastas seriam do computador, e os agentes estão na VPS); a tela se comporta como a web.
+- Se a VPS não responder, o app oferece tentar de novo ou abrir a Central local.
+- `CENTRAL_DESKTOP_MODE=local|vps` força o modo; `CENTRAL_VPS_URL` troca o endereço da VPS.
+- A escolha fica em `~/.central/desktop.json`.
+
+## O que precisa na máquina (modo local)
 
 - **Node.js 22 ou mais novo** no PATH (o mesmo que o Claude Code usa). Sem ele, o app tenta o Node embutido no Electron, mas o caminho recomendado é o do sistema.
 - **Claude Code instalado e logado** (`claude` no PATH) ou uma chave de API cadastrada em Configurações → Provedores de IA.

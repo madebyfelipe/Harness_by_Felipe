@@ -7,6 +7,7 @@ import { agentClick, agentOpen, agentPress, agentRead, agentScroll, agentShot, a
 import { normalizeAgent, normalizeSkill, saveAgent, saveSkill } from "./agents-store";
 import { getAgent, listSkills } from "./repo";
 import { forget, readMemory, remember } from "./agent-memory";
+import type { TaskItem } from "./chat";
 
 /*
  * Ferramentas próprias da Central, entregues a todo agente como o servidor MCP "central".
@@ -20,7 +21,7 @@ import { forget, readMemory, remember } from "./agent-memory";
 export const CENTRAL_SERVER = "central";
 const T = (n: string) => `mcp__${CENTRAL_SERVER}__${n}`;
 /** Não pedem aprovação: só leem, ou já são um pedido ao Felipe. */
-export const CENTRAL_AUTO = [T("perguntar_ao_felipe"), T("pedir_acesso"), T("listar_rotinas"), T("listar_apps"), T("mostrar_imagem"), T("lembrar"), T("minha_memoria"), T("esquecer")];
+export const CENTRAL_AUTO = [T("perguntar_ao_felipe"), T("pedir_acesso"), T("listar_rotinas"), T("listar_apps"), T("mostrar_imagem"), T("tarefas"), T("lembrar"), T("minha_memoria"), T("esquecer")];
 
 export type AskReply = { ok: boolean; answer?: string };
 export type AskData =
@@ -35,6 +36,8 @@ export type ToolsCtx = {
   canBrowse: () => boolean;
   /** Mostra uma imagem ao Felipe no chat (vira anexo da resposta). Devolve o texto para o agente. */
   showImage?: (a: { caminho?: string; legenda?: string; captura?: boolean }) => Promise<string>;
+  /** Lista de tarefas da execução (painel "Tasks" acima da caixa do chat). */
+  tasks?: (list: TaskItem[]) => void;
 };
 
 const text = (t: string, isError = false) => ({ content: [{ type: "text" as const, text: t }], ...(isError ? { isError: true } : {}) });
@@ -240,6 +243,18 @@ export function centralTools(ctx: ToolsCtx) {
           } catch (e) {
             return text(`Não mostrei a imagem: ${e instanceof Error ? e.message.split("\n")[0] : "erro"}`, true);
           }
+        },
+        { alwaysLoad: true }
+      ),
+      tool(
+        "tarefas",
+        "Lista de tarefas que o Felipe vê no chat. Use em trabalho com 3+ passos: mande a lista inteira no início e de novo a cada passo concluído (só um 'fazendo' por vez).",
+        { itens: z.array(z.object({ titulo: z.string().min(1).max(120), status: z.enum(["pendente", "fazendo", "feito"]) })).min(1).max(20) },
+        async (a) => {
+          if (!ctx.tasks) return text("Aqui não há painel de tarefas.", true);
+          const map = { pendente: "pending", fazendo: "in_progress", feito: "done" } as const;
+          ctx.tasks(a.itens.map((i) => ({ title: i.titulo, status: map[i.status] })));
+          return text("Lista atualizada.");
         },
         { alwaysLoad: true }
       ),

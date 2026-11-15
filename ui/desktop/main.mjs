@@ -23,11 +23,17 @@ const DATA_DIR = process.env.CENTRAL_DATA_DIR || path.join(os.homedir(), ".centr
 const CONFIG_DIR = process.env.CENTRAL_REPO_DIR || path.join(os.homedir(), "Central", "config");
 const PROJECTS_DIR = process.env.CENTRAL_PROJECTS_DIR || path.join(os.homedir(), "Central", "Projetos");
 const LOG = path.join(DATA_DIR, "desktop.log");
+const PREFS = path.join(DATA_DIR, "desktop.json");
+/** Central da VPS: a mesma conta e as mesmas conversas da web. */
+const VPS_URL = (process.env.CENTRAL_VPS_URL || "https://chat.madebyfelipe.agency").replace(/\/+$/, "");
+/** Sessão da VPS separada e gravada em disco: o login sobrevive a fechar o app. O local usa a sessão padrão. */
+const PARTICAO = { local: undefined, vps: "persist:central-vps" };
 
 let janela = null;
 let servidor = null;
 let servidorUrl = "";
 let encerrando = false;
+let modoAtual = "local";
 
 function log(onde, texto) {
   const linha = `[${new Date().toISOString()}] ${onde}: ${String(texto).replace(/\s+$/g, "")}\n`;
@@ -36,6 +42,76 @@ function log(onde, texto) {
     fs.appendFileSync(LOG, linha);
   } catch {
     /* sem log também não é motivo para não abrir */
+  }
+}
+
+function lerPrefs() {
+  try {
+    return JSON.parse(fs.readFileSync(PREFS, "utf8")) || {};
+  } catch {
+    return {};
+  }
+}
+
+function salvarPrefs(p) {
+  fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(PREFS, JSON.stringify({ ...lerPrefs(), ...p }, null, 2));
+}
+
+/** "local" (servidor nesta máquina) ou "vps" (chat.madebyfelipe.agency). Pergunta na primeira vez. */
+async function escolherModo() {
+  const forcado = process.env.CENTRAL_DESKTOP_MODE;
+  if (forcado === "local" || forcado === "vps") return forcado;
+  const salvo = lerPrefs().modo;
+  if (salvo === "local" || salvo === "vps") return salvo;
+  const r = await dialog.showMessageBox({
+    type: "question",
+    title: "Central",
+    message: "Onde a Central vai rodar?",
+    detail: `Na VPS: entra com a mesma conta da web (${new URL(VPS_URL).host}) e vê as mesmas conversas, agentes e rotinas.\n\nNesta máquina: os agentes trabalham nas pastas deste computador com o Claude Code daqui.\n\nDá para trocar depois no menu Modo.`,
+    buttons: ["Na VPS (mesma conta da web)", "Nesta máquina"],
+    defaultId: 0,
+    cancelId: 0
+  });
+  const modo = r.response === 1 ? "local" : "vps";
+  salvarPrefs({ modo });
+  return modo;
+}
+
+function trocarModo(modo) {
+  if (modo === modoAtual) return;
+  salvarPrefs({ modo });
+  log("modo", `trocado para ${modo}; reiniciando`);
+  app.relaunch();
+  app.exit(0);
+}
+
+/** VPS fora do ar ou sem internet: oferece tentar de novo ou usar a Central local. */
+async function vpsResponde() {
+  for (;;) {
+    try {
+      const r = await fetch(`${VPS_URL}/api/health`, { signal: AbortSignal.timeout(10_000) });
+      if (r.ok) return true;
+      throw new Error(`HTTP ${r.status}`);
+    } catch (e) {
+      log("vps", `sem resposta: ${e instanceof Error ? e.message : e}`);
+      const r = await dialog.showMessageBox({
+        type: "warning",
+        title: "Central",
+        message: "A Central da VPS não respondeu.",
+        detail: `${VPS_URL}\n\nConfira a internet. Se a VPS estiver fora do ar, dá para usar a Central nesta máquina.`,
+        buttons: ["Tentar de novo", "Usar nesta máquina", "Sair"],
+        defaultId: 0,
+        cancelId: 2
+      });
+      if (r.response === 0) continue;
+      if (r.response === 1) {
+        trocarModo("local");
+        return false;
+      }
+      app.quit();
+      return false;
+    }
   }
 }
 
@@ -134,12 +210,15 @@ function criarJanela(url) {
     minWidth: 960,
     minHeight: 620,
     backgroundColor: "#ffffff",
-    title: "Central",
+    title: modoAtual === "vps" ? `Central · ${new URL(VPS_URL).host}` : "Central",
     icon: path.join(ROOT, "icon.png"),
     show: false,
     autoHideMenuBar: false,
     webPreferences: {
       preload: path.join(ROOT, "preload.cjs"),
+      partition: PARTICAO[modoAtual],
+      // O preload só expõe as pastas do computador no modo local.
+      additionalArguments: [`--central-modo=${modoAtual}`],
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -147,9 +226,25 @@ function criarJanela(url) {
     }
   });
   janela.once("ready-to-show", () => janela.show());
+  const daCentral = (alvo) => {
+    try {
+      return new URL(alvo).origin === new URL(servidorUrl).origin;
+    } catch {
+      return false;
+    }
+  };
   janela.webContents.setWindowOpenHandler(({ url: alvo }) => {
-    if (/^https?:\/\//i.test(alvo) && !alvo.startsWith(servidorUrl)) shell.openExternal(alvo);
+    if (/^https?:\/\//i.test(alvo) && !daCentral(alvo)) shell.openExternal(alvo);
     return { action: "deny" };
+  });
+  // Link para fora da Central abre no navegador do sistema, nunca dentro do app.
+  janela.webContents.on("will-navigate", (e, alvo) => {
+    if (daCentral(alvo)) return;
+    e.preventDefault();
+    if (/^https?:\/\//i.test(alvo)) shell.openExternal(alvo);
+  });
+  janela.webContents.on("did-fail-load", (_e, codigo, desc, alvo, principal) => {
+    if (principal && codigo !== -3) log("janela", `falhou ${alvo}: ${desc} (${codigo})`);
   });
   janela.loadURL(url);
   janela.webContents.on("did-finish-load", () => log("janela", `carregou ${janela?.webContents.getURL() ?? url}`));
@@ -158,6 +253,15 @@ function criarJanela(url) {
 
 function menu() {
   const modelo = [
+    {
+      label: "Modo",
+      submenu: [
+        { label: `Na VPS (${new URL(VPS_URL).host}), mesma conta da web`, type: "radio", checked: modoAtual === "vps", click: () => trocarModo("vps") },
+        { label: "Nesta máquina", type: "radio", checked: modoAtual === "local", click: () => trocarModo("local") },
+        { type: "separator" },
+        { label: "Abrir no navegador", click: () => shell.openExternal(servidorUrl || VPS_URL) }
+      ]
+    },
     {
       label: "Arquivo",
       submenu: [
@@ -205,7 +309,7 @@ function menu() {
               type: "info",
               title: "Sobre a Central",
               message: `Central ${app.getVersion()}`,
-              detail: `Dados: ${DATA_DIR}\nConfiguração: ${CONFIG_DIR}\nProjetos: ${PROJECTS_DIR}`,
+              detail: modoAtual === "vps" ? `Modo VPS: ${VPS_URL}\nLog: ${LOG}` : `Modo local\nDados: ${DATA_DIR}\nConfiguração: ${CONFIG_DIR}\nProjetos: ${PROJECTS_DIR}`,
               buttons: ["OK"]
             })
         }
@@ -269,9 +373,18 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(async () => {
-    registrarIpc();
-    menu();
     try {
+      modoAtual = await escolherModo();
+      log("modo", modoAtual);
+      if (modoAtual === "vps") {
+        servidorUrl = VPS_URL;
+        menu();
+        if (!(await vpsResponde())) return;
+        criarJanela(VPS_URL);
+        return;
+      }
+      menu();
+      registrarIpc();
       prepararPastas();
       const url = await subirServidor();
       criarJanela(url);

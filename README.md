@@ -43,6 +43,7 @@ decisão recente é **legado**: tirar, ou marcar como legado (pode estar defasad
 | [`skills.md`](skills.md) | Skills e conectores que existem, o que falta conectar e as skills a criar |
 | [`equipe-e-agentes.md`](equipe-e-agentes.md) | Pessoas e agentes (Leonardo, Tyler, Dylan, Quinn, Casey, Harbinger…) e quem faz o quê |
 | [`como-o-felipe-trabalha.md`](como-o-felipe-trabalha.md) | Preferências, jeito de decidir e de pedir, o que irrita, o que agrada |
+| [`como-trabalhar-na-central.md`](como-trabalhar-na-central.md) | Regras para agentes dentro da Central: mostrar imagem gerada, lista de tarefas, delegar com título claro, fechar a resposta |
 | [`integracoes.md`](integracoes.md) | Mapa de sistemas: Twenty, Vercel, caixas de e-mail, WhatsApp, Trello… |
 | [`pendencias.md`](pendencias.md) | O que precisa de decisão, o que já foi decidido e falta executar, riscos |
 | [`subagentes.md`](subagentes.md) | **Proposta de arquitetura**: orquestrador + subagentes, escada de modelos, contrato de delegação, janelas de uso |

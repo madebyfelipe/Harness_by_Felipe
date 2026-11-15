@@ -23,6 +23,28 @@ export type Route = { agent: string; model: string; contexto?: boolean; workflow
 
 export type ToolUse = { id: string; name: string; summary: string; agent: string | null };
 
+/** Item da lista de tarefas do agente (painel "Tasks"). */
+export type TaskItem = { title: string; status: "pending" | "in_progress" | "done" };
+
+/** O que um subagente fez, na ordem: texto que ele escreveu ou ferramenta que chamou. */
+export type SubItem = { k: "text"; text: string } | { k: "tool"; name: string; summary: string };
+/** Conversa de um subagente: o pedido de quem delegou, o trabalho e a resposta devolvida. */
+export type SubThread = {
+  /** id da chamada Agent/Task que abriu o subagente. */
+  id: string;
+  /** Quem delegou: null = agente principal; senão, o id da conversa do subagente pai. */
+  parent: string | null;
+  agent: string;
+  title: string;
+  prompt: string;
+  model?: string;
+  status: "running" | "done" | "error" | "stopped";
+  items: SubItem[];
+  result?: string;
+  startedAt: number;
+  endedAt?: number;
+};
+
 export type MessageMeta = {
   model?: string;
   agent?: string;
@@ -47,6 +69,10 @@ export type MessageMeta = {
   interrupted?: boolean;
   /** Janela de contexto ao fim da resposta (categorias como no /context). */
   context?: ContextUsage;
+  /** Conversa de cada subagente desta resposta (abas no topo do chat). */
+  subagents?: SubThread[];
+  /** Lista de tarefas como ficou no fim da resposta. */
+  tasks?: TaskItem[];
 };
 
 export type ContextUsage = { total: number; max: number; pct: number; cats: { id: string; name: string; tokens: number; kind: string }[] };
