@@ -47,6 +47,8 @@ desatualizado).
   mensalidade** (decisão de 14/11). O `EMAIL-PLAYBOOK.md` do Dylan ainda diz R$ 440 / R$ 1.540
   e proíbe parcelamento — vale o preço novo.
 - **Interesse:** pede nome como assina, CRP e modalidade → `RESPONDEU`, `responsavel FELIPE`.
+- **Envio automático** (15/11): campanha aprovada roda sem revisão por e-mail. O Felipe
+  aprova a campanha uma vez (lista, oferta, texto-base) e recebe o resumo do dia (E7, 19:30).
 - **Fila:** e-mail gratuito só com nome/@ batendo, no máximo 6 por conta/dia.
 - **Números:** 11/11 18 D0 (2 bounces) · 12/11 13 D0 · 13/11 12–13 D0, 1 bounce, 1 resposta
   com interesse. Meta: reuniões até **30/11/2026**.
@@ -84,7 +86,7 @@ Oportunidades no Twenty: só **2** — o funil vive no objeto **Person**.
 | canal | onde | vai para |
 |---|---|---|
 | Quiz da LP do site (A–D → Nome + WhatsApp) | `/lp/site` (noindex, tráfego pago) | `/api/lp-lead` → e-mail "Novo lead" |
-| E-book / newsletter | `/hub` (modal) | Twenty (workflow `email_listing_hub`) + Make |
+| E-book / newsletter | `/hub` (modal) | Twenty (workflow `email_listing_hub`); Make é fallback antigo |
 | WhatsApp direto | todos os CTAs | `wa.me/5515992835226` |
 | Blog (SEO) | 75+ posts | CTA "Conversar por 15 minutos" + banner do site |
 | Comentários do blog | posts | e-mail de moderação |
@@ -105,7 +107,10 @@ link, anexo, emoji · tom de colega, 1ª pessoa.
 Afrouxar qualquer regra é **decisão do Felipe**. Regras completas de voz:
 `skills/email-personalizado/SKILL.md`.
 
-## Playbook de resposta (rascunho; quem responde é humano)
+## Playbook de resposta (automático dentro do playbook)
+
+Resposta que cai numa linha abaixo é enviada pela rotina, sem esperar o Felipe, e entra no
+resumo do dia. O que não cabe aqui vai para o Felipe.
 
 | classificação | o que fazer |
 |---|---|
@@ -120,15 +125,16 @@ Desconto, nota fiscal, contrato, objeção fora do roteiro: vai para o Felipe.
 
 ## O que a IA pode e não pode fazer em vendas
 
-| pode | não pode |
+| pode (sozinha, reporta depois) | não pode |
 |---|---|
 | pesquisar leads só com e-mail/telefone **publicado** pela profissional, anotando a URL | adivinhar e-mail, usar base comprada, `noreply@`/`financeiro@` |
-| escrever 1º e-mail, follow-ups, roteiro de ligação | enviar réplica a lead, conectar no LinkedIn |
-| classificar respostas e rascunhar réplica | retomar disparo pausado, mudar regra de copy, prometer prazo/garantia |
+| escrever e **enviar** 1º e-mail e follow-ups de campanha aprovada | abrir campanha nova ou mudar oferta/lista sem o Felipe |
+| classificar respostas e **responder** pelo playbook | negociar desconto, contrato, nota fiscal; responder objeção fora do roteiro |
+| | retomar disparo pausado, mudar regra de copy, prometer prazo/garantia, conectar no LinkedIn |
 | deduplicar contra o CRM inteiro antes de gravar | transformar contato de outra origem (newsletter, cliente) em prospecção fria |
 | | usar depoimento fictício ou cliente do portfólio como prova |
 
-Envio avulso (fora de campanha) só **aprovado pelo Felipe** e registrado em nota no Twenty.
+Envio avulso (fora de campanha) só com pedido do Felipe e registrado em nota no Twenty.
 
 ## Métricas que importam
 

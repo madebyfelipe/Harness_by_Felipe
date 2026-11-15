@@ -41,7 +41,7 @@ Depende de: M<x> / decisão do Felipe
 | **M0 · Contexto limpo** | banco de contexto sem legado ativo | legado removido ou marcado; `decisoes.md` no ar; oferta ativa (e-book + site) igual em todos os arquivos; depoimentos fictícios fora do contexto |
 | **M1 · Oferta no ar** | site e cold mail falando a mesma coisa | `beta` com R$ 599 / R$ 1.999; playbook do Dylan atualizado; depoimentos fictícios e `/diagnostico` fora do site; e-mails sem link rastreado |
 | **M2 · Feedback e status** | o Felipe registra impressão em segundos e o agente lê | canal de feedback funcionando (WhatsApp `fb:` ou janela da Central); triagem semanal rodando; Trello certo conectado |
-| **M3 · Central (UI) fase 1** | chat + modo Contexto | ver `prompts/construir-ui.md`, fase 1 |
+| **M3 · Central (UI) fase 1** | chat + modo Contexto + modo Auto | ver `prompts/construir-ui.md`, fase 1; uma tarefa real ("atualizar /privacidade") passa pela triagem e é executada sem o Felipe intervir |
 | **M4 · Rotinas e avisos** | rotinas e avisos pela Central/WhatsApp | ver fase 3 do prompt da UI |
 
 Status em 15/11: **M0 virou** (legado tirado ou marcado em todos os arquivos, `decisoes.md` criado, oferta igual em tudo, conferido por busca de termos antigos). Próximo: **M1**.

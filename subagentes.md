@@ -45,7 +45,8 @@ conversa para coordenar; uma skill a mais é só um arquivo.
 | **orquestrador** (sessão principal) | **Fable 5.2** | — | tudo, mais delegação | plano, delegação, revisão final, resposta para você | executar trabalho braçal que um executor faz |
 | **pesquisador-leads** | Sonnet 5.5 | — | navegador (Google Maps, sites), API do Twenty | leads novos no Twenty com `iniciativa`, fonte e dados públicos | inventar e-mail/telefone; gravar sem checar duplicado |
 | **enriquecedor** | Haiku 5.5 (volume) | Sonnet 5.5 | navegador/fetch, Twenty | por lead: o que o site tem, se está adequado, 3 pontos de melhoria, gancho | escrever o e-mail |
-| **redator-vendas** | Sonnet 5.5 | Fable 5.2 | Twenty, skill `email-personalizado` | 1º e-mail + follow-ups por lead, em fila para o bloco | **enviar** (quem envia é o código de disparo) |
+| **triagem** | Sonnet 5.5 | — | só leitura (contexto, repo, CRM) | workflow: passos, agente e modelo por passo, complexidade (`triagem.md`) | executar a tarefa |
+| **redator-vendas** | Sonnet 5.5 | Fable 5.2 | Twenty, skill `email-personalizado` | 1º e-mail + follow-ups por lead, em fila para o bloco | mudar oferta/lista (o envio é do código, automático) |
 | **analista-mercado** | Sonnet 5.5 | Fable 5.2 | busca web, navegador, skills `pesquisa-de-preco` e `validacao-de-oferta` | relatório de preço por mercado/estado e veredito da oferta | publicar preço; mudar oferta |
 | **programador** | Sonnet 5.5 | **Fable 5.2** | repo, terminal, navegador | branch + PR (ou commit na branch) com build passando | merge na `beta`; mexer no que não foi pedido |
 | **qa-site** | Sonnet 5.5 | — | navegador (desktop e celular), axe-core, `gh` | relatório: passou/falhou, com print | corrigir (devolve para o programador) |

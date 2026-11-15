@@ -4,6 +4,16 @@
 desta lista. Não travar por inconsistência: aplique a mais nova e corrija o arquivo antigo.
 Decisão nova entra **no topo**, com data e motivo.
 
+## 15/11/2026 — envio automático e triagem automática
+
+| decisão | o que muda |
+|---|---|
+| **Envio de e-mail de campanha é automático.** Campanha aprovada uma vez pelo Felipe (lista, oferta, texto-base) = rotina roda sozinha e **só reporta depois**. Motivo: "a lista é minha, a oferta é minha, o e-mail é meu; a IA só me ajuda a escrever, como no portal de e-mail" | Acaba a revisão humana por e-mail. D0, follow-ups e respostas previstas no playbook saem sem esperar o Felipe. Checagens automáticas (guardião, optOut, bounce, cotas) continuam, sem pessoa no meio. Fica com o Felipe só o que está fora do playbook (desconto, contrato, objeção estranha, denúncia) |
+| **Pode assinar como Felipe** | O remetente (Felipe ou Leonardo) é definido por campanha |
+| **Rotina é rotina**: executa sem interferência e checa depois | Vale para toda rotina do harness, não só e-mail |
+| **Triagem automática ("auto mode")**: um Sonnet recebe a tarefa, levanta o que fazer, mede a complexidade e escolhe agente(s), modelo e workflow | Especificação em `triagem.md`; agente em `agents/triagem.md` |
+| Coisa de passado distante: descartar ou marcar como defasada | Reforço da regra de recência |
+
 ## 15/11/2026 — limpeza de legado
 
 | decisão | o que muda |

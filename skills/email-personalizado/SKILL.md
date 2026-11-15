@@ -7,8 +7,11 @@ description: Regras de voz, assinatura e formato para e-mails frios e follow-ups
 
 ## Quem fala (assinatura) — a regra mais importante
 
-O Felipe assina como **profissional**, não como empresa. "Made by Felipe" é a marca, não
-o remetente.
+O remetente é **Felipe ou Leonardo**, definido por campanha (15/11: assinar como Felipe é
+ok — a campanha, a lista e a oferta são dele). Quem assina fala como **profissional**, não
+como empresa. "Made by Felipe" é a marca, não o remetente.
+
+O e-mail sai **automaticamente** (sem revisão humana), então tem de sair pronto.
 
 | quem assina | como se apresenta |
 |---|---|

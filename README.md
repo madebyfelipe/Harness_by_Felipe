@@ -20,6 +20,9 @@ decisão recente é **legado**: tirar, ou marcar como legado (pode estar defasad
   com avaliação real do Google, anônima.
 - **Clientes externos e portfólio fora** de venda, copy e rotinas.
 - **Projetos por milestones** no Trello; **loop de feedback** do Felipe.
+- **Envio de campanha é automático**: aprovou a campanha uma vez, a rotina roda e reporta
+  depois. Pode assinar como Felipe. Ninguém revisa e-mail por e-mail.
+- **Triagem automática**: um Sonnet recebe a tarefa e decide agente, modelo e workflow.
 
 ## Arquivos
 
@@ -31,6 +34,7 @@ decisão recente é **legado**: tirar, ou marcar como legado (pode estar defasad
 | [`site.md`](site.md) | Manutenção do site: stack, deploy, design system, rotas (ativas e legado), blog, checklist |
 | [`rotinas.md`](rotinas.md) | O que já roda (OpenBot, Claude, Vercel) e as rotinas propostas para o harness |
 | [`milestones.md`](milestones.md) | Método de projetos no Trello (M0, M1…, critério de virada) e milestones do harness |
+| [`triagem.md`](triagem.md) | Triagem automática ("auto mode"): complexidade, roteamento para agente/modelo, formato do workflow, exemplo |
 | [`feedback.md`](feedback.md) | Loop de feedback: como o Felipe registra (`fb:` no WhatsApp, janela na Central), triagem e registros |
 | [`skills.md`](skills.md) | Skills e conectores que existem, o que falta conectar e as skills a criar |
 | [`equipe-e-agentes.md`](equipe-e-agentes.md) | Pessoas e agentes (Leonardo, Tyler, Dylan, Quinn, Casey, Harbinger…) e quem faz o quê |
@@ -39,7 +43,7 @@ decisão recente é **legado**: tirar, ou marcar como legado (pode estar defasad
 | [`pendencias.md`](pendencias.md) | O que precisa de decisão, o que já foi decidido e falta executar, riscos |
 | [`subagentes.md`](subagentes.md) | **Proposta de arquitetura**: orquestrador + subagentes, escada de modelos, contrato de delegação, janelas de uso |
 | [`dashboard.md`](dashboard.md) | Especificação da Central (UI própria): chat, Contexto, feedback, projetos, navegador por bot, cofre, rotinas |
-| [`agents/`](agents/) | Definições: `orquestrador`, `pesquisador-leads`, `enriquecedor`, `redator-vendas`, `analista-mercado`, `programador`, `qa-site`, `guardiao` |
+| [`agents/`](agents/) | Definições: `orquestrador`, `triagem`, `pesquisador-leads`, `enriquecedor`, `redator-vendas`, `analista-mercado`, `programador`, `qa-site`, `guardiao` |
 | [`openbot/`](openbot/) | **Snapshot** do Harbinger de 14/11 (pode estar defasado; a raiz vale) |
 | [`prompts/`](prompts/) | `construir-ui.md`: prompt pronto para a sessão que vai construir a Central |
 | [`skills/`](skills/) | `pesquisa-de-preco`, `validacao-de-oferta`, `email-personalizado` (formato SKILL.md) |

@@ -15,7 +15,7 @@
 | **Twenty CRM** | banco de leads, campanhas (`campanhaProspeccao`), notas de operação, workflows | Conector MCP (`execute_tool`) · REST `crm.madebyfelipe.agency/rest` com `TWENTY_API_KEY` (servidor) |
 | **Vercel** | hospedagem, crons, env vars, deploy (`beta` = produção) | `gh api .../deployments` para conferir; painel pelo navegador |
 | **Hostinger** | e-mail (MX `mx1/mx2.hostinger.com`), SMTP `smtp.hostinger.com:465`, IMAP; hPanel (DNS, caixas) | só por credencial no servidor ou navegador |
-| **Make** | automação antiga: fallback do cadastro de newsletter/e-book | webhook chamado pela rota `/api/newsletter` |
+| **Make** | **defasado**: fallback antigo do cadastro de newsletter/e-book | webhook chamado pela rota `/api/newsletter` |
 | **Evolution API** | WhatsApp do estúdio (instância `mbf`), operado pelo Harbinger | servidor do OpenBot |
 | **Mirror de arquivos** | download do e-book (`file.madebyfelipe.agency/api/shares/ebook/...`) | URL só sai na resposta da API após opt-in |
 | **Magnific / Freepik** | fotos de banco licenciadas | conector MCP |

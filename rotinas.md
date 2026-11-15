@@ -48,14 +48,15 @@ rotinas do black berry (desativadas desde out/2026).
 
 ## 2. Rotinas propostas para o harness
 
-Princípio: **rotina não envia nada a lead, não faz merge na `beta` sem pedido, não muda
-oferta.** Prepara, mede e pergunta. O que o OpenBot já faz não se duplica.
+Princípio: **rotina é rotina** — executa sem o Felipe e **reporta depois**. Envio de
+campanha aprovada é automático. Rotina não abre campanha nova, não muda oferta nem preço,
+não faz merge do que ninguém pediu. O que o OpenBot já faz não se duplica.
 
 ### Diárias
 
 | quando | rotina | entrega |
 |---|---|---|
-| **07:30 seg–sex** | **Briefing comercial** | respostas novas (por classificação), réplicas esperando envio, prévias de site pedidas e não entregues, follow-ups do dia, compromissos da agenda. Termina com "as 3 coisas que só você pode fazer hoje" |
+| **07:30 seg–sex** | **Briefing comercial** | o que a rotina já enviou e respondeu, respostas fora do playbook (as únicas que esperam o Felipe), prévias de site pedidas e não entregues, compromissos da agenda. Termina com "as 3 coisas que só você pode fazer hoje" |
 | 07:30 seg–sex | **Saúde do site** | rotas principais em 200, último deploy de Produção é da `beta`, `/api/email-health` ok, formulários ativos (LP do site, newsletter) respondendo, drift `main` × `beta` |
 | ao chegar PR do blog | **Revisor de post** | art. 20, preço do site, fonte normativa com link, FAQ, capa, CTA; nada de depoimento ou cliente do portfólio; comenta no PR o que reprovar |
 
@@ -78,11 +79,12 @@ oferta.** Prepara, mede e pergunta. O que o OpenBot já faz não se duplica.
 
 ### Gatilhos (por evento)
 
-- **Lead respondeu** → classifica, rascunha réplica, avisa Felipe/Leonardo.
+- **Lead respondeu** → classifica; dentro do playbook, responde sozinho e registra; fora
+  do playbook, avisa o Felipe.
 - **Lead pediu a prévia** → tarefa "montar rascunho de site" com briefing pronto (perfil,
   público, 3 seções sugeridas).
-- **Form do site recebido** (LP do site) → cria/atualiza Person, rascunha a 1ª mensagem de
-  WhatsApp para o Felipe enviar.
+- **Form do site recebido** (LP do site) → cria/atualiza Person e manda a 1ª mensagem
+  pelo texto aprovado; avisa o Felipe depois.
 - **Merge na `beta`** → confere deploy Production e roda a saúde do site.
 - **Felipe mudou oferta/preço** → roda "Oferta consistente" na hora e registra em `decisoes.md`.
 - **Felipe mandou `fb:`** → registra em `feedback.md` (ver arquivo).

@@ -25,7 +25,12 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
 - **A IA decide e depois valida com ele.** Não quer fazer babysitting nem ficar
   entendendo o que a IA pretende fazer.
 - **Não interromper.** Pergunta só quando está bloqueada ou quando a decisão é dele de
-  verdade (preço, oferta, depoimento, enviar mensagem a lead).
+  verdade (preço, oferta, campanha nova, depoimento).
+- **Não quer revisar trabalho de IA.** Campanha aprovada uma vez = envio automático; a IA
+  é o auxílio de escrita que ele usaria no próprio portal de e-mail. "Rotina é rotina":
+  roda sem ele e checa depois.
+- **Triagem automática**: manda a tarefa e um Sonnet decide agente, modelo e workflow
+  (`triagem.md`).
 - **Pedido explícito no site vai direto para o ar**, sem PR: posts do blog, alterações que
   ele pediu. O site não é produto com dado sensível. Branch separada ou worktree só quando
   ele pedir.
@@ -58,7 +63,8 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
 - Estética editorial, dura (raio 2px), tipografia grande, pouco vermelho e bem colocado.
 - Fotos reais (dele ou de banco licenciado), em boa resolução.
 - Coisas que funcionam no **celular**.
-- Automação que tira trabalho braçal **mas deixa o envio com humano**.
+- Automação que roda **sozinha de ponta a ponta** e reporta depois (inclui envio de e-mail
+  de campanha aprovada).
 - Ver o resultado: link de prévia, print, número.
 - **Projetos por milestones** no Trello: M0, M1, M2…, cada um com cartão-guia, subtarefas
   e um critério de virada definido pelo agente (`milestones.md`).

@@ -84,7 +84,7 @@ Prioridade pelo impacto em venda. Todas em pt-BR, herdando as regras de `context
 | # | skill | gatilho | o que faz | por quê |
 |---|---|---|---|---|
 | 1 | **`rascunho-site-gratis`** | lead aceitou a prévia | Lê site/Instagram da psicóloga, monta o rascunho de página única no padrão do `/exemplo/site-psicologa`, com copy revisada pelo art. 20, e publica num link privado para o Leonardo enviar | É a oferta que **converte** hoje (1 ganho, campanha com 706 leads); hoje o Tyler faz à mão |
-| 2 | **`responder-lead`** | resposta chegou (painel, Dylan ou WhatsApp) | Classifica e rascunha a réplica pelo playbook de `vendas.md`, com os números atuais da oferta; nunca envia | Tira o gargalo do Felipe sem perder o controle humano |
+| 2 | **`responder-lead`** | resposta chegou (Dylan ou WhatsApp) | Classifica e responde pelo playbook de `vendas.md`, com os números atuais; fora do playbook, passa ao Felipe | Tira o Felipe do meio do que já está decidido |
 | 3 | **`proposta-comercial`** | conversa feita | Gera a proposta do site (R$ 599 / R$ 1.999) em PDF/Docs, sem depoimento nem cliente do portfólio | O deck-fonte atual é da época da imersão |
 | 4 | **`briefing-comercial`** | 07:30 seg–sex | O briefing da seção 2 de `rotinas.md`, lendo Twenty + Agenda | Uma tela por dia |
 | 5 | **`guarda-oferta`** | oferta muda / semanal | Varre todas as superfícies (site, LP, banner, JSON-LD, og, Twenty, textos do Dylan) atrás de número antigo, depoimento fictício, diagnóstico e link rastreado | A mudança de 13/11 passou por 78 arquivos e ainda não foi para o ar |

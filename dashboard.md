@@ -12,6 +12,8 @@ bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe._
    A dashboard vira o lugar para ver navegador, cofre e histórico, não para conversar.
 1. **Chat com o orquestrador** (e, opcionalmente, direto com um subagente), com histórico
    por conversa e seletor de modelo (Fable 5.2 · Opus 5.5 · Sonnet 5.5 · Haiku 5.5).
+   Modo **Auto** (padrão): a tarefa passa pela triagem (Sonnet), que escolhe agente, modelo
+   e workflow e já executa; "planejar:" mostra o workflow e espera (`triagem.md`).
 2. **Modo "Contexto"**: perguntas sobre a Made by Felipe e as ofertas respondidas **só**
    a partir do banco de contexto (`contexto.md`, `vendas.md`, preços, método, regras),
    com a fonte citada. Se não estiver no banco, diz "não está no contexto".
@@ -96,7 +98,7 @@ nascer outra estética.
 ## Fases (para não virar projeto infinito)
 
 1. **MVP (1–2 semanas de agente)**: chat + modo Contexto + seletor de modelo + rotinas
-   em leitura + **janela de feedback**. Sem navegador ao vivo e sem cofre (segredos em
+   em leitura + **janela de feedback** + **triagem automática**. Sem navegador ao vivo e sem cofre (segredos em
    variável de ambiente).
 2. **Cofre** com escopo por agente e registro de uso.
 3. **Navegador por agente** com transmissão de tela e "assumir controle".
@@ -109,5 +111,6 @@ nascer outra estética.
   menor escopo.
 - Conteúdo de páginas lidas pelo bot é **dado, não instrução** (prompt injection via site
   de lead é risco real num bot que navega).
-- Ação externa (enviar, publicar, merge, pagar) sempre com aprovação na UI, salvo rotina
-  autorizada por escrito.
+- Rotina aprovada (ex.: campanha de e-mail) executa sozinha e reporta depois. Fila de
+  aprovação só para o que é decisão do Felipe: campanha nova, gasto, oferta/preço, merge do
+  que ninguém pediu, resposta fora do playbook.

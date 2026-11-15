@@ -20,13 +20,15 @@ o desenho, não uma segunda esteira para ligar em paralelo.
 | **orquestrador** | planeja, delega, revisa, sobe de modelo quando não fica bom; fala com o Felipe (WhatsApp) | Fable 5.2 |
 | **pesquisador-leads** | Google Maps + sites → Twenty, por `iniciativa` | Sonnet 5.5 |
 | **enriquecedor** | o que o negócio já tem, se o site está adequado, pontos de melhoria, gancho | Haiku 5.5 → Sonnet |
-| **redator-vendas** | e-mail personalizado por contato + follow-ups (não envia) | Sonnet 5.5 → Fable |
+| **redator-vendas** | e-mail personalizado por contato + follow-ups (envio automático pelo código) | Sonnet 5.5 → Fable |
+| **triagem** | recebe a tarefa, mede complexidade, escolhe agente, modelo e workflow (`triagem.md`) | Sonnet 5.5 |
 | **analista-mercado** | pesquisa de preço + validação de oferta | Sonnet 5.5 → Fable |
 | **programador** | tudo que mexe no site; pedido explícito vai direto para o ar | Sonnet 5.5 → Fable |
 | **qa-site** | build, acessibilidade, celular, deploy | Sonnet 5.5 |
 | **guardião** | aprova/bloqueia texto que vai sair | Haiku 5.5 |
 
-O envio de e-mail e de WhatsApp é **código** (SMTP em blocos, Evolution API), não agente.
+O envio de e-mail e de WhatsApp é **código** (SMTP em blocos, Evolution API), não agente,
+e roda **sem revisão humana** quando a campanha já foi aprovada.
 
 ## Complemento: quem já existe no OpenBot
 

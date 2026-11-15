@@ -116,7 +116,7 @@ Em inglês: Practice, Subject, Inner need, Quality, Universe, Ethos.
 
 Processo em 8 passos, 2 etapas: **Estratégia** (Entrevista · Workshop · Pesquisa ·
 Diagnóstico) → **Identidade** (Plataforma · Keyword · Keyvisual · Guia da marca).
-O nome anterior do método era NAVE.
+
 
 ## Regras que não se quebram (valem para todo agente)
 
@@ -134,9 +134,11 @@ O nome anterior do método era NAVE.
    titular**; fonte registrada; descadastro honrado para sempre (não apagar quem saiu);
    sem base comprada, sem e-mail adivinhado. Aceite explícito em todo formulário,
    validado no servidor. Meta Pixel e embeds só com consentimento.
-5. **Réplica a lead é humana** (Felipe ou Leonardo); IA rascunha. O único envio automático
-   autorizado é o cold mail em blocos do Dylan (OpenBot), dentro do playbook. LinkedIn só
-   rascunho; convite é manual.
+5. **Envio de campanha é automático** (decisão de 15/11). Campanha aprovada pelo Felipe
+   (lista, oferta, texto-base) roda sozinha em rotina — D0, follow-ups e respostas do
+   playbook — e reporta depois. Assina Felipe ou Leonardo, conforme a campanha. Fora do
+   playbook (desconto, contrato, objeção estranha, denúncia) vai para o Felipe. LinkedIn:
+   convite continua manual.
 6. Só ofertar o que está ativo (site e e-book). Preço do site só no `/lp/site`, banner do
    blog e materiais de venda — nunca no `/en`. Imersão: não ofertar nem precificar.
 7. **Copy aprovada não se reescreve** (`lib/institucional.ts`).
