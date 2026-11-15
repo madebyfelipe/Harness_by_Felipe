@@ -1,5 +1,10 @@
 # Infraestrutura e integrações
 
+> ⚠️ **Snapshot de 14/11/2026, feito pelo Harbinger.** Pode estar defasado. Onde discordar
+> dos arquivos da raiz, vale `decisoes.md` (o mais recente). Já mudou desde então: preço do
+> site agora é R$ 599 / R$ 1.999 até 12x; rastreio de clique e diagnóstico descartados;
+> clientes externos fora do harness.
+
 Levantamento em 14/11/2026. Nenhuma chave, senha ou token está neste documento; ficam no cofre de chaves do OpenBot (`/data/.config/OpenBot/agent-api-keys/.vault/`, só o nome da variável aparece aqui).
 
 ## Servidor
@@ -15,9 +20,8 @@ Levantamento em 14/11/2026. Nenhuma chave, senha ou token está neste documento;
 | **CRM Twenty** (crm.madebyfelipe.agency) | Único registro de leads e histórico de contato | API REST via `twenty.sh`; chave `API_CRM` |
 | **Hostinger e-mail** | Três caixas de envio do cold mail e leitura de respostas | SMTP/IMAP pelos scripts em `outreach/` (senha no cofre) |
 | **Evolution API** (evo.madebyfelipe.agency) | WhatsApp: envio para o Felipe, grupos e contatos aprovados | Instância `mbf`; chave `EVOLUTION_API_KEY` |
-| **GitHub** | Repositórios `madebyfelipe/lpfds` (blog Made by Felipe) e `madebyfelipe/advocacia_an` (site Alves & Nabuco) | Conector GitHub do OpenBot e `gh` logado na conta madebyfelipe |
+| **GitHub** | Repositório `madebyfelipe/lpfds` (site e blog Made by Felipe) | Conector GitHub do OpenBot e `gh` logado na conta madebyfelipe |
 | **Vercel** | Hospeda madebyfelipe.com.br (Produção = branch `beta`) | MCP vercel; deploys conferidos pela API do GitHub |
-| **Hostinger FTP** | Hospeda advocaciaalvesnabuco.com.br; deploy por GitHub Actions | Workflow `deploy-hostinger.yml` |
 | **Apify** | Captura de leads do Google Maps (teto US$ 5 por ciclo) | Chave `APIFY_TOKEN` |
 | **Magnific** | Fotos de capa dos artigos | Chave `MAGNIFIC_KEY` |
 | **Snov.io** | Aquecimento da conta C de e-mail | Fora do OpenBot |
@@ -29,7 +33,6 @@ Levantamento em 14/11/2026. Nenhuma chave, senha ou token está neste documento;
 - Instância `mbf` ligada ao número do Felipe. Caiu em 10/11 às 05:44 (aparelho removido, erro 401, provável conflito com WhatsApp do desktop) e já estava conectada de novo em 12/11.
 - Antes de qualquer envio: `GET /instance/connectionState/mbf` deve devolver `open`. Se estiver `close` ou pedir QR, não reconectar nem usar outro canal; reportar.
 - Status `PENDING` na resposta significa só que a API aceitou, não que o destinatário recebeu. Não reenviar em caso de dúvida.
-- Grupo do blog: "Marketing | Alves Nabuco" (sem "e"), localizado pelo nome na API.
 - O WhatsApp Web via navegador do servidor (usado pelo Dylan no começo) saiu do ar em 10/11; o disparo por WhatsApp está pausado.
 
 ## E-mail

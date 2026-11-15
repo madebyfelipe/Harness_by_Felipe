@@ -1,5 +1,10 @@
 # Equipe de agentes
 
+> ⚠️ **Snapshot de 14/11/2026, feito pelo Harbinger.** Pode estar defasado. Onde discordar
+> dos arquivos da raiz, vale `decisoes.md` (o mais recente). Já mudou desde então: preço do
+> site agora é R$ 599 / R$ 1.999 até 12x; rastreio de clique e diagnóstico descartados;
+> clientes externos fora do harness.
+
 Levantamento em 14/11/2026. Cada agente tem pasta de trabalho própria; arquivos compartilhados ficam em `/data/OpenBot/Shared`. Agentes não veem o chat uns dos outros: tudo que um precisa vai em mensagem completa ou em arquivo.
 
 ## Frente de vendas e marketing (Made by Felipe)
@@ -14,18 +19,15 @@ Levantamento em 14/11/2026. Cada agente tem pasta de trabalho própria; arquivos
 | **Avery** | UI designer sênior (Pen.dev). | Interfaces, design systems, acessibilidade. |
 | **Jordan** | Motion designer e diretor criativo. | Experiências de motion em modo claro. |
 
-## Frente do escritório Alves & Nabuco
+## Clientes externos
 
-| Agente | Papel | Observações |
-|---|---|---|
-| **Blake** | Blog e SEO do repositório `advocacia_an`. Sonnet 5.5. | Não cria posts (existe rotina editorial automática). Faz arte de Instagram, auditoria e correções de SEO técnico. Notas de trabalho em `NOTAS.md` no workspace dele. |
-| **Wren** | Web e experiência do site e blog Alves & Nabuco. Sonnet 5.5. | **Em espera, sem tarefa.** Foco: interatividade, leitura confortável do blog, formulários e CTAs, acessibilidade, desempenho. |
+Blake e Wren atendem um cliente externo: **fora do harness**.
 
 ## Atendimento e orquestração
 
 | Agente | Papel | Observações |
 |---|---|---|
-| **Harbinger** | Atende o WhatsApp do número do Felipe e repassa à equipe. | Recebe os resumos diários do Dylan e as respostas dos leads, envia pela Evolution API, monta o resumo semanal de artigos. |
+| **Harbinger** | Atende o WhatsApp do número do Felipe e repassa à equipe. | Recebe os resumos diários do Dylan e as respostas dos leads, envia pela Evolution API. |
 | **Parker** | Atende o Discord do servidor. | Mesma lógica do Harbinger para o Discord. |
 | **Cameron** | Orquestra execuções e delega aos estagiários. | Não executa código. |
 | **Jason** (Executor A) e **Morgan** (Executor B) | Estagiários executores. | Executam o que o Cameron passa. |

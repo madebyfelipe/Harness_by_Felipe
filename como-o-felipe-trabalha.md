@@ -44,10 +44,14 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
 - Decide rápido e muda de ideia quando o mercado responde (oferta mudou 3 vezes em 3 meses;
   ICP de advogados → psicólogos → neurodivergência).
 - Decisões viram regra **com motivo e data** no `CLAUDE.md` ("Felipe, nov/2026: 'só o
-  vermelho REAL'"). Agente que mudar algo deve registrar assim.
+  vermelho REAL'") e em `decisoes.md`. Agente que mudar algo deve registrar assim.
+- **O mais recente vale.** Ele muda de ideia no meio do processo e um arquivo antigo fica
+  para trás. Não travar nem perguntar por inconsistência: aplicar a decisão mais nova e
+  corrigir o arquivo antigo. Coisa muito antiga sem decisão recente = legado (marcar ou tirar).
 - **Não reabrir o que ele fechou**: `/sobre`, grade de marcas, cases na home, versão
   "agressiva" do blog, imagens de IA, `contato@` como e-mail público, preço da imersão.
-- Copy de cliente/depoimento: só muda com ele (respeita o que o cliente viveu).
+- Clientes externos e portfólio não entram em venda nem em copy. Depoimentos atuais são
+  fictícios e não se usam (15/11).
 
 ## O que agrada
 
@@ -56,6 +60,10 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
 - Coisas que funcionam no **celular**.
 - Automação que tira trabalho braçal **mas deixa o envio com humano**.
 - Ver o resultado: link de prévia, print, número.
+- **Projetos por milestones** no Trello: M0, M1, M2…, cada um com cartão-guia, subtarefas
+  e um critério de virada definido pelo agente (`milestones.md`).
+- **Loop de feedback**: registrar a impressão dele na hora, sem formulário (`feedback.md`).
+  Ele não lembra depois.
 
 ## O que irrita (evitar)
 
@@ -75,9 +83,9 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
   **resetar às 10:30**.
 - **08:30–10:30** — trabalho intenso, gastando a primeira janela.
 - **10:30** — reset; segue trabalhando o resto do dia com a janela nova.
-- Dia útil cheio de entregas de cliente (A&N seg/qua/sex 10h, PrismaPay, agência).
-- Madrugada e começo da manhã são dos agentes (blog, editorial, prospecção).
-- Domingo: revisão/planejamento (era o dia do relatório semanal do black berry).
+- Dia útil cheio de entregas de outros trabalhos (fora do harness).
+- Madrugada e começo da manhã são dos agentes (blog, prospecção no OpenBot).
+- Domingo: revisão/planejamento (resumo da semana + triagem de feedback).
 - Cuidado: qualquer rotina que use a assinatura **antes** das 05:30 abre a janela antes e
   antecipa o reset (ver `subagentes.md` → Janelas de uso).
 

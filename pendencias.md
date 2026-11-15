@@ -1,86 +1,69 @@
-# Pendências, inconsistências e riscos
+# Pendências e riscos
 
-_Encontrado durante a coleta de 14/11/2026. Ordem: o que custa venda primeiro._
+_Revisado em 15/11/2026. O que já foi decidido saiu daqui e está em `decisoes.md`.
+Ordem: o que custa venda primeiro._
 
-## Precisa de decisão sua
+## Precisa de decisão do Felipe
 
-1. ✅ **Decidido 14/11: R$ 599 / R$ 1.999 prevalece.** Falta publicar na `beta` e atualizar o `EMAIL-PLAYBOOK.md` do Dylan (hoje diz R$ 440 / R$ 1.540 e proíbe falar de parcelamento). Contexto anterior: **Oferta nova fora do ar.** Preços (R$ 599 / R$ 1.999, 12x) e formato da imersão
-   (2 encontros de 1h30, até 30 dias com site) estão na `main` (`bc32cc3`, `e40f43e`), mas a
-   produção publica da **`beta`**, que ainda mostra R$ 440 / R$ 1.550 e "2 dias / 45 dias".
-   A sessão de 14/11 parou perguntando se leva os dois commits para a `beta`.
-2. **Depoimentos** ainda dizem "dois dias de imersão" e "quarenta e cinco dias depois".
-   Confirmar com as clientes ou manter como estão (são do formato antigo).
-3. **Campanhas sem oferta**: `prospeccao-gringa` (310 leads) e `site-fraco-local` (154)
-   estão com oferta e tom "a definir". Sem isso, ninguém pode escrever para elas.
-4. **Painel pausado desde 13/11** (só o Dylan envia). 40 leads de `psico-neurodivergencia`
-   estão **PRONTO** e 2 em REVISAR, parados. Retomar, descartar ou passar para o Dylan?
-5. **Preço da imersão** segue sem definição (fora do site por decisão sua).
-6. **Briefing da campanha `psico-neurodivergencia`** no Twenty fala de "marca e comunicação"
-   sem os números novos; os textos do Dylan também precisam ser conferidos contra a oferta nova.
+1. **Imersão**: não foi citada como produto ativo em 15/11. Confirmar se saiu de vez ou
+   só está parada. Até lá, nenhum agente oferta.
+2. **Avaliações do Google**: a busca não achou o perfil. Mandar o link do Perfil da
+   Empresa (ou colar as avaliações) para virar a prova social anônima.
+3. **Campanhas sem oferta**: `prospeccao-gringa` (310) e `site-fraco-local` (154), oferta e
+   tom "a definir".
+4. **40 leads PRONTO de `psico-neurodivergencia`** (do painel, agora legado): passar para o
+   Dylan ou descartar?
+5. **Manutenção/renovação/domínio do site**: valor indefinido (hoje "vou confirmar").
+6. **Limite de 6 e-mails gratuitos por conta/dia** travou envios; a fila é quase toda de
+   gratuitos.
+7. **Recarregar o Apify** com teto de gasto, senão a Quinn não repõe a fila.
+8. **Regra de bounce única** no playbook do Dylan (trava desligada × parada por 5%).
+9. **Branch de produção**: Vercel publica a `beta`. Voltar para a `main` e aposentar a
+   `beta` simplificaria "pedido explícito vai direto para o ar".
 
-7. **"Merge na main = site no ar" não vale hoje.** A Vercel publica a `beta`. Para a regra
-   "pedido explícito vai direto para o site" ficar simples, troque a branch de produção da
-   Vercel de volta para a `main` (e aposente a `beta`). Até lá, os agentes mandam para as duas.
+## Para executar (decisão já tomada)
 
-## Complemento: pendências levantadas pelo Harbinger (íntegra em `openbot/decisoes-e-pendencias.md`)
+| o quê | onde | decisão |
+|---|---|---|
+| Publicar R$ 599 / R$ 1.999 na `beta` | repo `lpfds` | 14/11 |
+| Atualizar `EMAIL-PLAYBOOK.md` do Dylan (preço novo, parcelamento liberado, sem link rastreado) | OpenBot | 14/11 e 15/11 |
+| **Tirar os depoimentos fictícios do site** (`lib/institucional.ts` e onde aparecem) — risco de art. 20/CDC | repo `lpfds` | 15/11 |
+| Tirar `/diagnostico` do site e dos CTAs; aposentar `/api/diagnostico` (tem BCC de e-mail pessoal no código, repo público) | repo `lpfds` | 15/11 |
+| Remover rastreio de clique: `/r/[token]`, `/api/prospeccao/link-clique`, `CLIQUE_SECRET` | repo `lpfds` | 15/11 |
+| Remover cron de disparo e de webinar do `vercel.json` | repo `lpfds` | 15/11 |
+| Excluir os 7 agentes do jogo na interface do OpenBot | OpenBot (manual) | 14/11 |
+| Conectar a conta certa do Trello e montar o quadro do harness (M0–M4) | Trello | 15/11 |
 
-8. **Limite de 6 e-mails gratuitos por conta/dia** travou os envios de 13/11 (a fila restante é toda de gratuitos).
-9. **Recarregar o Apify** com teto de gasto, senão a Quinn não repõe a fila.
-10. **Excluir os 7 agentes do jogo** na interface do OpenBot.
-11. **Primeira tarefa do Wren.**
-12. **Leads segurados:** 154 site fraco, 169 do Google Maps com site próprio, 39 de conteúdo/webinar sem campanha; 2 aguardam confirmação de CRP.
-13. **Valor de manutenção, renovação e domínio** do site: indefinido (hoje a resposta é "vou confirmar").
-14. **Regra de bounce única:** o playbook diz que a trava foi desligada em 13/11, mas o Dylan parou o dia por 1 bounce em 8.
-15. **Escada de produtos:** registrar como rascunho grátis → site → imersão se conectam.
-16. **Google Postmaster** e teste semanal de caixa de entrada.
+> Mexer em copy aprovada exige aval. Os depoimentos são exceção: a decisão de tirar já é
+> do Felipe (15/11).
 
-## Inconsistências encontradas
+## Inconsistências conhecidas
 
-- **Rotinas editoriais [NOVO] rodam todo dia**: chamam-se "terça 05:00" e "quinta 05:00",
-  mas o cron das duas é `0 5 * * *` (diário). Rodaram no sábado 14/11. Se a intenção é
-  terça/quinta: `0 5 * * 2` e `0 5 * * 4`. E elas **auto-aprovam e publicam** no LinkedIn do
-  Felipe sem revisão humana.
-- `docs/prospeccao.md` ainda diz "sem link rastreado", mas o link `/r/<token>` foi adotado
-  em nov/2026 (o `CLAUDE.md` está certo).
-- `lib/data.ts` guarda planos mensais antigos (R$ 1.200–2.500) e `previews/campanhas/` um
-  simulador com 45 dias. Nenhuma página usa, mas um agente pode ler e repetir.
-- CNPJ ativo em nome de **Dazz Marketing Soluções de Marketing** (CNPJ do próprio Felipe,
-  cadastro em Curitiba/PR); o estúdio se apresenta de **Sorocaba** e, em inglês, "based in
-  São Paulo". Razão social e endereço ainda vazios em `lib/legal.ts` — dá para preencher a
-  razão social já.
-- **Janela de uso**: as rotinas editoriais (05:00) e o 1º bloco de e-mail (05:00) abrem a
-  janela da assinatura antes do "reset" das 05:30, então o reset cai por volta de 10:00, não
-  10:30. Se o OpenBot também usa o login da assinatura, ele entra na mesma conta.
-- **Respostas de lead em dois lugares**: as caixas redirecionam para o Gmail pessoal, e o
-  painel/Dylan leem por IMAP. Falta definir qual é a fonte única de "respondeu" para nenhum
-  follow-up sair depois de uma resposta já lida.
-- O funil vive em `people.prospStatus`; `opportunities` tem só 2 registros. Para medir
-  venda (proposta, ganho, valor), falta decidir onde o negócio fecha.
-- A campanha `site-gratis-whatsapp` (706 leads, a que mais envia) **não existe** como objeto
-  `campanhaProspeccao` — briefing dela não está no CRM.
-- 33–39 pessoas sem origem e sem campanha.
-- ClickUp "Tarefas" tem ~100+ itens abertos, vários com prazo de 2024, misturando estúdio,
-  agência e pessoal — não serve como fila confiável para um agente sem limpeza.
-- Trello tem um quadro só, de 2025 — provável legado.
+- **Respostas de lead em dois lugares**: caixas redirecionam para o Gmail pessoal e o Dylan
+  lê por IMAP. Falta fonte única de "respondeu".
+- O funil vive em `people.prospStatus`; `opportunities` tem 2 registros. Falta decidir onde
+  a venda fecha.
+- `site-gratis-whatsapp` (a campanha ativa) não existe como objeto `campanhaProspeccao`.
+- `lib/data.ts` (planos R$ 1.200–2.500) e `previews/campanhas/` (45 dias) no `lpfds`:
+  ninguém usa, mas um agente pode ler e repetir.
+- `lib/legal.ts` com razão social e endereço vazios (CNPJ em nome de Dazz Marketing,
+  Curitiba/PR; o estúdio se apresenta de Sorocaba).
+- **Janela de uso**: rotinas antes das 05:30 (blog da Casey 00:30/03:00, rotinas de
+  clientes externos às 05:00) abrem a janela antes do reset. Se o OpenBot usa o login da
+  assinatura, o reset cai antes das 10:30.
 
 ## Conectores / acessos faltando
 
-- **OpenSEO** e **Postiz**: precisam reconectar nas configurações de conectores do claude.ai.
-- **Gmail**: conectado mas sem serviço de e-mail nesta conta; a caixa real é Hostinger.
-  Para o harness ler respostas fora do painel, precisa de IMAP no servidor (o painel já faz).
-- **Search Console** sem conector (posições do blog são checagem manual).
-- Servidor do **OpenBot** (`/data/OpenBot/Shared/...`) não é acessível das sessões do Claude:
-  o relatório do Dylan não pode ser lido daqui.
-- WhatsApp Web do servidor caiu em 14/11 (pedia QR code); o Harbinger enviou depois via
-  Evolution API com status PENDING.
+- **Trello** da conta certa (o conectado aqui é outra conta).
+- **OpenSEO** e **Postiz**: reconectar nas configurações de conectores do claude.ai.
+- **Search Console** sem conector.
+- **Gmail**: "Mail service not enabled"; a caixa real é Hostinger.
+- Servidor do OpenBot não é acessível das sessões do Claude (relatório do Dylan não é lido daqui).
 
 ## Riscos
 
-- **Repo público** com BCC de e-mail pessoal no código (`/api/diagnostico`) e números de
-  WhatsApp — revisar o que precisa estar em código.
-- Disparo de prospecção divide domínio com o site se cair em `alo@` (7 envios registrados
-  por `alo@`). Uma onda de denúncias derruba imersão, e-book e site juntos.
-- DMARC do `madebyfelipe.com.br` sem `rua` (ninguém recebe relatório).
-- Fotos da home em ~736px; IA do painel nunca testada com chave real.
-- Três agentes de IA escrevendo no mesmo CRM (painel, Dylan, Harbinger) com convenções
-  diferentes de status (`ENVIADO` do painel × `LISTA_FRIA/PREVIA_ENVIADA` do Dylan).
+- Depoimentos fictícios no ar (até saírem do site).
+- Repo `lpfds` público com BCC de e-mail pessoal (`/api/diagnostico`) e números de WhatsApp.
+- DMARC do `madebyfelipe.com.br` sem `rua`.
+- Fotos da home em ~736px.
+- Status antigos do painel (`PESQUISAR`, `REVISAR`) misturados com os do Dylan no mesmo CRM.

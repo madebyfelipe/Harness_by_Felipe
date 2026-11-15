@@ -26,8 +26,11 @@ biblioteca de skills, MCP). Leia o levantamento dele em `openbot/` antes de dese
   linhas. Só pergunte se estiver bloqueado.
 - Código em `ui/` deste repositório. Commit direto na `main`, sem PR.
 - Configuração como **arquivo** neste repo: `agents/*.md`, `skills/*/SKILL.md`,
-  `routines/*.yaml`, `connectors/*.yaml`. A UI lê e escreve esses arquivos (e faz commit);
-  é assim que os modos VPS e local compartilham a mesma configuração.
+  `routines/*.yaml`, `connectors/*.yaml`, `feedback.md`. A UI lê e escreve esses arquivos
+  (e faz commit); é assim que os modos VPS e local compartilham a mesma configuração.
+- Organize o próprio trabalho em milestones (`milestones.md`: M3 = fase 1, M4 = fase 3…),
+  com critério de virada verificável em cada um.
+- Em conflito entre arquivos, vale a decisão mais recente (`decisoes.md`).
 - Nenhum segredo no repo, em log ou em prompt. Segredo só no cofre.
 - Visual: tokens do design system do site Made by Felipe (ver `site.md`): raio 2px, Neue
   Haas Grotesk Display, cream/black/red, tema claro e escuro, contraste AA. Funciona no celular.
@@ -95,7 +98,8 @@ limite navegadores simultâneos (configurável, padrão 2) e feche ao fim da tar
      entre envios (hoje: C 7/janela 40/dia, A e B 2/janela 10/dia, máx. 60/dia).
    - **Monitor de janela de uso:** avisa se uma rotina vai abrir a janela da assinatura
      antes do "reset" das 05:30.
-   - Importar as rotinas atuais (`openbot/rotinas.md` e `rotinas.md`) como rascunho.
+   - Importar as rotinas atuais (`openbot/rotinas.md` e `rotinas.md`) como rascunho — só
+     as do harness; rotinas de clientes externos ficam fora.
 4. **Skills**: listar, criar, editar, versionar (`skills/*/SKILL.md`); criar skill a partir
    de uma conversa que deu certo; atribuir a agentes.
 5. **Cofre**: segredos criptografados (chave mestra fora do banco), escopo por agente,
@@ -108,6 +112,12 @@ limite navegadores simultâneos (configurável, padrão 2) e feche ao fim da tar
 8. **Início**: briefing do dia (vendas + site), aprovações pendentes, rotinas de hoje,
    agentes rodando, saúde dos conectores.
 9. **Registros**: cada execução com entrada, ferramentas usadas, custo/tokens, resultado.
+10. **Feedback** (`feedback.md`): botão fixo em toda tela e em cada entrega de agente
+    (`bom` · `ruim` · `comentar`), gravando tela/agente/rotina/entrega junto; no WhatsApp,
+    mensagem com `fb:`. Tela com os registros e o encaminhamento de cada um. Rotina de
+    triagem dom 20:00.
+11. **Projetos**: quadros do Trello por milestone (M0, M1…), cartão-guia com critério de
+    virada e subtarefas (`milestones.md`).
 
 ## Conectores
 
@@ -119,7 +129,7 @@ cofre, agentes que podem usar, teste de saúde). A tela mostra status e um botã
 | **Twenty CRM** (`crm.madebyfelipe.agency`) | REST/MCP | leads, campanhas, notas | 1 |
 | **Hostinger e-mail** (SMTP/IMAP, 3–4 caixas) | nativo | disparo em blocos, leitura de respostas | 1 |
 | **Evolution API** (WhatsApp) | REST + webhook | canal com o Felipe, envios aprovados | 1 |
-| **GitHub** | MCP | repos `lpfds`, `advocacia_an`, este | 1 |
+| **GitHub** | MCP | repos `lpfds` e este | 1 |
 | **Vercel** | MCP/API | deploy e conferência de Produção | 1 |
 | **Google Drive / Calendar** | MCP | arquivos de cliente, agenda | 2 |
 | **Gmail pessoal** | MCP/IMAP | respostas redirecionadas das caixas | 2 |
@@ -127,7 +137,7 @@ cofre, agentes que podem usar, teste de saúde). A tela mostra status e um botã
 | **Apify** | REST | Google Maps (teto de gasto por ciclo obrigatório) | 2 |
 | **onepagelove** | MCP | referências de design | 2 |
 | **Figma** | MCP | design | 3 |
-| **ClickUp / Trello / Notion** | MCP | tarefas e projetos | 3 |
+| **Trello** (conta do Felipe) | MCP | projetos por milestone | 2 |
 | **OpenSEO / Search Console** | MCP/API | posições do blog | 3 |
 | **Postiz** | API | agendar posts | 3 |
 | **cal.com** | API | conversas de 15 min | 3 |
@@ -138,8 +148,9 @@ cofre, agentes que podem usar, teste de saúde). A tela mostra status e um botã
 ## Fases (entregar e validar uma por vez)
 
 1. **Base:** app, login do Felipe (passkey/2FA), modos VPS/local, leitura dos arquivos
-   deste repo, chat com o orquestrador, modo Contexto, conectores Twenty + GitHub + MCP
-   genérico. *Pronto quando:* ele conversa pela Central e consulta o contexto.
+   deste repo, chat com o orquestrador, modo Contexto, **janela de feedback**, conectores
+   Twenty + GitHub + MCP genérico. *Pronto quando:* ele conversa pela Central, consulta o
+   contexto e registra um feedback que aparece em `feedback.md`.
 2. **Agentes e skills:** CRUD salvando em arquivo + commit; importação do OpenBot.
 3. **Rotinas e WhatsApp:** agendador com fuso certo, janelas de envio, canal Evolution,
    avisos, monitor de janela de uso. *Pronto quando:* uma rotina de teste avisa no WhatsApp.

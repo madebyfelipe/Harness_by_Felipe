@@ -4,6 +4,9 @@ _Proposta de 14/11/2026, a partir de como você já trabalha (OpenBot + Claude) 
 quer: um orquestrador forte que delega para executores mais baratos e sobe de modelo
 quando o resultado não fica bom._
 
+> 15/11/2026: prospecção e disparo **já rodam no OpenBot** (Quinn + Dylan). Os papéis de
+> vendas abaixo são o desenho de referência; não abrir uma segunda esteira em paralelo.
+
 ## A ideia em uma tela
 
 ```
@@ -95,7 +98,6 @@ A estrutura acima é a que vale; o OpenBot complementa (detalhe em `equipe-e-age
 | Quinn (Apify / Google Maps) | pesquisador-leads |
 | Dylan (cold mail) | redator-vendas + código de disparo |
 | Casey (blog) | programador (+ skill `post-blog-psico`) |
-| Wren (web/UX) | programador com escalada para Fable + qa-site |
 | — (falta) | enriquecedor, analista-mercado, guardião, qa-site |
 
 ## Janelas de uso (importante para a sua rotina)
@@ -103,9 +105,9 @@ A estrutura acima é a que vale; o OpenBot complementa (detalhe em `equipe-e-age
 Sua rotina de "reset" assume que o limite da assinatura é uma janela de ~5h contada a
 partir do **primeiro uso** depois da janela anterior. Se for assim:
 
-- **Quem roda primeiro abre a janela.** As duas rotinas editoriais da Alves & Nabuco
-  disparam às **05:00** e o bot de e-mail às 05:00 — então a janela já abre às 05:00 e
-  reseta por volta de **10:00**, não 10:30. O "Oi" das 05:30 cai dentro dela e não muda nada.
+- **Quem roda primeiro abre a janela.** Rotinas de clientes externos às **05:00** e o blog
+  da Casey (00:30/03:00, se usar a assinatura) abrem a janela antes — o reset cai antes das
+  10:30. O "Oi" das 05:30 só funciona se nada rodar antes.
 - Para o reset cair às 10:30: nada que use a assinatura entre ~00:30 e 05:30, e o "Oi" (ou
   o 1º bloco de e-mail) exatamente às 05:30.
 - Trabalho pesado de agente na madrugada (01h–05h) **empurra** o seu reset. Se precisar

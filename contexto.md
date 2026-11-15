@@ -1,12 +1,13 @@
 # Contexto do negócio — Made by Felipe
 
-_Coletado em 14/11/2026._
+_Coletado em 14/11/2026 · limpeza de legado em 15/11/2026 (ver `decisoes.md`; o mais
+recente vale)._
 
 ## Em uma frase
 
 Estúdio de **branding para psicólogas e consultórios de psicologia**, com foco em quem
-atende **famílias de crianças autistas e neurodivergentes**. Vende uma **imersão de marca**
-(produto principal, sem preço público) e **sites** (produto de entrada, com preço público).
+atende **famílias de crianças autistas e neurodivergentes**. Hoje vende **sites** (low
+ticket, preço público) e capta com um **e-book** gratuito.
 
 ## Quem é
 
@@ -49,41 +50,20 @@ psicologia (ago/2026) → recorte em neurodivergência (out/2026). **Não voltar
 
 ## Posicionamento: fugir de commodity
 
-- O que se vende é a **transformação** do consultório: **construção de marca, construção
-  de posicionamento, marca pessoal, aumento de ticket** (sustentar o valor da sessão),
-  ser escolhida por quem procura.
-- Página, logo e post são meio, nunca o assunto da venda.
-- **Social media e tráfego pago**: ficam fora do discurso. Existem como serviço em outros
-  trabalhos do Felipe, mas não são o que a Made by Felipe oferece nem o que ele gosta de vender.
-- O **site** é a porta de entrada e uma **promoção para gerar caixa**; a **imersão** é o
-  produto principal. Toda oferta nova precisa levar à imersão
-  (`skills/validacao-de-oferta`).
+- O que se vende é o que muda para o consultório: ser escolhida por quem procura, os pais
+  entenderem o trabalho antes da 1ª consulta, sustentar o valor da sessão, marca pessoal.
+- Página, logo e post são meio, nunca o assunto da venda — vale também para o site.
+- **Social media e tráfego pago**: ficam fora do discurso.
 
-## Oferta atual
+## Oferta ativa (decisão de 15/11/2026)
 
-> ⚠️ **A oferta mudou em 13/11/2026 e está só na `main`.** A produção (`beta`) ainda mostra
-> a versão anterior (2 dias / 45 dias; site a partir de R$ 440 / R$ 1.550). Ver
-> `pendencias.md`. Os números abaixo são os **atuais** (proposta comercial de nov/2026).
+Só dois produtos estão ativos. Qualquer outro (diagnóstico, webinar, recém-formados,
+imersão) **não se oferta** — ver "Legado" abaixo.
 
-### 1. Imersão de marca (produto principal) — **sem preço no site**
+### 1. Site — produto low ticket para psicólogas
 
-- **Dois encontros de cerca de 1h30** (entender como a pessoa trabalha, para quem e aonde
-  quer chegar). Formato: levantamento de informações por **imersão e workshops**.
-- Depois: **diagnóstico, estudo de mercado e construção da marca**.
-- **Tudo apresentado em até 30 dias, com o site incluso.**
-- Entregáveis: Posicionamento · Identidade Visual · Identidade Verbal · Brand Guide ·
-  Página Profissional · Papelaria Clínica · Direção de Arte. **Naming não é entregável**
-  (art. 20 exige nome completo + título + CRP; nome fantasia depende de PJ).
-- Capacidade: **3 projetos simultâneos** (`agenda.numProjetos`).
-- No inglês: dois encontros **online** de ~90 min, **em inglês com o próprio Felipe**;
-  "free homepage preview" é oferta real para os EUA; sem preço.
-- Linha do tempo anterior (não usar): meio dia / 30 dias (até ago) → 2 dias / 45 dias no
-  ar (set–nov).
-
-### 2. Site (produto de entrada e promoção de caixa) — **único preço público do site**
-
-> Decisão do Felipe (14/11/2026): **R$ 599 / R$ 1.999 prevalece** sobre os R$ 440 / R$ 1.540
-> que ainda estão no roteiro do Dylan.
+> Preço decidido em 14/11/2026: **R$ 599 / R$ 1.999** prevalece sobre R$ 440 / R$ 1.540
+> (playbook do Dylan) e R$ 440 / R$ 1.550 (versão antiga da `beta`).
 
 | plano | preço | inclui |
 |---|---|---|
@@ -91,27 +71,35 @@ psicologia (ago/2026) → recorte em neurodivergência (out/2026). **Não voltar
 | Site institucional | **R$ 1.999** | até 8 páginas, SEO, Perfil no Google, revisão CFP — **não inclui blog** |
 
 - **Até 12x sem juros**, **sem mensalidade** (depois do 1º ano, só a renovação do domínio).
-- Antes de fechar: **rascunho sem compromisso** (CTA "Quero ver meu rascunho").
+- Antes de fechar: **rascunho sem compromisso** (CTA "Quero ver meu rascunho"). Na
+  prospecção fria: "rascunho de site, sem custo" — ver `vendas.md`.
 - **Prazo não informado** — fica para a conversa. Não inventar prazo nem garantia.
+- Manutenção/renovação: valor ainda não definido ("vou confirmar").
 - Em inglês: **sem preço**.
 
-### 3. Iscas e entradas
+### 2. E-book (gratuito)
 
-- **E-book** de construção de marca para psicólogos (gated por newsletter, `/hub#ebook`).
-- **Diagnóstico** (`/diagnostico`): formulário com Índice, banda (Ponto de partida / Em
-  construção / Território) e gargalo (Território, Pontos de contato, Conta-hora, Ativos,
-  Conformidade) → Twenty + e-mail.
-- **Webinar** (`/webinar`, com lembretes por cron) e página **recém-formados**.
-- **Conversa de 15 minutos** (CTA padrão de blog e home).
-- **Prospecção fria**: "rascunho de site, sem custo" (prévia grátis) — ver `vendas.md`.
+- E-book de construção de marca para psicólogos, liberado após cadastro na newsletter
+  (`/hub#ebook`) → Twenty (workflow `email_listing_hub`).
 
-### Preço da imersão
+### CTA de conversa
 
-Fica **fora do site** por decisão do Felipe até ser definido. O deck-fonte
-(`Modelo_Proposta_Comercial.pdf`) e o `lib/data.ts` têm planos mensais antigos
-(R$ 1.200 / 1.800 / 2.500) que **nenhuma página usa** — não reaproveitar.
+- **Conversa de 15 minutos** (`cal.com/madebyfelipe/15min`) segue como CTA do blog e da
+  home. Não é produto.
+
+### Legado (não ofertar, não citar como atual)
+
+| item | situação |
+|---|---|
+| **Imersão de marca** (2 encontros de ~1h30, até 30 dias com site; antes 2 dias/45 dias) | não citada como ativa em 15/11 — **não ofertar até o Felipe confirmar**. Preço nunca foi público; os planos mensais de `lib/data.ts` (R$ 1.200–2.500) não valem |
+| **Diagnóstico gratuito** (`/diagnostico`, Índice, bandas, gargalo) | descartado em 15/11 |
+| Webinar, página recém-formados | fora da oferta ativa |
+| Rastreio de clique (`/r/<token>`) | descartado em 15/11 |
 
 ## Método PSIQUE
+
+_Método da imersão (hoje fora da oferta ativa). Continua na copy aprovada do site; serve de
+referência de voz, não de oferta._
 
 Tese: **"Branding é tradução, não invenção."** A marca é traduzida de seis áreas:
 
@@ -139,36 +127,28 @@ O nome anterior do método era NAVE.
 2. **Não inventar**: números, depoimentos, fontes, clientes, métricas, prazos, garantias.
    Afirmação normativa cita CFP/CRP com link. Sem superlativo ("o melhor", "referência",
    "nº 1") nem promessa de posição no Google (art. 20 + CDC valem para o próprio estúdio).
-3. **Depoimentos** são de clientes do estúdio sobre o **serviço de design**, anonimizados
-   (só "Psicóloga · cidade"). Nome/CRP só com autorização escrita. Os três atuais citam o
-   formato antigo (2 dias / 45 dias) e **só mudam com aval do Felipe**.
+3. **Depoimentos**: os que existem no site são **fictícios** (gerados por IA) — **não usar
+   em nenhum texto**. Prova social só com **avaliações reais do Google**, anônimas (só o
+   texto da avaliação, sem nome). Nada de case ou cliente externo como prova (ver abaixo).
 4. **LGPD**: legítimo interesse sobre e-mail **profissional publicado pela própria
    titular**; fonte registrada; descadastro honrado para sempre (não apagar quem saiu);
    sem base comprada, sem e-mail adivinhado. Aceite explícito em todo formulário,
    validado no servidor. Meta Pixel e embeds só com consentimento.
-5. **Quem envia mensagem para lead é humano** (Felipe ou Leonardo). IA rascunha. LinkedIn
-   só rascunho; convite é manual.
-6. **Preço da imersão fora** de qualquer superfície. Preço do site só no `/lp/site`,
-   banner do blog e materiais de venda — nunca no `/en`.
+5. **Réplica a lead é humana** (Felipe ou Leonardo); IA rascunha. O único envio automático
+   autorizado é o cold mail em blocos do Dylan (OpenBot), dentro do playbook. LinkedIn só
+   rascunho; convite é manual.
+6. Só ofertar o que está ativo (site e e-book). Preço do site só no `/lp/site`, banner do
+   blog e materiais de venda — nunca no `/en`. Imersão: não ofertar nem precificar.
 7. **Copy aprovada não se reescreve** (`lib/institucional.ts`).
 8. **Imagens reais**: banco com licença (Freepik via Magnific) ou fotos do Felipe. Nenhuma
    imagem de IA no site.
 9. **Português (pt-BR)** em tudo que é público, exceto `/en`.
 
-## Portfólio público (clientes que já podem ser citados)
+## Fora do harness: clientes externos e outras frentes
 
-Estruturart Capital, Arflam Engenharia, PrismaPay (landing pages) · Rei das Barras,
-Alves & Nabuco, Doce & Afeto, iVoei, Dazz (marca) · Oliveira & Co (produto digital) ·
-Liz Helena, Know How Experience, Fila Zero (conteúdo). Fonte: `lib/portfolio.ts`.
-Case da psicóloga Rozeli em rascunho (noindex, aguardando aprovação). `/cases` usa
-exemplo **fictício e rotulado**.
-
-## Outras frentes do Felipe (fora do foco do harness, mas consomem agenda)
-
-- **Alves & Nabuco** (escritório de advocacia, cliente recorrente): carrossel seg e qua,
-  vídeo sex (10h, na agenda) + blog/LinkedIn editorial automatizado (repo `advocacia_an`).
-- **PrismaPay**: produção de posts para Instagram/LinkedIn (pastas `POST_N_*` no Drive).
-- Trabalho de agência/freela que aparece no ClickUp (New Cabos, PowerOfData, JK Marketing,
-  Cbriks, Dry Box, RD Station…).
-- Produtos próprios: **black berry** (SaaS de aprovação de conteúdo para agências, rotinas
-  pausadas desde out/2026), apps e jogos pessoais.
+- O **portfólio** (`/portfolio`, `lib/portfolio.ts`) é vitrine profissional para quem
+  procurar. **Não** é fonte de copy, prova, exemplo ou argumento de venda, e nenhum agente
+  cita esses clientes (PrismaPay, Alves & Nabuco etc.) — não são o público da Made by Felipe.
+- Trabalhos para clientes externos, agência/freela e produtos pessoais ocupam a agenda do
+  Felipe, mas **não entram** no harness. Se aparecerem numa fonte (Drive, agenda, OpenBot),
+  ignorar.

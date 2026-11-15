@@ -60,7 +60,8 @@ rascunho de página sem compromisso e perguntar "posso preparar?". Não prometer
 - Fale do que muda para ela: ser escolhida antes de comparar preço, os pais entenderem o
   trabalho antes da 1ª consulta (logo depois do laudo), sustentar o valor da sessão.
 - Página, logo e post não são o assunto. Social media e tráfego ficam de fora.
-- Números só os de `contexto.md`. Preço da imersão nunca.
+- Números só os de `contexto.md`. Só oferta ativa (site); imersão e diagnóstico, nunca.
+- Sem depoimento (os atuais são fictícios), sem cliente do portfólio, sem link rastreado.
 
 ## Limites (art. 20 do CFP, CDC, LGPD)
 

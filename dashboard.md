@@ -23,6 +23,12 @@ bot, cofre de credenciais e consulta ao banco de contexto da Made by Felipe._
 5. **Cofre (vault)**: chaves de API, senhas de caixas, logins. Os agentes **usam** sem
    **ver**.
 6. **Rotinas**: lista das tarefas agendadas (hora, último resultado, liga/desliga).
+7. **Janela de feedback** (decisão de 15/11): botão fixo em toda tela e em cada entrega de
+   agente — `bom` · `ruim` · `comentar` — que grava a impressão do Felipe com o contexto
+   (tela, agente, rotina, entrega). No WhatsApp, mensagem com `fb:`. Tudo cai em
+   `feedback.md` e a triagem semanal transforma em regra ou cartão de milestone.
+8. **Projetos (milestones)**: lê os quadros do Trello (M0, M1, M2…) e mostra, por projeto,
+   o milestone atual, o critério de virada e o que travou (`milestones.md`).
 
 ## Arquitetura sugerida (enxuta)
 
@@ -75,12 +81,14 @@ dizer com segurança:
 
 | tela | conteúdo |
 |---|---|
-| **Início** | briefing do dia (vendas + site), "precisa de você" (aprovações), rotinas de hoje |
+| **Início** | briefing do dia (vendas + site), "precisa de você" (aprovações), rotinas de hoje, milestone atual de cada projeto |
 | **Chat** | conversa com o orquestrador; seletor de modelo; anexos; botão "subir de modelo" |
 | **Contexto** | busca e perguntas sobre o negócio/ofertas, com citação do arquivo |
 | **Agentes** | cards por agente: status, tarefa atual, navegador ao vivo, parar/assumir |
 | **Rotinas** | agendamentos, janelas de envio, último resultado, liga/desliga |
 | **Cofre** | segredos (nome, escopo por agente, último uso) — valor nunca exibido depois de salvo |
+| **Feedback** | registros do Felipe (bom/ruim/ideia), encaminhamento de cada um, repetidos em destaque |
+| **Projetos** | quadros do Trello por milestone: cartão-guia, subtarefas, critério de virada |
 
 Visual: o design system do site (tokens, raio 2px, Neue Haas, tema escuro), para não
 nascer outra estética.
@@ -88,7 +96,8 @@ nascer outra estética.
 ## Fases (para não virar projeto infinito)
 
 1. **MVP (1–2 semanas de agente)**: chat + modo Contexto + seletor de modelo + rotinas
-   em leitura. Sem navegador ao vivo e sem cofre (segredos em variável de ambiente).
+   em leitura + **janela de feedback**. Sem navegador ao vivo e sem cofre (segredos em
+   variável de ambiente).
 2. **Cofre** com escopo por agente e registro de uso.
 3. **Navegador por agente** com transmissão de tela e "assumir controle".
 4. Painel de agentes com parar/retomar e aprovações (enviar? fazer merge?) pela UI.

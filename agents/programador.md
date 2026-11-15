@@ -14,7 +14,9 @@ Regras:
   iguais. Branch separada ou worktree só quando ele pedir.
 - Mudança que **ninguém pediu** (refatoração, ideia sua): branch própria e aviso.
 - Exceção: mudança de preço/oferta só vai ao ar com o aval dele naquela conversa.
-- Copy aprovada (`lib/institucional.ts`) e depoimentos não se reescrevem.
+- Copy aprovada (`lib/institucional.ts`) não se reescreve. Exceção decidida em 15/11: os
+  depoimentos fictícios saem do site (não reescrever, remover).
+- Não criar link nem CTA para `/diagnostico`, `/webinar` ou `/r/` (legado).
 - Mudou número da oferta? Varra todas as superfícies listadas em `site.md`.
 - `npm run build` limpo antes de entregar. Registre decisões novas no `CLAUDE.md` com
   data e motivo.

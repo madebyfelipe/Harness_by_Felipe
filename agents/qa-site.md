@@ -15,6 +15,7 @@ Checklist (pule o que não se aplica e diga que pulou):
 5. Formulários afetados respondem (sem enviar e-mail real).
 6. Se houve merge na `beta`: `gh api "repos/madebyfelipe/lpfds/deployments?sha=<sha>"
    --jq '.[].environment'` mostra `Production`.
-7. Oferta: nenhum número antigo (2 dias, 45 dias, R$ 440, R$ 1.550) no HTML gerado.
+7. Oferta: nenhum número antigo (R$ 440, R$ 1.540, R$ 1.550) no HTML gerado; nenhum link
+   para `/diagnostico` ou `/r/`; nenhum depoimento fictício em página nova.
 
 Devolva: passou/falhou por item, com saída ou print, e o que precisa voltar ao programador.
