@@ -54,11 +54,9 @@ Status em 15/11 (madrugada):
 - **M2 em andamento.** Canal de feedback funciona (janela da Central + `fb:` no WhatsApp). Rotina semanal de triagem **ligada** (`routines/resumo-semana.yaml`, domingo 20:00), mas ainda não rodou uma vez. **Trello travado**: o conector está em outra conta (só o Felipe resolve).
 - **M2.5 travado.** Sellbird sem nome/recursos confirmáveis e sem acesso; tabela de `consolidacao.md` preenchida até onde dá. Decisão provisória registrada: harness próprio.
 - **M3 bloqueado no Felipe**: o critério é um áudio com 3 assuntos do celular; os testes automáticos de chat dependem disso.
-- **M3.2 com estrutura pronta.** App Electron monta e abre (testado com display virtual: janela, `/configurar`, ponte de pastas criando e recusando `../`); zip do Windows em `/baixar`. **Falta o Felipe instalar no Windows**, escolher pasta e ver um agente editar e commitar num repo local.
+- **M3.2 com estrutura pronta.** App Electron monta e abre (testado com display virtual: janela, `/configurar`, ponte de pastas criando e recusando `../`); zip do Windows em `/baixar`. Desde 15/11 (tarde) tem **modo VPS**: entra com a mesma conta da web (testado: abre o login da VPS). **Falta o Felipe instalar no Windows**, escolher pasta e ver um agente editar e commitar num repo local.
 - **M4 não começou de verdade**: falta migrar rotina por rotina e o teste "um dia sem abrir OpenBot" (depende de Evolution e contas).
 - **Base de memória e autonomia** (pedido de 15/11): memória durável por agente, revisão automática de aprendizado, curador semanal e autonomia por agente em `memoria/README.md` e `decisoes.md`. Não é milestone; é fundação para o M4.
-
-Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 
 Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 - **Fase 1 (base)**: feita. Falta o critério de virada conferido pelo Felipe no celular (áudio com 3 assuntos).
@@ -67,8 +65,14 @@ Central em 15/11 (noite), pelas fases de `prompts/construir-ui.md`:
 - **Fase 4 (cofre e navegadores)**: feita. Cofre com escopo por agente e segredo por referência (`{{vault:NOME}}`, valor só depois da aprovação); navegador por agente com tela ao vivo na tela Navegadores, bloqueio de rede interna, controle pelo Felipe e cofre separado por agente; colar e arrastar arquivo no chat.
 - **Fase 5 (aprovações, registros, demais conectores)**: **feita**. Aprovação no chat e modo automático; fila única em `/aprovacoes` (decide de qualquer conversa, atualiza a cada 5 s) e `/registros` (execuções com modelo/custo/tokens, aprovações e auditoria). Conectores restantes dependem de conta.
 
+Feito em 15/11 (tarde), fora das fases:
+- **Abas de subagentes** no topo do chat (pedido, passos e resposta de cada um) e **painel Tasks** acima da caixa.
+- **Celular no estilo do app do OpenBot**: gaveta lateral, lista com título grande e busca flutuante, chat com botões redondos, configurações em cartões.
+- **VPS sem amarra ao repositório**: agentes leem, escrevem e sobem servidor na máquina toda; sistema pede aprovação; pastas de login e chave fechadas.
+- **Publicação sem derrubar execução** (`deploy-prod.sh`): build em pasta separada, espera a produção ficar sem execução, troca e religa.
+
 ## Entrada (ideias)
 
 _Ideias que chegam pela Central ou pelo WhatsApp. Até o Trello certo estar ligado, ficam aqui; a triagem semanal encaixa cada uma._
 
-- 15/11/2026 · "Uma estrutura de abas na barra superior, ao lado do seletor, ou à esquerda, com uma aba para cada subagente, para ver onde cada comunicação está sendo feita." (via Central; encaixar no milestone certo)
+- ~~15/11/2026 · "Uma estrutura de abas na barra superior … uma aba para cada subagente"~~ — **feito 15/11** (abas de subagentes no topo do chat).
