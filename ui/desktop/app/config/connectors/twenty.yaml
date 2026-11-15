@@ -1,0 +1,24 @@
+# Conector da Central. O campo `segredo` é só o NOME; o valor fica fora do repositório.
+nome: twenty
+titulo: Twenty CRM
+tipo: rest+mcp
+prioridade: 1
+uso: Leads, campanhas e notas de operação (crm.madebyfelipe.agency).
+endpoint: https://crm.madebyfelipe.agency
+segredo: TWENTY_API_KEY
+agentes:
+  - orquestrador
+  - pesquisador-leads
+  - enriquecedor
+  - redator-vendas
+  - analista-mercado
+mcp:
+  nome: Twenty
+  url: https://crm.madebyfelipe.agency/mcp
+  transporte: http
+saude:
+  metodo: GET
+  url: https://crm.madebyfelipe.agency/rest/people?limit=1
+  auth: bearer
+  espera:
+    - 200

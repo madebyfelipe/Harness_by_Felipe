@@ -107,6 +107,18 @@ export function routeFor(wf: Workflow, pedido: string): Route {
   return { agent: ORCHESTRATOR, model: LEVEL_MODEL[nivel] ?? "claude-sonnet-5-5", workflow: wf, pedido };
 }
 
+/**
+ * Regra do modelo: com **Planejar** ligado, a triagem escolhe o modelo adequado à tarefa
+ * (inclusive o de cada passo do workflow). Desligado, o modelo é o que o Felipe escolheu
+ * no seletor — a triagem só decide o agente. O Modo Contexto mantém o modelo próprio.
+ */
+export function withUserModel(route: Route, userModel: string, planejar: boolean): Route {
+  if (planejar || route.contexto || !userModel) return route;
+  const wf = route.workflow as Workflow | undefined;
+  const workflow = wf?.passos?.length ? { ...wf, passos: wf.passos.map((p) => ({ ...p, modelo: userModel })) } : route.workflow;
+  return { ...route, model: userModel, workflow };
+}
+
 export function toView(t: Triage, anotados: TriageView["anotados"], planejar: boolean): TriageView {
   return {
     resumo: t.resumo,

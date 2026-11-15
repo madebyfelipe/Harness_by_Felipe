@@ -1,0 +1,14 @@
+# Rotina da Central. Agenda em America/Sao_Paulo. Rotina roda sozinha e reporta depois.
+nome: reset-0530
+titulo: Reset da janela de 5h (05:30)
+quando: todo dia às 05:30
+cron: 30 5 * * *
+agente: ping
+modo: vps
+ativa: true
+silencio: true
+whatsapp: false
+limite_minutos: 2
+liberadas: []
+instrucoes: 'Abre a janela de 5h da assinatura. Esta execução já é a chamada que abre a janela: não
+  use nenhuma ferramenta, não leia arquivos, não rode comando e não envie nada. Responda só "ok".'

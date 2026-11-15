@@ -4,7 +4,7 @@ import { query, type CanUseTool, type HookCallback, type Options, type SDKUserMe
 import { resolveMentions } from "./mentions";
 import { addMessage, getAttachments, listMessages, updateConversation, type ContextUsage, type Conversation, type Message, type MessageMeta, type Route, type ToolUse, type TriageView } from "./chat";
 import { writeNotes, type NoteKind, type Sentimento } from "./notes";
-import { AUTO_AGENT, routeFor, runTriage, toView, TRIAGE_MODEL, workflowBrief, type Workflow } from "./triage";
+import { AUTO_AGENT, routeFor, runTriage, toView, TRIAGE_MODEL, withUserModel, workflowBrief, type Workflow } from "./triage";
 import { cfg, fmtBrasilia, nowIso } from "./config";
 import { mcpServersFor } from "./connectors";
 import { getDb } from "./db";
@@ -427,13 +427,15 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   if (extra.auto && !codexP) {
     let route: Route | null = null;
     const vai = Boolean(conversation.route?.planejado) && /^\s*(vai|pode ir|manda ver|manda|segue|ok|bora|roda)\b/i.test(extra.rawText);
+    // Planejar ligado = a triagem escolhe o modelo; desligado = vale o modelo do seletor.
+    const planejarPedido = /^\s*planejar\s*:/i.test(extra.rawText);
     const chamado = extra.mentionAgent ? getAgent(extra.mentionAgent) : undefined;
     if (chamado && !extra.redo) {
       // @agente: vai direto para ele, sem triagem.
       route = { agent: chamado.name, model: resolveModel(chamado.model, conversation.model), planejado: false, pedido: extra.rawText };
     } else if (extra.redo) {
       route = { ...(conversation.route ?? { agent: ORCHESTRATOR }), model: conversation.model, planejado: false };
-    } else if (extra.history && !/^\s*planejar\s*:/i.test(extra.rawText) && !(vai && conversation.route)) {
+    } else if (extra.history && !planejarPedido && !(vai && conversation.route)) {
       // Triagem só na primeira mensagem: depois a conversa segue com o agente e o modelo já escolhidos.
       route = { ...(conversation.route ?? { agent: ORCHESTRATOR }), model: conversation.model, planejado: false };
     } else if (vai && conversation.route) {
@@ -454,7 +456,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
           skipExecutor = true;
         } else {
           triageView = { resumo: "", falhou: "A triagem não devolveu um plano legível; mandei direto para o orquestrador." };
-          route = { agent: ORCHESTRATOR, model: "claude-sonnet-5-5", pedido: extra.rawText };
+          route = withUserModel({ agent: ORCHESTRATOR, model: "claude-sonnet-5-5", pedido: extra.rawText }, resolveModel(conversation.model), planejarPedido);
         }
       } else {
         const tr = t.triage;
@@ -478,6 +480,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
         triageView = toView(tr, anotados, planejar);
         const hasTask = tr.itens.some((i) => i.tipo === "tarefa") || Boolean(tr.workflow?.passos?.length);
         if (tr.workflow && hasTask) route = routeFor(tr.workflow, extra.rawText);
+        // Sem Planejar, a triagem não troca o modelo: fica o escolhido no seletor.
+        if (route) route = withUserModel(route, resolveModel(conversation.model), planejar);
         if (route && planejar) {
           await updateConversation(run.conversationId, { route: { ...route, planejado: true } });
           finalText = `${tr.resumo || "Plano pronto."}\n\nDiga **vai** para rodar.`;

@@ -245,3 +245,23 @@ test("fora do repositório: segredo na pasta do projeto continua bloqueado", asy
   assert.equal(toolInputBlocked("Read", { file_path: path.join(projeto, "README.md") }, projeto, tmp), null);
   assert.ok(pathBlocked(path.join(tmp, "central.db"), projeto, tmp), "banco da Central fora de alcance");
 });
+
+test("modelo: Planejar liga a escolha da triagem; desligado vale o modelo do seletor", async () => {
+  const { withUserModel } = await import("../lib/triage");
+  const rota = {
+    agent: "orquestrador",
+    model: "claude-opus-5-5",
+    workflow: { complexidade: { nivel: "N3" }, passos: [
+      { n: 1, o_que: "editar", agente: "dev-site", modelo: "claude-sonnet-5-5" },
+      { n: 2, o_que: "conferir", agente: "qa-site", modelo: "claude-haiku-5-5" }
+    ] }
+  };
+  const com = withUserModel(rota, "claude-fable-5-2", true);
+  assert.equal(com.model, "claude-opus-5-5", "com Planejar, fica o modelo da triagem");
+  assert.equal((com.workflow as { passos: { modelo: string }[] }).passos[0].modelo, "claude-sonnet-5-5");
+  const sem = withUserModel(rota, "claude-fable-5-2", false);
+  assert.equal(sem.model, "claude-fable-5-2", "sem Planejar, fica o modelo escolhido");
+  assert.deepEqual((sem.workflow as { passos: { modelo: string }[] }).passos.map((p) => p.modelo), ["claude-fable-5-2", "claude-fable-5-2"], "os passos também");
+  const ctx = withUserModel({ agent: "contexto", model: "claude-sonnet-5-5", contexto: true }, "claude-fable-5-2", false);
+  assert.equal(ctx.model, "claude-sonnet-5-5", "Modo Contexto mantém o modelo próprio");
+});

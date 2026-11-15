@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 /*
  * Central desktop — o mesmo app da web, rodando na máquina do Felipe.
- *  - sobe o servidor Next (pasta app/, gerada por build.mjs) em 127.0.0.1, numa porta livre;
+ *  - sobe o servidor Next (pasta servidor/, gerada por build.mjs) em 127.0.0.1, numa porta livre;
  *  - guarda dados em ~/.central e a configuração (agentes, skills, contexto) em ~/Central/config;
  *  - os projetos nascem em ~/Central/Projetos, mas podem apontar para qualquer pasta;
  *  - o seletor de pastas do app usa o diálogo nativo do sistema.
@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = app.isPackaged ? app.getAppPath() : HERE;
-const APP_DIR = path.join(ROOT, "app");
+const APP_DIR = path.join(ROOT, "servidor");
 const SERVER = path.join(APP_DIR, "server.js");
 
 const DATA_DIR = process.env.CENTRAL_DATA_DIR || path.join(os.homedir(), ".central");

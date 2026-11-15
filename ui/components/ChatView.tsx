@@ -810,7 +810,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat", projec
                 className={`chip-toggle${plan ? " chip-toggle--on" : ""}`}
                 aria-pressed={plan}
                 disabled={running}
-                title="Planejar: a Central monta o plano e só roda depois do seu “vai”"
+                title="Planejar: a triagem escolhe o modelo adequado e monta o plano; só roda depois do seu “vai”"
                 onClick={() => setPlan((v) => !v)}
               >
                 Planejar

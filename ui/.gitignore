@@ -11,6 +11,6 @@ data/
 public/fonts/*.ttf
 
 # App desktop: o app montado e os instaladores não entram no repositório.
-desktop/app/
+desktop/servidor/
 desktop/dist/
 desktop/node_modules/

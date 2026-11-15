@@ -17,7 +17,7 @@ Dentro de `ui/`:
 ```bash
 cd desktop
 npm install            # Electron + electron-builder (só na primeira vez)
-npm run montar         # build do Next em standalone e junção em desktop/app
+npm run montar         # build do Next em standalone e junção em desktop/servidor
 npm run app            # abre a janela
 ```
 
@@ -39,7 +39,7 @@ O instalador do Windows precisa ser gerado no Windows (ou no Linux com wine); o 
 | Configuração | `~/Central/config` | cópia gravável de `agents/`, `skills/`, `connectors/`, `routines/`, `prompts/` e dos `.md` de contexto |
 | Projetos | `~/Central/Projetos` | uma pasta por projeto criado automaticamente |
 
-Na primeira execução, `app/config` (que veio no instalador) é copiado para `~/Central/config`. A partir daí, o Felipe edita essa cópia pelas telas da Central — atualizar o app não sobrescreve.
+Na primeira execução, `servidor/config` (que veio no instalador) é copiado para `~/Central/config`. A partir daí, o Felipe edita essa cópia pelas telas da Central — atualizar o app não sobrescreve.
 
 Variáveis de ambiente aceitas (todas opcionais): `CENTRAL_DATA_DIR`, `CENTRAL_REPO_DIR`, `CENTRAL_PROJECTS_DIR`, `CENTRAL_NODE`, `CENTRAL_ALLOWED_DIRS` (pastas extras liberadas para os agentes, separadas por `:`).
 
