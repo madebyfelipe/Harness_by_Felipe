@@ -138,19 +138,21 @@ test("conectores: valida, grava YAML sem valor de segredo e lê os dois da base"
   assert.throws(() => normalizeConnector({ nome: "x1", tipo: "mcp" }), /mcp.url/);
   const { connectors, errors } = listConnectors();
   assert.deepEqual(errors, []);
-  assert.deepEqual(connectors.map((x) => x.nome).sort(), ["github", "twenty"]);
+  // O Felipe cria conectores pela tela (viram arquivos no repositório): só os dois da base são fixos.
+  for (const base of ["github", "twenty"]) assert.ok(connectors.some((x) => x.nome === base), `falta o conector ${base}`);
   assert.equal(connectors.find((x) => x.nome === "twenty")!.mcp!.nome, "Twenty");
 });
 
 test("conectores: sem segredo definido, o agente não recebe o servidor MCP; com segredo, só o agente permitido", () => {
   delete process.env.TWENTY_API_KEY;
   delete process.env.GITHUB_TOKEN;
-  assert.deepEqual(mcpServersFor("orquestrador"), {});
+  const semSegredo = (o: Record<string, unknown>) => Object.keys(o).filter((k) => k === "Twenty" || k === "github");
+  assert.deepEqual(semSegredo(mcpServersFor("orquestrador")), []);
   process.env.TWENTY_API_KEY = "chave-de-teste";
   const forRedator = mcpServersFor("redator-vendas");
-  assert.deepEqual(Object.keys(forRedator), ["Twenty"]);
+  assert.deepEqual(semSegredo(forRedator), ["Twenty"]);
   assert.equal(forRedator.Twenty.headers!.Authorization, "Bearer chave-de-teste");
-  assert.deepEqual(mcpServersFor("guardiao"), {}, "guardião não está na lista do Twenty");
+  assert.deepEqual(semSegredo(mcpServersFor("guardiao")), [], "guardião não está na lista do Twenty");
   delete process.env.TWENTY_API_KEY;
 });
 
