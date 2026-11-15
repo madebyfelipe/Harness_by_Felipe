@@ -36,3 +36,5 @@ Registrar as palavras do Felipe como ele disse. O encaminhamento é preenchido n
   → ajuste feito em 15/11: Central com raio 10px (cartões 16px, caixa de mensagem e bolhas mais macias, pontos redondos). O site segue com 2px.
 - 15/11/2026 · Central · chat · orquestrador Haiku 5.5 · 'teste' · bom · "bom"
   → (a encaminhar na triagem semanal)
+- 15/11/2026 · Central · chat · orquestrador Haiku 5.5 · 'teste' · bom · "bom"
+  → (a encaminhar na triagem semanal)
