@@ -9,9 +9,14 @@ export function fail(message: string, status = 400, extra?: Record<string, unkno
   return json({ error: message, ...extra }, status);
 }
 
+/**
+ * IP de quem pediu, para o limite de tentativas. Usa o último item do
+ * X-Forwarded-For: é o que o proxy da frente (Caddy) anotou. Os anteriores
+ * vêm do próprio visitante e podem ser forjados.
+ */
 export function clientIp(req: Request): string {
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim().slice(0, 64);
+  if (fwd) return (fwd.split(",").map((s) => s.trim()).filter(Boolean).pop() ?? "local").slice(0, 64);
   return req.headers.get("x-real-ip")?.slice(0, 64) || "local";
 }
 
