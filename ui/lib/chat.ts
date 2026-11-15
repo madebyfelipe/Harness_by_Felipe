@@ -43,7 +43,11 @@ export type MessageMeta = {
   trocas?: string[];
   /** Execução fechada no arranque porque o servidor reiniciou no meio. */
   interrupted?: boolean;
+  /** Janela de contexto ao fim da resposta (categorias como no /context). */
+  context?: ContextUsage;
 };
+
+export type ContextUsage = { total: number; max: number; pct: number; cats: { id: string; name: string; tokens: number; kind: string }[] };
 
 /** O que a tela mostra da triagem: resumo, nível, passos e o que foi anotado. */
 export type TriageView = {

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { query, type CanUseTool, type HookCallback, type Options, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
-import { addMessage, getAttachments, listMessages, updateConversation, type Conversation, type Message, type MessageMeta, type Route, type ToolUse, type TriageView } from "./chat";
+import { addMessage, getAttachments, listMessages, updateConversation, type ContextUsage, type Conversation, type Message, type MessageMeta, type Route, type ToolUse, type TriageView } from "./chat";
 import { writeNotes, type NoteKind, type Sentimento } from "./notes";
 import { AUTO_AGENT, routeFor, runTriage, toView, TRIAGE_MODEL, workflowBrief, type Workflow } from "./triage";
 import { cfg, fmtBrasilia, nowIso } from "./config";
@@ -383,6 +383,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   let isContext = conversation.mode === "contexto";
   const cwd = c.repoDir;
   const allowed = new Set(conversation.allowed_tools);
+  let ctxUsage: ContextUsage | null = null;
   let sessionId: string | null = extra.auto ? null : conversation.sdk_session_id;
   let result: { cost?: number; inTok?: number; outTok?: number; turns?: number } = {};
   let errorText = "";
@@ -782,7 +783,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     if (!isContext) options.mcpServers = { ...options.mcpServers, [CENTRAL_SERVER]: centralTools({ ask: askCard, agent: () => run.agent, canBrowse: () => Boolean(getAgent(run.agent)?.browser) }) };
     limit = null;
     try {
-    for await (const msg of query({ prompt: input(), options })) {
+    const q = query({ prompt: input(), options });
+    for await (const msg of q) {
       const m = msg as unknown as Record<string, unknown> & { type: string };
       if (!extra.auto && typeof m.session_id === "string" && m.session_id && m.session_id !== sessionId) {
         sessionId = m.session_id;
@@ -820,6 +822,21 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
           }
         }
       } else if (m.type === "result") {
+        // Janela de contexto (como o /context): leitura rápida, sem chamadas extras de contagem.
+        if (!ctxUsage) {
+          ctxUsage = await Promise.race([
+            q
+              .getContextUsage({ detail: "summary" })
+              .then((u) => ({
+                total: u.totalTokens,
+                max: u.rawMaxTokens || u.maxTokens,
+                pct: u.percentage,
+                cats: u.categories.filter((c) => c.tokens > 0 && c.kind !== "deferred").map((c) => ({ id: c.id ?? c.name, name: c.name, tokens: c.tokens, kind: c.kind }))
+              }))
+              .catch(() => null),
+            new Promise<null>((res) => setTimeout(() => res(null), 4000))
+          ]);
+        }
         const usage = (m.usage ?? {}) as Record<string, number>;
         result = {
           cost: typeof m.total_cost_usd === "number" ? m.total_cost_usd : undefined,
@@ -896,6 +913,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     outputTokens: result.outTok,
     durationMs: run.endedAt - run.startedAt,
     turns: result.turns,
+    ...(ctxUsage ? { context: ctxUsage } : {}),
     ...(authSource ? { auth: authSource === "none" ? "login da máquina" : authSource } : {}),
     ...(error ? { error } : {}),
     ...(stopped ? { stopped: true } : {}),

@@ -7,6 +7,8 @@ import { agentName, REFRESH_EVENT } from "./ConversationList";
 import { sendFeedback } from "./FeedbackButton";
 import { IconBack, IconMic, IconMore, IconPanel, IconPlus, IconSend, IconStop, IconTool } from "./Icons";
 import { BrowserSide } from "./BrowserSide";
+import { ContextMeter } from "./ContextMeter";
+import { ModelPicker } from "./ModelPicker";
 import { Markdown } from "./Markdown";
 
 type ModelOpt = { id: string; label: string; note: string };
@@ -227,6 +229,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const label = (id?: string) => models.find((m) => m.id === id)?.label ?? id ?? "";
   const topIndex = models.findIndex((m) => m.id === model);
   const upper = topIndex >= 0 && topIndex < models.length - 1 ? models[topIndex + 1] : null;
+  const lastCtx = [...messages].reverse().find((m) => m.role === "assistant" && m.meta.context)?.meta.context ?? null;
   const hasAnswer = messages.some((m) => m.role === "assistant" && !m.meta.feedback);
   const headAgent = isContext ? "Modo Contexto" : isAuto ? (conv?.route?.agent ? `Central · ${agentName(conv.route.agent)}` : "Central") : agentName(conv!.agent);
   const refreshList = () => window.dispatchEvent(new Event(REFRESH_EVENT));
@@ -521,29 +524,16 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
           <strong>{title}</strong>
         </div>
         <div className="chat__modelbar">
-          <label className="sr-only" htmlFor="model-top">
-            Modelo
-          </label>
-          <select id="model-top" className="field field--sm field--inline" value={model} disabled={running} onChange={(e) => void changeModel(e.target.value)} title={isAuto && !isContext ? "Modelo (a triagem escolhe; vale para subir de modelo)" : "Modelo"}>
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-          <label className="sr-only" htmlFor="provider-top">
-            Provedor
-          </label>
-          <select id="provider-top" className="field field--sm field--inline" value={provider} disabled={running} onChange={(e) => void changeProvider(e.target.value)} title="Provedor">
-            <option value="">Automático</option>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-                {p.kind === "codex" ? " · só leitura" : ""}
-                {p.info.loggedIn === false ? " · não conectada" : ""}
-              </option>
-            ))}
-          </select>
+          <ModelPicker
+            models={models}
+            providers={providers}
+            model={model}
+            provider={provider}
+            disabled={running}
+            autoNote={isAuto && !isContext ? "Na primeira mensagem a triagem escolhe o modelo; este vale para as seguintes e para subir de modelo." : undefined}
+            onModel={(id) => void changeModel(id)}
+            onProvider={(id) => void changeProvider(id)}
+          />
         </div>
         {running ? (
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => conv && void api(`/api/chat/${conv.id}/stop`, { method: "POST" }).catch(() => undefined)}>
@@ -851,6 +841,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                 )}
               </p>
             )}
+            {rec.state === "idle" ? <ContextMeter ctx={lastCtx} onNewChat={() => (window.location.href = "/")} /> : null}
             {!isContext ? (
               <button
                 type="button"
