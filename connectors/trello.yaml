@@ -1,0 +1,12 @@
+# Conector da Central. O campo `segredo` é só o NOME; o valor fica fora do repositório.
+nome: trello
+titulo: Trello
+tipo: mcp
+prioridade: 1
+uso: Quadros de projeto por milestone (milestones.md).
+agentes:
+  - "*"
+mcp:
+  nome: trello
+  url: https://mcp.trello.com/v1
+  transporte: http
