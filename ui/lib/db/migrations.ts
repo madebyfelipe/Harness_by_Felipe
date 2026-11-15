@@ -153,6 +153,24 @@ export const MIGRATIONS: Migration[] = [
         created_at TEXT NOT NULL
       )`
     ]
+  },
+  {
+    // Provedores de IA (várias contas Claude, ChatGPT pelo Codex) e o provedor escolhido por conversa.
+    id: "003_provedores",
+    statements: [
+      `CREATE TABLE providers (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        name TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 0,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        home TEXT,
+        secret_enc TEXT,
+        info TEXT,
+        created_at TEXT NOT NULL
+      )`,
+      "ALTER TABLE conversations ADD COLUMN provider TEXT"
+    ]
   }
 ];
 

@@ -11,6 +11,8 @@ export type Conversation = {
   allowed_tools: string[];
   /** Rota escolhida pela triagem na última execução (conversas "auto"). */
   route: Route | null;
+  /** Provedor escolhido à mão (menu ⋯). Vazio = contas Claude na ordem da tela Provedores. */
+  provider: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +38,9 @@ export type MessageMeta = {
   audio?: boolean;
   triage?: TriageView;
   feedback?: boolean;
+  /** Conta/provedor que respondeu (tela Provedores). */
+  conta?: string;
+  trocas?: string[];
 };
 
 /** O que a tela mostra da triagem: resumo, nível, passos e o que foi anotado. */
@@ -109,7 +114,7 @@ export async function listConversationPreviews(limit = 60, q = ""): Promise<Conv
   return rows.map((r) => ({ ...toConv(r), preview: (r.preview ?? "").replace(/\s+/g, " ").slice(0, 140), previewRole: r.preview_role }));
 }
 
-export async function updateConversation(id: string, patch: Partial<Pick<Conversation, "title" | "model" | "sdk_session_id" | "allowed_tools" | "route">>): Promise<void> {
+export async function updateConversation(id: string, patch: Partial<Pick<Conversation, "title" | "model" | "sdk_session_id" | "allowed_tools" | "route" | "provider">>): Promise<void> {
   const db = await getDb();
   const sets: string[] = ["updated_at = ?"];
   const params: unknown[] = [nowIso()];
@@ -118,6 +123,7 @@ export async function updateConversation(id: string, patch: Partial<Pick<Convers
   if (patch.sdk_session_id !== undefined) (sets.push("sdk_session_id = ?"), params.push(patch.sdk_session_id));
   if (patch.allowed_tools !== undefined) (sets.push("allowed_tools = ?"), params.push(JSON.stringify(patch.allowed_tools)));
   if (patch.route !== undefined) (sets.push("route = ?"), params.push(patch.route ? JSON.stringify(patch.route) : null));
+  if (patch.provider !== undefined) (sets.push("provider = ?"), params.push(patch.provider || null));
   params.push(id);
   await db.run(`UPDATE conversations SET ${sets.join(", ")} WHERE id = ?`, params);
 }

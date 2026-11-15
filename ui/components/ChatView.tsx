@@ -11,6 +11,7 @@ import { Markdown } from "./Markdown";
 type ModelOpt = { id: string; label: string; note: string };
 type Approval = { id: string; tool: string; summary: string; agent: string; status: "pending" | "approved" | "denied" };
 type Pending = { id: string; name: string; size: number };
+type ProviderOpt = { id: string; kind: string; name: string; enabled: boolean; info: { loggedIn?: boolean } };
 
 type Props = {
   initial: { conversation: Conversation | null; messages: Message[]; active: { id: string; status: string } | null };
@@ -173,6 +174,9 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
   const [uploading, setUploading] = useState(false);
   const [redoOpen, setRedoOpen] = useState(false);
   const [rec, setRec] = useState<{ state: "idle" | "rec" | "trans"; secs: number }>({ state: "idle", secs: 0 });
+  const [providers, setProviders] = useState<ProviderOpt[]>([]);
+  const [provider, setProvider] = useState(initial.conversation?.provider ?? "");
+  const [switchNote, setSwitchNote] = useState("");
 
   const esRef = useRef<EventSource | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -196,6 +200,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
     setLiveTriage(null);
     setTriaging(false);
     setLiveAgent(null);
+    setSwitchNote("");
     const es = new EventSource(`/api/chat/${cid}/stream?after=0`);
     esRef.current = es;
     const on = (type: string, fn: (data: Record<string, unknown>) => void) =>
@@ -217,6 +222,8 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
       setModel(String(d.model ?? ""));
     });
     on("delta", (d) => setLiveText((t) => t + String(d.text ?? "")));
+    on("reset", () => setLiveText(""));
+    on("account", (d) => setSwitchNote(`${String(d.from)} bateu o limite; segui com ${String(d.to)}.`));
     on("tool", (d) => setLiveTools((t) => (t.some((x) => x.id === d.id) ? t : [...t, d as unknown as ToolUse])));
     on("approval", (d) => setApprovals((a) => (a.some((x) => x.id === d.id) ? a : [...a, { ...(d as unknown as Approval), status: "pending" }])));
     on("approval_done", (d) => setApprovals((a) => a.map((x) => (x.id === d.id ? { ...x, status: d.status as Approval["status"] } : x))));
@@ -244,6 +251,12 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
         .then((r) => setMessages(r.messages))
         .catch(() => undefined);
     });
+  }, []);
+
+  useEffect(() => {
+    api<{ providers: ProviderOpt[] }>("/api/provedores")
+      .then((r) => setProviders(r.providers.filter((p) => p.enabled)))
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -312,6 +325,19 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
     } catch (e) {
       setRunning(false);
       setError(e instanceof Error ? e.message : "Não foi possível refazer.");
+    }
+  }
+
+  async function changeProvider(next: string) {
+    const before = provider;
+    setProvider(next);
+    try {
+      const c = await ensureConversation();
+      await api(`/api/chat/${c.id}`, { method: "PATCH", body: { provider: next } });
+      setConv((x) => (x ? { ...x, provider: next || null } : x));
+    } catch (e) {
+      setProvider(before);
+      setError(e instanceof Error ? e.message : "Não foi possível trocar o provedor.");
     }
   }
 
@@ -449,6 +475,22 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                 </option>
               ))}
             </select>
+            <label className="label" htmlFor="provider">
+              Provedor
+            </label>
+            <select id="provider" className="field field--sm" value={provider} disabled={running} onChange={(e) => void changeProvider(e.target.value)}>
+              <option value="">Automático (contas Claude na ordem)</option>
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                  {p.kind === "codex" ? " · só leitura" : ""}
+                  {p.info.loggedIn === false ? " · não conectada" : ""}
+                </option>
+              ))}
+            </select>
+            <a className="link small" href="/provedores">
+              Gerenciar provedores
+            </a>
             <a className="link small" href="/agentes">
               Falar direto com um agente
             </a>
@@ -536,9 +578,10 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
                   </p>
                 ) : null}
                 {m.meta.stopped ? <p className="notice notice--plain">Execução parada por você.</p> : null}
+                {m.meta.trocas?.length ? <p className="small muted">Troca de conta: {m.meta.trocas.join("; ")}</p> : null}
                 <Steps tools={m.meta.tools ?? []} />
                 <p className="msg__meta">
-                  <span>{[fmtSecs(m.meta.durationMs), fmtCost(m.meta.costUsd), fmtTokens((m.meta.inputTokens ?? 0) + (m.meta.outputTokens ?? 0)), m.meta.auth].filter(Boolean).join(" · ")}</span>
+                  <span>{[fmtSecs(m.meta.durationMs), fmtCost(m.meta.costUsd), fmtTokens((m.meta.inputTokens ?? 0) + (m.meta.outputTokens ?? 0)), m.meta.conta ?? m.meta.auth].filter(Boolean).join(" · ")}</span>
                   {!m.meta.feedback ? <FeedbackRow onde={`Central · chat · ${m.meta.agent ?? ""} ${label(m.meta.model)} · "${title.slice(0, 60)}"`} /> : null}
                 </p>
               </article>
@@ -548,6 +591,7 @@ export function ChatView({ initial, models, backHref, draftMode = "chat" }: Prop
           {running ? (
             <article className="msg" data-testid="live">
               {triaging ? <p className="msg__meta">Triagem · lendo o pedido e escolhendo agente e modelo…</p> : null}
+              {switchNote ? <p className="small muted">{switchNote}</p> : null}
               {liveTriage ? <TriageCard t={liveTriage} modelLabel={label} /> : null}
               {liveAgent && !triaging ? (
                 <span className="kicker">

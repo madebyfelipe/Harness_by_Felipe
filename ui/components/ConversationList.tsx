@@ -22,7 +22,7 @@ type Item = {
 
 export const REFRESH_EVENT = "central:conversas";
 
-const AGENT_NAMES: Record<string, string> = { auto: "Central", contexto: "Contexto", orquestrador: "Orquestrador" };
+const AGENT_NAMES: Record<string, string> = { auto: "Central", contexto: "Contexto", orquestrador: "Orquestrador", chatgpt: "ChatGPT" };
 export function agentName(a: string): string {
   return AGENT_NAMES[a] ?? a.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }

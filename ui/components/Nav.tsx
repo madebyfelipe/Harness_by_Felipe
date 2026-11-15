@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FeedbackButton } from "./FeedbackButton";
-import { IconBook, IconBot, IconChat, IconGrid, IconPlug, IconSpark, IconUser } from "./Icons";
+import { IconBook, IconBot, IconChat, IconGrid, IconLayers, IconPlug, IconSpark, IconUser } from "./Icons";
 import { ThemeToggle } from "./ThemeToggle";
 
 const ITEMS = [
@@ -12,6 +12,7 @@ const ITEMS = [
   { href: "/agentes", label: "Agentes", icon: IconBot, match: ["/agentes"] },
   { href: "/skills", label: "Skills", icon: IconSpark, match: ["/skills"] },
   { href: "/conectores", label: "Conectores", icon: IconPlug, match: ["/conectores"] },
+  { href: "/provedores", label: "Provedores de IA", icon: IconLayers, match: ["/provedores"] },
   { href: "/inicio", label: "Painel", icon: IconGrid, match: ["/inicio"] }
 ];
 
@@ -50,7 +51,7 @@ export function TabNav() {
     { href: "/chat", label: "Conversas", match: ["/chat"] },
     { href: "/contexto", label: "Contexto", match: ["/contexto"] },
     { href: "/agentes", label: "Agentes", match: ["/agentes", "/skills", "/conectores"] },
-    { href: "/inicio", label: "Painel", match: ["/inicio", "/conta"] }
+    { href: "/inicio", label: "Painel", match: ["/inicio", "/conta", "/provedores"] }
   ];
   return (
     <nav className="tabs" aria-label="Seções">

@@ -147,6 +147,20 @@ const server = http.createServer((req, res) => {
       return json(400, { type: "error", error: { type: "invalid_request_error", message: "json inválido" } });
     }
     if (url.endsWith("/count_tokens")) return json(200, { input_tokens: 10 });
+    // Chave com "limite": simula conta que bateu o limite de uso (para testar a troca de conta).
+    if (String(req.headers["x-api-key"] ?? "").includes("limite")) {
+      const reset = Math.floor(Date.now() / 1000) + 3600;
+      console.log(`${new Date().toISOString().slice(11, 19)} ${body.model} → 429 limite (chave de teste)`);
+      res.writeHead(429, {
+        "content-type": "application/json",
+        "retry-after": "3600",
+        "anthropic-ratelimit-unified-status": "rejected",
+        "anthropic-ratelimit-unified-reset": String(reset),
+        "anthropic-ratelimit-unified-representative-claim": "five_hour",
+        "x-should-retry": "false"
+      });
+      return res.end(JSON.stringify({ type: "error", error: { type: "rate_limit_error", message: "Usage limit reached (teste)" } }));
+    }
     if (!url.endsWith("/v1/messages")) return json(404, { type: "error", error: { type: "not_found_error", message: "modelo falso" } });
     const reply = decide(body);
     console.log(`${new Date().toISOString().slice(11, 19)} ${body.model} ferramentas=${body.tools?.length ?? 0} → ${"text" in reply ? `texto: ${reply.text.slice(0, 70)}` : `${reply.tool} ${JSON.stringify(reply.input).slice(0, 90)}`}`);

@@ -198,6 +198,67 @@ check(!r.card && /Bloqueado pela Central/.test(r.answer), "Modo Contexto não l�
 r = await ask("FALSO:bash:echo contexto-nao", "nenhum");
 check(!r.card && /ferramenta indisponível/.test(r.answer), "Modo Contexto não tem terminal nem escrita");
 
+/* ---------------- provedores: várias contas, troca automática, ChatGPT ---------------- */
+await page.goto(URL_ + "/provedores");
+await page.waitForSelector("[data-testid=provider-maquina]");
+await page.click("[data-testid=provider-maquina] button:has-text('Conferir')");
+await page.waitForFunction(() => /conectada/.test(document.querySelector("[data-testid=provider-maquina] [data-testid=status]")?.textContent ?? ""), null, { timeout: 30_000 });
+check(true, "a conta da máquina é conferida sem gastar uso (mostra conectada)");
+
+async function addProvider(kind: string, name: string, key = "") {
+  await page.selectOption("#p-kind", kind);
+  await page.fill("#p-name", name);
+  if (key) await page.fill("#p-key", key);
+  await page.click("form button:has-text('Adicionar')");
+  await page.waitForSelector(`li:has-text("${name}")`);
+}
+await addProvider("claude-api", "Boa e2e", "sk-ant-ok-e2e");
+await addProvider("claude-api", "Limitada e2e", "sk-ant-limite-e2e");
+check(!(await page.content()).includes("sk-ant-limite-e2e"), "a chave salva não aparece de novo na tela");
+for (let i = 0; i < 3; i++) {
+  await page.click("button[aria-label='Subir Limitada e2e']").catch(() => undefined);
+  await page.waitForTimeout(400);
+}
+const firstName = (await page.locator("ul[aria-label=Provedores] > li").first().textContent()) ?? "";
+check(/Limitada e2e/.test(firstName), "dá para pôr uma conta em primeiro na ordem de uso");
+
+await newChat("/");
+r = await ask("oi", "nenhum");
+info(`com a primeira conta no limite: ${r.answer.slice(0, 200)}`);
+check(/resposta-falsa: ok/.test(r.answer) && /Troca de conta: .*Limitada e2e no limite/.test(r.answer), "conta no limite: a Central troca sozinha para a próxima e avisa na resposta");
+await page.goto(URL_ + "/provedores");
+await page.waitForSelector("li:has-text('Limitada e2e')");
+check(/no limite até/.test((await page.locator("li:has-text('Limitada e2e')").textContent()) ?? ""), "a conta que bateu o limite aparece marcada com a hora de liberar");
+
+await addProvider("claude", "Claude conta 2 e2e");
+await page.click("li:has-text('Claude conta 2 e2e') button:has-text('Entrar')");
+const link = page.locator("li:has-text('Claude conta 2 e2e') a:has-text('Abrir login da Anthropic')");
+await link.waitFor({ timeout: 30_000 });
+check(/^https:\/\/claude\.com\/.*oauth/.test((await link.getAttribute("href")) ?? ""), "outra conta Claude: Entrar abre o login oficial da Anthropic e pede o código");
+await page.click("li:has-text('Claude conta 2 e2e') button:has-text('cancelar')");
+
+await addProvider("codex", "ChatGPT e2e");
+await page.click("li:has-text('ChatGPT e2e') button:has-text('Conferir')");
+await page.waitForFunction(() => /não conectada/.test([...document.querySelectorAll("li")].find((l) => l.textContent?.includes("ChatGPT e2e"))?.textContent ?? ""), null, { timeout: 30_000 });
+check(true, "ChatGPT pelo Codex: adicionado e conferido (sem login, aparece não conectado)");
+
+await newChat("/");
+await page.click("summary[aria-label='Mais opções']");
+const codexId = await page.locator("#provider option", { hasText: "ChatGPT e2e" }).getAttribute("value");
+await page.selectOption("#provider", codexId!);
+await page.click("summary[aria-label='Mais opções']");
+r = await ask("diga oi", "nenhum");
+info(`ChatGPT sem login: ${r.answer.slice(0, 160)}`);
+check(/chatgpt/i.test(r.answer) && /não está conectado|Abra Provedores/i.test(r.answer), "conversa posta no ChatGPT roda pelo Codex (sem login, explica como conectar)");
+
+await page.goto(URL_ + "/provedores");
+for (const name of ["Boa e2e", "Limitada e2e", "Claude conta 2 e2e", "ChatGPT e2e"]) {
+  page.once("dialog", (d) => void d.accept());
+  await page.click(`li:has-text("${name}") button:has-text('Remover')`);
+  await page.waitForSelector(`li:has-text("${name}")`, { state: "detached" });
+}
+check(true, "provedores de teste removidos");
+
 await browser.close();
 if (problems.length) {
   console.error("\nFALHAS:");

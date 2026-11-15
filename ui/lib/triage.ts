@@ -3,6 +3,7 @@ import type { Route, TriageView } from "./chat";
 import { cfg } from "./config";
 import { agentEnv, toolInputBlocked } from "./guardrails";
 import { resolveModel } from "./models";
+import { claudeEnvFor, markLimited, type Provider } from "./providers";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile } from "./repo";
 
 /*
@@ -124,10 +125,27 @@ ${JSON.stringify(wf, null, 2)}
 \`\`\``;
 }
 
-export type TriageRun = { triage: Triage | null; raw: string; error: string; costUsd: number; limit: { type?: string; resetsAt?: number } | null };
+export type TriageRun = { triage: Triage | null; raw: string; error: string; costUsd: number; limit: { type?: string; resetsAt?: number } | null; trocas: string[] };
 
 /** Roda a triagem. `history` é o fim da conversa, para a triagem entender "isso", "aquilo". */
-export async function runTriage(text: string, history: string, abort: AbortController): Promise<TriageRun> {
+export async function runTriage(text: string, history: string, abort: AbortController, chain: Provider[] = [], failover = false): Promise<TriageRun> {
+  const trocas: string[] = [];
+  const contas = chain.length ? chain : [null];
+  for (let i = 0; i < contas.length; i++) {
+    const conta = contas[i];
+    const env = conta ? await claudeEnvFor(conta) : {};
+    const r = await triageOnce(text, history, abort, env);
+    if (r.limit && conta) await markLimited(conta.id, r.limit.resetsAt).catch(() => undefined);
+    if (r.limit && failover && i < contas.length - 1 && !abort.signal.aborted) {
+      trocas.push(`${conta?.name ?? "conta"} no limite → ${contas[i + 1]?.name ?? "próxima"}`);
+      continue;
+    }
+    return { ...r, trocas };
+  }
+  return { triage: null, raw: "", error: "sem conta", costUsd: 0, limit: null, trocas };
+}
+
+async function triageOnce(text: string, history: string, abort: AbortController, accountEnv: Record<string, string>): Promise<Omit<TriageRun, "trocas">> {
   const c = cfg();
   const cwd = c.repoDir;
   const gate: HookCallback = async (input) => {
@@ -156,7 +174,7 @@ export async function runTriage(text: string, history: string, abort: AbortContr
         allowedTools: ["Read", "Glob", "Grep"],
         hooks: { PreToolUse: [{ hooks: [gate] }] },
         maxTurns: 12,
-        env: agentEnv(),
+        env: { ...agentEnv(), ...accountEnv },
         ...(c.claudePath ? { pathToClaudeCodeExecutable: c.claudePath } : {})
       }
     })) {
@@ -164,6 +182,8 @@ export async function runTriage(text: string, history: string, abort: AbortContr
       if (m.type === "rate_limit_event") {
         const info = (m.rate_limit_info ?? {}) as { status?: string; resetsAt?: number; rateLimitType?: string };
         if (info.status === "rejected") limit = { type: info.rateLimitType, resetsAt: info.resetsAt };
+      } else if (m.type === "assistant" && m.error === "rate_limit" && !limit) {
+        limit = {};
       } else if (m.type === "result") {
         costUsd = typeof m.total_cost_usd === "number" ? m.total_cost_usd : 0;
         if (typeof m.result === "string") raw = m.result;

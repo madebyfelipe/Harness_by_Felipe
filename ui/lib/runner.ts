@@ -10,6 +10,8 @@ import { getDb } from "./db";
 import { agentEnv, toolInputBlocked } from "./guardrails";
 import { modelLabel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
+import { friendlyCodexError, runCodex } from "./codex";
+import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, type Provider } from "./providers";
 
 /* ------------------------------------------------------------------ */
 /* Execuções em memória: sobrevivem à aba fechada e ao celular dormindo */
@@ -316,7 +318,7 @@ function friendlyError(raw: string, limit?: { type?: string; resetsAt?: number }
   if (t.includes("not logged in") || t.includes("authentication_failed") || t.includes("invalid api key") || t.includes("login expired") || t.includes("/login")) {
     return "O modelo não está autenticado nesta máquina. Entre no Claude Code (ou defina a chave de API) e tente de novo — veja ui/AUTH.md.";
   }
-  if (limit || /hit your .*limit/.test(t)) return limitMessage(limit ?? {});
+  if ((limit && (limit.type || limit.resetsAt)) || /hit your .*limit/.test(t)) return limitMessage(limit ?? {});
   if (t.includes("rate_limit") || t.includes("usage limit") || t.includes("rate limit")) return "Limite de uso atingido. Tente mais tarde ou use um modelo abaixo.";
   if (t.includes("model_not_found")) return "Este modelo não está disponível para a credencial em uso.";
   if (t.includes("billing_error")) return "Problema de cobrança na conta do modelo.";
@@ -336,7 +338,16 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   let limit: { type?: string; resetsAt?: number } | null = null;
   const stderrTail: string[] = [];
   let resolveDone: () => void = () => undefined;
-  const done = new Promise<void>((r) => (resolveDone = r));
+  let done = new Promise<void>((r) => (resolveDone = r));
+
+  /* ---------- provedor: contas Claude na ordem da tela Provedores, ou ChatGPT escolhido à mão ---------- */
+  const chosen = conversation.provider ? await getProvider(conversation.provider) : undefined;
+  const codexP = chosen?.kind === "codex" && chosen.enabled ? chosen : undefined;
+  let chain = await claudeChain(chosen && chosen.kind !== "codex" ? chosen.id : null);
+  const failover = await failoverOn();
+  const trocas: string[] = [];
+  let conta: Provider = codexP ?? chain[0];
+  let codexErr = "";
 
   /* ---------- triagem sempre ligada (conversa "auto") ---------- */
   let triageView: TriageView | undefined;
@@ -344,7 +355,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   let extraCost = 0;
   let skipExecutor = false;
   let finalText = "";
-  if (extra.auto) {
+  if (extra.auto && !codexP) {
     let route: Route | null = null;
     const vai = Boolean(conversation.route?.planejado) && /^\s*(vai|pode ir|manda ver|manda|segue|ok|bora|roda)\b/i.test(extra.rawText);
     if (extra.redo) {
@@ -354,7 +365,10 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       prompt = `${prompt}\n\n[O Felipe aprovou o plano. Pedido original: ${route.pedido ?? ""}]${route.workflow ? `\n\n${workflowBrief(route.workflow as Workflow)}` : ""}`;
     } else {
       emit(run, "triage_start", { model: modelLabel(TRIAGE_MODEL) });
-      const t = await runTriage(extra.rawText, extra.history, run.abort);
+      const t = await runTriage(extra.rawText, extra.history, run.abort, chain, failover);
+      trocas.push(...t.trocas);
+      // A triagem já marcou quem está no limite: o agente começa pela próxima conta livre.
+      if (t.trocas.length) chain = await claudeChain(chosen && chosen.kind !== "codex" ? chosen.id : null);
       extraCost += t.costUsd;
       if (t.limit) limit = t.limit;
       if (run.status === "stopped") skipExecutor = true;
@@ -433,6 +447,35 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
         emit(run, "route", { agent: run.agent, model: run.model, modelLabel: modelLabel(run.model) });
         await (await getDb()).run("UPDATE runs SET agent = ?, model = ? WHERE id = ?", [run.agent, run.model, run.id]).catch(() => undefined);
       }
+    }
+  }
+
+  /* ---------- ChatGPT (Codex CLI, só leitura) quando a conversa foi posta nele ---------- */
+  if (codexP && !skipExecutor) {
+    skipExecutor = true;
+    run.agent = "chatgpt";
+    run.model = "codex";
+    emit(run, "route", { agent: run.agent, model: run.model, modelLabel: "ChatGPT" });
+    await (await getDb()).run("UPDATE runs SET agent = ?, model = ? WHERE id = ?", [run.agent, run.model, run.id]).catch(() => undefined);
+    const codexPrompt = `${REGRAS_DA_CENTRAL}\n\n${ambiente()}\n\n# Banco de contexto (carregado em todo agente)\n${sharedContext()}\n\n---\n\n${prompt}`;
+    const r = await runCodex(
+      { prompt: codexPrompt, home: codexP.home!, cwd, abort: run.abort },
+      {
+        onText: (t) => {
+          run.text += t;
+          emit(run, "delta", { text: t });
+        },
+        onTool: (id, name, summary) => {
+          const tool: ToolUse = { id, name, summary, agent: null };
+          run.tools.push(tool);
+          emit(run, "tool", tool);
+        }
+      }
+    );
+    result = { inTok: r.inputTokens, outTok: r.outputTokens };
+    if (r.error && run.status !== "stopped") {
+      codexErr = friendlyCodexError(r.error);
+      errorText = r.error;
     }
   }
 
@@ -582,6 +625,11 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   const seenTools = new Set<string>();
   try {
     if (skipExecutor) throw new SkipExecutor();
+    for (let attempt = 0; ; attempt++) {
+    conta = chain[attempt];
+    options.env = { ...agentEnv(), ...(await claudeEnvFor(conta)) };
+    limit = null;
+    try {
     for await (const msg of query({ prompt: input(), options })) {
       const m = msg as unknown as Record<string, unknown> & { type: string };
       if (!extra.auto && typeof m.session_id === "string" && m.session_id && m.session_id !== sessionId) {
@@ -606,6 +654,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       } else if (m.type === "assistant") {
         const message = m.message as { content?: Block[] } | undefined;
         if (typeof m.error === "string" && m.error) errorText = m.error;
+        // Com chave de API o limite chega só como erro da resposta (sem rate_limit_event).
+        if (m.error === "rate_limit" && !limit) limit = {};
         for (const block of message?.content ?? []) {
           if (block.type === "tool_use" && block.id && block.name && !seenTools.has(block.id)) {
             seenTools.add(block.id);
@@ -634,6 +684,28 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
         resolveDone();
       }
     }
+    } catch (e) {
+      // O SDK lança erro no fim de uma resposta de erro; se foi limite, decide a troca abaixo.
+      if (!limit) throw e;
+      errorText = errorText || (e instanceof Error ? e.message : String(e));
+    }
+    // Conta no limite antes de produzir algo: marca e, se a troca estiver ligada, segue com a próxima.
+    if (limit) await markLimited(conta.id, limit.resetsAt).catch(() => undefined);
+    const nada = !run.tools.length && (!run.text.trim() || LIMIT_TEXT.test(run.text));
+    if (!(limit && failover && nada && attempt < chain.length - 1 && run.status === "running")) break;
+    trocas.push(`${conta.name} no limite → ${chain[attempt + 1].name}`);
+    emit(run, "account", { from: conta.name, to: chain[attempt + 1].name });
+    run.text = "";
+    errorText = "";
+    emit(run, "reset", {});
+    done = new Promise<void>((r) => (resolveDone = r));
+    if (options.resume) {
+      // A sessão salva é da outra conta: leva o histórico no pedido.
+      delete options.resume;
+      sessionId = null;
+      if (extra.history) prompt = `[Histórico desta conversa, para você continuar de onde parou]\n${extra.history}\n\n[Mensagem nova do Felipe]\n${prompt}`;
+    }
+    }
   } catch (e) {
     if (e instanceof SkipExecutor) {
       /* triagem resolveu sem executor (só anotações, plano ou erro já registrado) */
@@ -651,8 +723,8 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   }
   const stopped = run.status === "stopped";
   if (!stopped) run.status = errorText ? "error" : "done";
-  if (limit && /hit your .*limit/i.test(run.text)) run.text = "";
-  const error = errorText && !stopped ? friendlyError(errorText, limit) : "";
+  if (limit && LIMIT_TEXT.test(run.text)) run.text = "";
+  const error = errorText && !stopped ? codexErr || friendlyError(errorText, limit) : "";
   run.endedAt = Date.now();
 
   // Sessão que não existe mais nesta máquina: esquece o id para a próxima levar o histórico.
@@ -672,7 +744,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     ...(authSource ? { auth: authSource === "none" ? "login da máquina" : authSource } : {}),
     ...(error ? { error } : {}),
     ...(stopped ? { stopped: true } : {}),
-    ...(triageView ? { triage: triageView } : {})
+    ...(triageView ? { triage: triageView } : {}),
+    conta: conta.name,
+    ...(trocas.length ? { trocas } : {})
   };
 
   try {
@@ -704,6 +778,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
 }
 
 class SkipExecutor extends Error {}
+
+/** Texto que o Claude Code põe na resposta quando a conta bateu o limite. */
+const LIMIT_TEXT = /hit your .*limit|usage limit|rejected \(429\)|rate.?limit/i;
 
 /** Pasta de anexos de uma conversa (fora do repositório). */
 export function uploadsDir(conversationId: string): string {

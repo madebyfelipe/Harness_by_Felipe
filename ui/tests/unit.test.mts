@@ -168,3 +168,25 @@ test("limite da assinatura: mensagem traz a janela e a hora de Brasília, não a
   assert.match(msg, /14\/11, 23:40 \(Brasília\)/);
   assert.match(limitMessage({}), /Limite de uso da assinatura/);
 });
+
+test("provedores: ordem de uso, conta no limite vai para o fim, tela nunca vê chave nem pasta", async () => {
+  const { createProvider, listProviders, claudeChain, markLimited, moveProvider, publicProvider, claudeEnvFor, deleteProvider } = await import("../lib/providers");
+  const a = await createProvider({ kind: "claude-api", name: "A", apiKey: "sk-ant-teste-a" });
+  const b = await createProvider({ kind: "claude", name: "B" });
+  await assert.rejects(() => createProvider({ kind: "claude-api", name: "ruim", apiKey: "nao-e-chave" }), /sk-ant-/);
+  let chain = (await claudeChain()).map((p) => p.name);
+  assert.deepEqual(chain, ["Conta da máquina", "A", "B"]);
+  await moveProvider(b.id, -1);
+  await moveProvider(b.id, -1);
+  assert.deepEqual((await claudeChain()).map((p) => p.name), ["B", "Conta da máquina", "A"]);
+  await markLimited(b.id, Math.floor(Date.now() / 1000) + 3600);
+  assert.deepEqual((await claudeChain()).map((p) => p.name), ["Conta da máquina", "A", "B"]);
+  assert.equal((await claudeChain(a.id))[0].name, "A", "provedor escolhido na conversa vem primeiro");
+  const env = await claudeEnvFor((await listProviders()).find((p) => p.id === a.id)!);
+  assert.equal(env.ANTHROPIC_API_KEY, "sk-ant-teste-a");
+  const pub = JSON.stringify((await listProviders()).map(publicProvider));
+  assert.ok(!pub.includes("sk-ant-teste-a") && !pub.includes('"home"'), "lista pública sem chave e sem pasta");
+  await deleteProvider(a.id);
+  await deleteProvider(b.id);
+  await assert.rejects(() => deleteProvider("maquina"), /máquina/);
+});

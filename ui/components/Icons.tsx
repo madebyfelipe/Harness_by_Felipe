@@ -91,3 +91,9 @@ export const IconFeedback = ({ size }: P) => (
     <path d="M7.5 8.5h5M7.5 11h3" />
   </svg>
 );
+export const IconLayers = ({ size }: P) => (
+  <svg {...s(size)}>
+    <path d="m10 3 7 4-7 4-7-4z" />
+    <path d="m3 11 7 4 7-4" />
+  </svg>
+);
