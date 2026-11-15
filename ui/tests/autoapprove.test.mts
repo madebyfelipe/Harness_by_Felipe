@@ -86,3 +86,46 @@ test("modo automático: escrita só em arquivo de conteúdo do repositório; app
   assert.equal(await t("mcp__central__criar_rotina", {}), false);
   assert.equal(await t("FerramentaNova", {}), false);
 });
+
+import { pathBlocked } from "../lib/guardrails";
+import os from "node:os";
+
+test("VPS: a máquina toda é área de trabalho, menos sistema", () => {
+  const v = (c: string) => classifyBash(c, CWD, { vps: true }).auto;
+  assert.equal(v("cat /data/OpenBot/Shared/notas.txt"), true);
+  assert.equal(v("ls -la /srv/site"), true);
+  assert.equal(v("cat /etc/passwd"), false);
+  assert.equal(v("nohup setsid node server.js > /tmp/site.log 2>&1 &"), true);
+  assert.equal(v("cd /srv/app && npm run dev > /tmp/dev.log 2>&1 &"), true);
+  assert.equal(v("curl -s http://127.0.0.1:3000/api/health"), true);
+  assert.equal(v("curl -X POST http://127.0.0.1:3000/"), false);
+  assert.equal(v("curl https://exemplo.com"), false);
+  assert.equal(v("echo x > /etc/hosts"), false);
+  assert.equal(v("rm -rf /srv/app"), false);
+  assert.equal(v("node -e 'process.exit()'"), false);
+  assert.equal(v("npm install left-pad"), false);
+  assert.equal(v("sudo systemctl restart caddy"), false);
+});
+
+test("fora da VPS nada muda", () => {
+  assert.equal(classifyBash("cat /data/x.txt", CWD).auto, false);
+  assert.equal(classifyBash("node server.js &", CWD).auto, false);
+  assert.equal(classifyBash("npm run dev", CWD).auto, false);
+});
+
+test("VPS: escrever fora do repositório", async () => {
+  const w = async (f: string) => (await classifyTool("Write", { file_path: f, content: "x" }, CWD, { vps: true })).auto;
+  assert.equal(await w("/srv/site/index.html"), true);
+  assert.equal(await w("/etc/caddy/Caddyfile"), false);
+  assert.equal(await w("/srv/app/.env"), false);
+  assert.equal(await w(`${CWD}/agents/novo.md`), false);
+  assert.equal((await classifyTool("Write", { file_path: "/srv/site/index.html", content: "x" }, CWD)).auto, false);
+});
+
+test("pastas de login e chave seguem fechadas", () => {
+  const home = os.homedir();
+  for (const p of [`${home}/.config/OpenBot/Cookies`, `${home}/.codex/auth.json`, `${home}/.claude.json`, `${home}/.ssh/id_ed25519`, "/srv/app/.npmrc"]) {
+    assert.ok(pathBlocked(p, "/", "/tmp/dados-central"), `deveria bloquear ${p}`);
+  }
+  assert.equal(pathBlocked("/srv/site/index.html", "/", "/tmp/dados-central"), null);
+});

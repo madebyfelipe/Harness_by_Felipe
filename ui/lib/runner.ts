@@ -8,7 +8,7 @@ import { AUTO_AGENT, routeFor, runTriage, toView, TRIAGE_MODEL, withUserModel, w
 import { cfg, fmtBrasilia, nowIso } from "./config";
 import { mcpServersFor } from "./connectors";
 import { getDb } from "./db";
-import { agentEnv, toolInputBlocked } from "./guardrails";
+import { agentEnv, pathBlocked, toolInputBlocked } from "./guardrails";
 import { modelLabel, resolveModel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { getProject, projectFolder } from "./projects";
@@ -180,7 +180,11 @@ function ambiente(atual?: string): string {
     atual && atual !== c.repoDir
       ? `\n- Pasta de trabalho desta conversa: ${atual} (o repositório de configuração fica em ${c.repoDir}).`
       : `\n- Pasta de trabalho: o repositório de configuração (${c.repoDir}).`;
-  return `# Ambiente\n- Agora: ${hojeBrasilia()} (America/Sao_Paulo).\n- Central em modo ${c.mode === "vps" ? "VPS" : "local"}.${pasta}`;
+  const vps =
+    c.mode === "vps"
+      ? "\n- Você tem acesso à VPS inteira, não só ao repositório: lê e escreve fora dele, roda comandos e sobe servidores. Servidor que precisa continuar de pé: `nohup setsid <comando> > /tmp/<nome>.log 2>&1 &`, numa porta livre em 127.0.0.1; confira com `curl http://127.0.0.1:<porta>` e diga a porta e o log. Pastas de sistema (/etc, /usr…) pedem aprovação; pastas de login e chave (~/.ssh, ~/.claude, ~/.config, dados da Central) ficam fechadas. Abrir para a internet (Caddy, DNS) é com o Felipe."
+      : "";
+  return `# Ambiente\n- Agora: ${hojeBrasilia()} (America/Sao_Paulo).\n- Central em modo ${c.mode === "vps" ? "VPS" : "local"}.${pasta}${vps}`;
 }
 
 export function buildAppend(agent: AgentDef, cwd?: string): string {
@@ -697,7 +701,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   }
   // Raízes do que roda sem cartão: pasta do projeto, repositório, liberadas, anexos e /tmp.
   const roots = [...new Set([cwd, ...sandboxRoots(projectFolder(projeto), c.dataDir)])];
-  const foraDaPasta = (abs: string) => !insideAny(abs, roots);
+  // Na VPS o agente lê a máquina toda (as pastas de segredo continuam negadas pelo guardrails).
+  const vps = c.mode === "vps";
+  const foraDaPasta = (abs: string) => !vps && !insideAny(abs, roots);
 
   /* ---------- ChatGPT (Codex CLI, só leitura) quando a conversa foi posta nele ---------- */
   if (codexP && !skipExecutor) {
@@ -736,7 +742,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const summary = summarizeTool(toolName, toolInput);
     const db = await getDb();
     // Modo automático: o que a regra classifica como seguro roda sem cartão, e fica registrado.
-    const verdict = await classifyTool(toolName, toolInput, cwd);
+    const verdict = await classifyTool(toolName, toolInput, cwd, { vps: cfg().mode === "vps" });
     // Autonomia "livre" do agente: o que o classificador já considera seguro roda sem cartão.
     const autonomiaLivre = getAgent(run.agent)?.autonomy === "livre";
     if (!force && verdict.auto && ((await autoApproveOn()) || autonomiaLivre)) {
@@ -932,7 +938,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       allowedTools: [...AUTO_ALLOW, ...CENTRAL_AUTO],
       disallowedTools: NEVER,
       mcpServers: mcpServersFor(a.name === ORCHESTRATOR ? ORCHESTRATOR : a.name),
-      additionalDirectories: [...new Set([c.repoDir, ...extraAllowedDirs(), ...extraDirs])].filter((d) => d !== cwd),
+      additionalDirectories: [...new Set([c.repoDir, ...extraAllowedDirs(), ...extraDirs, ...(vps ? ["/"] : [])])].filter((d) => d !== cwd),
       maxTurns: 40
     };
   }
@@ -1246,7 +1252,10 @@ async function showImage(run: ActiveRun, a: { caminho?: string; legenda?: string
         return d;
       }
     });
-    if (!allowed.some((d) => abs === d || abs.startsWith(d + path.sep))) throw new Error("o arquivo precisa estar na pasta de trabalho, nos anexos ou em /tmp");
+    const blocked = pathBlocked(abs, "/", cfg().dataDir, [path.join(cfg().dataDir, "uploads")]);
+    if (blocked) throw new Error(`arquivo em ${blocked}`);
+    // Na VPS vale qualquer pasta fora das de segredo; no computador, só a de trabalho, anexos e /tmp.
+    if (cfg().mode !== "vps" && !allowed.some((d) => abs === d || abs.startsWith(d + path.sep))) throw new Error("o arquivo precisa estar na pasta de trabalho, nos anexos ou em /tmp");
     mime = IMG_EXT[path.extname(abs).toLowerCase()] ?? "";
     if (!mime) throw new Error("só PNG, JPG, WebP ou GIF");
     const st = fs.statSync(abs);

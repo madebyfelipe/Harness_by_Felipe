@@ -15,12 +15,37 @@ const SENSITIVE_NAMES = [
   /^\.credentials\.json$/i,
   /^id_(rsa|ed25519|ecdsa|dsa)(\.pub)?$/i,
   /^hosts\.ya?ml$/i,
-  /\.pem$/i
+  /\.pem$/i,
+  /^\.claude\.json$/i,
+  /^\.npmrc$/i,
+  /^\.netrc$/i,
+  /^\.git-credentials$/i
 ];
 
 export function sensitiveDirs(dataDir: string): string[] {
   const home = os.homedir();
-  return [dataDir, path.join(home, ".claude"), path.join(home, ".ssh"), path.join(home, ".config", "gh"), path.join(home, ".config", "anthropic"), path.join(home, ".aws")];
+  // Na VPS os agentes enxergam a máquina toda: estas pastas de login e chave continuam fechadas sempre.
+  return [
+    dataDir,
+    path.join(home, ".claude"),
+    path.join(home, ".ssh"),
+    path.join(home, ".config"),
+    path.join(home, ".codex"),
+    path.join(home, ".pi"),
+    path.join(home, ".aws"),
+    path.join(home, ".gnupg"),
+    path.join(home, ".docker"),
+    path.join(home, ".kube"),
+    ...extraSensitiveDirs()
+  ];
+}
+
+/** Pastas extras fechadas, por variável (CENTRAL_SECRET_DIRS, separadas por ":"): dados da Central de produção, chaves SSH com outro nome. */
+function extraSensitiveDirs(): string[] {
+  return (process.env.CENTRAL_SECRET_DIRS ?? "")
+    .split(":")
+    .map((d) => d.trim())
+    .filter((d) => d && path.isAbsolute(d));
 }
 
 function insideAny(abs: string, dirs: string[]): boolean {
