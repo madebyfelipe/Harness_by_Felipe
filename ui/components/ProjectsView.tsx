@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import { agentName } from "./ConversationList";
+import { FolderPicker } from "./FolderPicker";
 import { IconFolder, IconPlus } from "./Icons";
 
-type Project = { id: string; slug: string; name: string; description: string; instructions: string; conversations?: number; last_at?: string | null; updated_at: string };
+type Project = { id: string; slug: string; name: string; description: string; instructions: string; folder: string | null; conversations?: number; last_at?: string | null; updated_at: string };
 type Conv = { id: string; title: string; mode: string; agent: string; updated_at: string; preview: string; route: { agent?: string } | null };
 
 function quando(iso?: string | null): string {
@@ -85,10 +86,20 @@ export function ProjectsView() {
   );
 }
 
-function ProjectForm({ initial, onSave, onCancel }: { initial?: Partial<Project>; onSave: (v: { name: string; description: string; instructions: string }) => Promise<void>; onCancel: () => void }) {
+function ProjectForm({
+  initial,
+  onSave,
+  onCancel
+}: {
+  initial?: Partial<Project>;
+  onSave: (v: { name: string; description: string; instructions: string; folder: string }) => Promise<void>;
+  onCancel: () => void;
+}) {
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [instructions, setInstructions] = useState(initial?.instructions ?? "");
+  const [folder, setFolder] = useState(initial?.folder ?? "");
+  const [picker, setPicker] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return (
@@ -99,7 +110,7 @@ function ProjectForm({ initial, onSave, onCancel }: { initial?: Partial<Project>
         setBusy(true);
         setError("");
         try {
-          await onSave({ name, description, instructions });
+          await onSave({ name, description, instructions, folder });
         } catch (err) {
           setError(err instanceof Error ? err.message : "Não salvou.");
         }
@@ -126,6 +137,16 @@ function ProjectForm({ initial, onSave, onCancel }: { initial?: Partial<Project>
         placeholder={"Ex.: Repositório madebyfelipe/lpfds, deploy na Vercel (branch beta).\nTom: direto, sem jargão. Sempre testar no celular."}
         maxLength={8000}
       />
+      <label className="label" htmlFor="pj-folder">
+        Pasta do projeto <span className="muted">(onde o agente trabalha)</span>
+      </label>
+      <div className="proj__folder">
+        <input id="pj-folder" className="field" value={folder} readOnly placeholder="Criada automaticamente em ~/Central/Projetos" title={folder} />
+        <button type="button" className="btn btn--sm" onClick={() => setPicker(true)}>
+          Escolher…
+        </button>
+      </div>
+      <p className="small muted">Vazio = a Central cria uma pasta com o nome do projeto. A pasta pode ficar em qualquer lugar do computador, fora do repositório.</p>
       {error ? <p className="notice small">{error}</p> : null}
       <div className="row">
         <button className="btn btn--sm btn--on" disabled={busy || !name.trim()}>
@@ -135,6 +156,7 @@ function ProjectForm({ initial, onSave, onCancel }: { initial?: Partial<Project>
           Cancelar
         </button>
       </div>
+      {picker ? <FolderPicker inicial={folder || null} onPick={(p) => (setFolder(p), setPicker(false))} onClose={() => setPicker(false)} /> : null}
     </form>
   );
 }
@@ -145,6 +167,8 @@ export function ProjectView({ id }: { id: string }) {
   const [p, setP] = useState<Project | null>(null);
   const [convs, setConvs] = useState<Conv[]>([]);
   const [editing, setEditing] = useState(false);
+  const [picker, setPicker] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -177,6 +201,48 @@ export function ProjectView({ id }: { id: string }) {
           <IconPlus size={16} /> Nova conversa
         </Link>
       </header>
+
+      <div className="proj__pasta">
+        <IconFolder size={15} />
+        <code className="small" title={p.folder ?? ""}>
+          {p.folder || "pasta automática em ~/Central/Projetos"}
+        </code>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={() => setPicker(true)}>
+          Trocar pasta
+        </button>
+        {p.folder && typeof window !== "undefined" && window.centralDesktop ? (
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => void window.centralDesktop!.abrirPasta(p.folder!)}>
+            Abrir no sistema
+          </button>
+        ) : p.folder ? (
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={async () => {
+              await navigator.clipboard.writeText(p.folder!).catch(() => undefined);
+              setCopiado(true);
+              setTimeout(() => setCopiado(false), 1600);
+            }}
+          >
+            {copiado ? "Copiado" : "Copiar caminho"}
+          </button>
+        ) : null}
+      </div>
+      {picker ? (
+        <FolderPicker
+          inicial={p.folder}
+          onClose={() => setPicker(false)}
+          onPick={async (caminho) => {
+            setPicker(false);
+            try {
+              const r = await api<{ project: Project }>(`/api/projetos/${p.id}`, { method: "PATCH", body: { folder: caminho } });
+              setP(r.project);
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Não troquei a pasta.");
+            }
+          }}
+        />
+      ) : null}
 
       <div className="proj__cols">
         <section className="stack">

@@ -13,6 +13,10 @@ export type Config = {
   peerUrl: string;
   gitPush: boolean;
   claudePath: string;
+  /** Pasta dos projetos criados automaticamente (fora do repositório). */
+  projectsDir: string;
+  /** Pastas extras liberadas para os agentes (`CENTRAL_ALLOWED_DIRS`). */
+  allowedDirs: string[];
   tz: "America/Sao_Paulo";
 };
 
@@ -66,6 +70,15 @@ export function cfg(): Config {
     peerUrl: process.env.CENTRAL_PEER_URL || "",
     gitPush: process.env.CENTRAL_GIT_PUSH === "1",
     claudePath: process.env.CENTRAL_CLAUDE_PATH || "",
+    projectsDir: path.resolve(/* turbopackIgnore: true */ process.env.CENTRAL_PROJECTS_DIR || path.join(os.homedir(), "Central", "Projetos")),
+    // Separadas por `:` (Linux/macOS) ou `;` (Windows); `~` é expandido.
+    allowedDirs: String(process.env.CENTRAL_ALLOWED_DIRS || "")
+      .split(path.delimiter)
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .map((d) => (d === "~" ? os.homedir() : d.startsWith("~/") || d.startsWith("~\\") ? path.join(os.homedir(), d.slice(2)) : d))
+      .map((d) => path.resolve(/* turbopackIgnore: true */ d))
+      .filter((d) => d !== "/" && d !== repoDir),
     tz: "America/Sao_Paulo"
   };
   return cached;

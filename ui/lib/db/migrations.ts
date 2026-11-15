@@ -242,6 +242,11 @@ export const MIGRATIONS: Migration[] = [
         sent_at TEXT
       )`
     ]
+  },
+  {
+    // Desktop e VPS: cada projeto tem uma pasta de trabalho própria, fora do repositório.
+    id: "008_projeto_pasta",
+    statements: ["ALTER TABLE projects ADD COLUMN folder TEXT"]
   }
 ];
 

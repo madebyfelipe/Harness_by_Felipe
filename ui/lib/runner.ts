@@ -11,6 +11,8 @@ import { getDb } from "./db";
 import { agentEnv, toolInputBlocked } from "./guardrails";
 import { modelLabel, resolveModel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
+import { getProject, projectFolder } from "./projects";
+import { expandPath, extraAllowedDirs, insideAny, sandboxRoots } from "./paths";
 import { friendlyCodexError, runCodex } from "./codex";
 import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, apiKeyOf, deepseekBase, type Provider } from "./providers";
 import { runOpenAi } from "./openai";
@@ -160,13 +162,17 @@ function sharedContext(): string {
   return parts.join("\n\n");
 }
 
-function ambiente(): string {
+function ambiente(atual?: string): string {
   const c = cfg();
-  return `# Ambiente\n- Agora: ${hojeBrasilia()} (America/Sao_Paulo).\n- Central em modo ${c.mode === "vps" ? "VPS" : "local"}. Pasta de trabalho: o repositório de configuração (${c.repoDir}).`;
+  const pasta =
+    atual && atual !== c.repoDir
+      ? `\n- Pasta de trabalho desta conversa: ${atual} (o repositório de configuração fica em ${c.repoDir}).`
+      : `\n- Pasta de trabalho: o repositório de configuração (${c.repoDir}).`;
+  return `# Ambiente\n- Agora: ${hojeBrasilia()} (America/Sao_Paulo).\n- Central em modo ${c.mode === "vps" ? "VPS" : "local"}.${pasta}`;
 }
 
-export function buildAppend(agent: AgentDef): string {
-  return [agent.prompt, REGRAS_DA_CENTRAL, ambiente(), "# Banco de contexto (carregado em todo agente)", sharedContext()].join("\n\n");
+export function buildAppend(agent: AgentDef, cwd?: string): string {
+  return [agent.prompt, REGRAS_DA_CENTRAL, ambiente(cwd), "# Banco de contexto (carregado em todo agente)", sharedContext()].join("\n\n");
 }
 
 function subagentPrompt(agent: AgentDef): string {
@@ -389,7 +395,9 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   const c = cfg();
   await loadVault().catch(() => undefined);
   let isContext = conversation.mode === "contexto";
-  const cwd = c.repoDir;
+  // Projeto com pasta própria: o agente trabalha lá. Sem pasta, continua no repositório.
+  const projeto = conversation.project_id ? await getProject(conversation.project_id) : undefined;
+  let cwd = c.repoDir;
   const allowed = new Set(conversation.allowed_tools);
   let ctxUsage: ContextUsage | null = null;
   let sessionId: string | null = extra.auto ? null : conversation.sdk_session_id;
@@ -518,6 +526,15 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     }
   }
 
+  // A execução usa a pasta do projeto; sem pasta (ou no Modo Contexto), o repositório.
+  if (!isContext) {
+    const pasta = projectFolder(projeto);
+    if (pasta) cwd = pasta;
+  }
+  // Raízes do que roda sem cartão: pasta do projeto, repositório, liberadas, anexos e /tmp.
+  const roots = [...new Set([cwd, ...sandboxRoots(projectFolder(projeto), c.dataDir)])];
+  const foraDaPasta = (abs: string) => !insideAny(abs, roots);
+
   /* ---------- ChatGPT (Codex CLI, só leitura) quando a conversa foi posta nele ---------- */
   if (codexP && !skipExecutor) {
     skipExecutor = true;
@@ -525,7 +542,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     run.model = "codex";
     emit(run, "route", { agent: run.agent, model: run.model, modelLabel: "ChatGPT" });
     await (await getDb()).run("UPDATE runs SET agent = ?, model = ? WHERE id = ?", [run.agent, run.model, run.id]).catch(() => undefined);
-    const codexPrompt = `${REGRAS_DA_CENTRAL}\n\n${ambiente()}\n\n# Banco de contexto (carregado em todo agente)\n${sharedContext()}\n\n---\n\n${prompt}`;
+    const codexPrompt = `${REGRAS_DA_CENTRAL}\n\n${ambiente(cwd)}\n\n# Banco de contexto (carregado em todo agente)\n${sharedContext()}\n\n---\n\n${prompt}`;
     const r = await runCodex(
       { prompt: codexPrompt, home: codexP.home!, cwd, abort: run.abort },
       {
@@ -643,10 +660,23 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     }
     if (why) return verdict("deny", `Bloqueado pela Central: ${why}. Agentes não leem nem escrevem ali.`);
     if (NEVER.includes(name)) return verdict("deny", "Ferramenta indisponível na Central. Para perguntar ao Felipe use mcp__central__perguntar_ao_felipe; para agendar, mcp__central__criar_rotina.");
+    const who = hookInput.agent_type ? `subagente ${hookInput.agent_type}` : run.agent;
+
+    // Fora da pasta de trabalho (projeto, repositório, liberadas, anexos): ler também pede cartão.
+    // É o que deixa a VPS operar fora do repositório sem abrir a máquina inteira sozinha.
+    if (!allowed.has(name) && ["Read", "Glob", "Grep"].includes(name)) {
+      const inp = (hookInput.tool_input ?? {}) as Record<string, unknown>;
+      const raw = String(inp.file_path ?? inp.path ?? "");
+      if (raw) {
+        const abs = raw.startsWith("~") ? expandPath(raw) : path.resolve(cwd, raw);
+        if (foraDaPasta(abs)) {
+          const d = await askFelipe(name, hookInput.tool_input, who, signal);
+          return d === "deny" ? verdict("deny", DENIED) : verdict("allow", "Aprovado pelo Felipe na Central.");
+        }
+      }
+    }
     // Leitura e delegação seguem o fluxo normal (liberadas em allowedTools).
     if (AUTO_ALLOW.includes(name) || CENTRAL_AUTO.includes(name)) return verdictOrPass(name);
-
-    const who = hookInput.agent_type ? `subagente ${hookInput.agent_type}` : run.agent;
 
     // Segredo por referência: {{vault:NOME}} num comando. O cartão mostra a referência; o valor
     // só entra depois da aprovação, e só se este agente estiver no escopo do segredo.
@@ -724,13 +754,13 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     const builtin = a.tools.filter((t) => !t.startsWith("mcp__"));
     options = {
       ...base,
-      systemPrompt: { type: "preset", preset: "claude_code", append: buildAppend(a) },
+      systemPrompt: { type: "preset", preset: "claude_code", append: buildAppend(a, cwd) },
       agents: subagents,
       tools: a.isOrchestrator || !builtin.length ? BASE_TOOLS : [...new Set([...builtin, "Agent", "Task", "ToolSearch"])],
       allowedTools: [...AUTO_ALLOW, ...CENTRAL_AUTO],
       disallowedTools: NEVER,
       mcpServers: mcpServersFor(a.name === ORCHESTRATOR ? ORCHESTRATOR : a.name),
-      additionalDirectories: extraDirs,
+      additionalDirectories: [...new Set([c.repoDir, ...extraAllowedDirs(), ...extraDirs])].filter((d) => d !== cwd),
       maxTurns: 40
     };
   }
@@ -755,7 +785,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
       if (!key) throw new Error("A chave da DeepSeek não está salva. Abra Configurações → Provedores de IA e cole de novo.");
       const oa = await runOpenAi(
         {
-          system: `${REGRAS_DA_CENTRAL}\n\n${ambiente()}\n\n# Banco de contexto (carregado em todo agente)\n${sharedContext()}`,
+          system: `${REGRAS_DA_CENTRAL}\n\n${ambiente(cwd)}\n\n# Banco de contexto (carregado em todo agente)\n${sharedContext()}`,
           prompt,
           model: run.model,
           baseUrl: chosen.info.baseUrl || (await deepseekBase()),
@@ -792,7 +822,7 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
     conta = chain[attempt];
     options.env = { ...agentEnv(), ...(await claudeEnvFor(conta)) };
     // Servidor novo a cada tentativa: a instância fica presa à conexão da tentativa anterior.
-    if (!isContext) options.mcpServers = { ...options.mcpServers, [CENTRAL_SERVER]: centralTools({ ask: askCard, agent: () => run.agent, canBrowse: () => Boolean(getAgent(run.agent)?.browser), showImage: (a) => showImage(run, a, [cwd, ...extraDirs]) }) };
+    if (!isContext) options.mcpServers = { ...options.mcpServers, [CENTRAL_SERVER]: centralTools({ ask: askCard, agent: () => run.agent, canBrowse: () => Boolean(getAgent(run.agent)?.browser), showImage: (a) => showImage(run, a, [cwd, ...roots]) }) };
     limit = null;
     try {
     const q = query({ prompt: input(), options });

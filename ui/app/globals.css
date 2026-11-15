@@ -3444,3 +3444,159 @@ details.triage[open] {
   border-color: var(--red);
   color: var(--on-red);
 }
+
+/* ---------- Pasta do projeto e seletor de pastas ---------- */
+.proj__pasta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--gray-100);
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.proj__pasta code {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--black);
+  font-size: 0.78rem;
+}
+.proj__folder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.proj__folder .field {
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.fpick {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 8, 8, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.fpick__box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(620px, 100%);
+  max-height: min(86vh, 720px);
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--black);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+.fpick__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.fpick__head > div {
+  flex: 1;
+  min-width: 0;
+}
+.fpick__title {
+  margin: 0 0 2px;
+  font-size: 1rem;
+}
+.fpick__head p {
+  margin: 0;
+}
+.fpick__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--gray-100);
+}
+.fpick__path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--black);
+  direction: rtl;
+  text-align: left;
+}
+.fpick__nativo {
+  align-self: flex-start;
+}
+.fpick__list {
+  flex: 1;
+  min-height: 180px;
+  overflow: auto;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+  padding: 4px;
+}
+.fpick__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--black);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+}
+.fpick__item:hover {
+  background: var(--gray-100);
+}
+.fpick__item span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fpick__item small {
+  opacity: 0;
+}
+.fpick__item:hover small {
+  opacity: 1;
+}
+.fpick__empty {
+  padding: 14px;
+  margin: 0;
+}
+.fpick__novo {
+  display: flex;
+  gap: 8px;
+}
+.fpick__novo .field {
+  flex: 1;
+  min-width: 0;
+}
+.fpick__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.fpick__foot .small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

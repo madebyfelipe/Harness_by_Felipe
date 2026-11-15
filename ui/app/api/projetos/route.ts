@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (g.error) return g.error;
   const body = await readJson(req);
   try {
-    const project = await createProject({ name: str(body.name, 80), description: str(body.description, 500), instructions: str(body.instructions, 8000) });
+    const project = await createProject({ name: str(body.name, 80), description: str(body.description, 500), instructions: str(body.instructions, 8000), folder: str(body.folder, 400) });
     await audit(g.user.name, "projeto.criar", project.name);
     return json({ project });
   } catch (e) {

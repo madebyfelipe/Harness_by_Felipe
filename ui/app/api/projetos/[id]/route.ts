@@ -21,7 +21,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
     const project = await updateProject((await ctx.params).id, {
       ...(typeof body.name === "string" ? { name: str(body.name, 80) } : {}),
       ...(typeof body.description === "string" ? { description: str(body.description, 500) } : {}),
-      ...(typeof body.instructions === "string" ? { instructions: str(body.instructions, 8000) } : {})
+      ...(typeof body.instructions === "string" ? { instructions: str(body.instructions, 8000) } : {}),
+      ...(typeof body.folder === "string" ? { folder: str(body.folder, 400) } : {})
     });
     await audit(g.user.name, "projeto.editar", project.name);
     return json({ project });

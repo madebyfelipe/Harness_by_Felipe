@@ -17,6 +17,8 @@ const config: NextConfig = {
   serverExternalPackages: ["@anthropic-ai/claude-agent-sdk", "pg", "@modelcontextprotocol/sdk", "@huggingface/transformers", "onnxruntime-node", "playwright-core"],
   turbopack: { root: path.resolve(__dirname) },
   outputFileTracingRoot: path.resolve(__dirname),
+  // Só a build do app desktop (desktop/build.mjs) vira standalone: a web continua igual.
+  ...(process.env.CENTRAL_DESKTOP === "1" ? { output: "standalone" as const } : {}),
   async headers() {
     // Arquivos com hash no nome (_next/static) e fontes podem ficar em cache; o resto, nunca.
     const cacheable = securityHeaders.filter((h) => h.key !== "Cache-Control");

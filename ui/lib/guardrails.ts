@@ -32,10 +32,13 @@ export function pathBlocked(candidate: string, cwd: string, dataDir: string, all
   if (!candidate) return null;
   const expanded = candidate.startsWith("~") ? path.join(os.homedir(), candidate.slice(1)) : candidate;
   const abs = path.resolve(cwd, expanded);
-  if (insideAny(abs, allowDirs)) return null;
-  if (insideAny(abs, sensitiveDirs(dataDir))) return "pasta de segredos";
+  // Nome de segredo nunca passa, nem dentro de pasta liberada (ex.: .env na pasta do projeto).
   const base = path.basename(abs);
   if (base !== ".env.example" && SENSITIVE_NAMES.some((re) => re.test(base))) return "arquivo de segredos";
+  if (insideAny(abs, allowDirs)) return null;
+  // A raiz de dados é toda bloqueada, menos os anexos que a própria Central guardou.
+  if (insideAny(abs, [dataDir]) && !insideAny(abs, [path.join(dataDir, "uploads")])) return "pasta de segredos";
+  if (insideAny(abs, sensitiveDirs(dataDir).filter((d) => d !== dataDir))) return "pasta de segredos";
   return null;
 }
 

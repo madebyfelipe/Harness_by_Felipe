@@ -9,3 +9,8 @@ data/
 
 # Fonte licenciada: não vai para repositório público (ver README)
 public/fonts/*.ttf
+
+# App desktop: o app montado e os instaladores não entram no repositório.
+desktop/app/
+desktop/dist/
+desktop/node_modules/

@@ -8,6 +8,7 @@ import { test } from "node:test";
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "central-test-"));
 process.env.CENTRAL_DATA_DIR = tmp;
 process.env.CENTRAL_REPO_DIR = path.resolve(import.meta.dirname, "..", "..");
+process.env.CENTRAL_PROJECTS_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "central-projetos-"));
 
 const { hotp, verifyTotp, base32Encode, base32Decode, totpCounter } = await import("../lib/totp");
 const { encrypt, decrypt, hashPassword, verifyPassword, safeEqual } = await import("../lib/crypto");
@@ -191,4 +192,56 @@ test("provedores: ordem de uso, conta no limite vai para o fim, tela nunca vê c
   await deleteProvider(a.id);
   await deleteProvider(b.id);
   await assert.rejects(() => deleteProvider("maquina"), /máquina/);
+});
+
+test("pasta de projeto: criada sozinha, fora do repositório, e entra no prompt", async () => {
+  const { createProject, getProject, projectBrief } = await import("../lib/projects");
+  const p = await createProject({ name: "Teste Pasta Automática" });
+  assert.ok(p.folder, "projeto novo ganha pasta");
+  assert.equal(fs.statSync(p.folder!).isDirectory(), true);
+  assert.ok(p.folder!.startsWith(process.env.CENTRAL_PROJECTS_DIR!));
+  assert.ok(!p.folder!.startsWith(process.env.CENTRAL_REPO_DIR!), "pasta fora do repositório");
+  assert.match(projectBrief(p), /Pasta de trabalho/);
+  const again = await getProject(p.slug);
+  assert.equal(again!.folder, p.folder, "não recria a pasta a cada leitura");
+});
+
+test("pasta de projeto: escolhida pelo Felipe, recusa segredos", async () => {
+  const { createProject, updateProject } = await import("../lib/projects");
+  const { validateProjectFolder, ensureFolder, expandPath } = await import("../lib/paths");
+  const escolhida = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "central-work-")), "site-lpfds");
+  ensureFolder(escolhida);
+  const p = await createProject({ name: "Site escolhido", folder: escolhida });
+  assert.equal(p.folder, escolhida);
+  const outra = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "central-work-")), "outra");
+  const q = await updateProject(p.id, { folder: outra });
+  assert.equal(q.folder, outra);
+  assert.equal(fs.statSync(outra).isDirectory(), true, "pasta nova é criada ao trocar");
+  assert.throws(() => validateProjectFolder(tmp), /dados e segredos/);
+  assert.throws(() => validateProjectFolder(path.join(os.homedir(), ".ssh", "x")), /segredos do sistema/);
+  assert.throws(() => validateProjectFolder("relativo/pasta"), /absoluto/);
+  assert.equal(expandPath("~/x"), path.join(os.homedir(), "x"));
+});
+
+test("seletor de pastas: lista só pastas visíveis e ignora node_modules", async () => {
+  const { listSubfolders, folderRefused, sandboxRoots } = await import("../lib/paths");
+  const raiz = fs.mkdtempSync(path.join(os.tmpdir(), "central-sel-"));
+  for (const d of ["beta", "Alfa", "gama"]) fs.mkdirSync(path.join(raiz, d));
+  fs.mkdirSync(path.join(raiz, "node_modules"));
+  fs.mkdirSync(path.join(raiz, ".git"));
+  fs.writeFileSync(path.join(raiz, "arquivo.txt"), "x");
+  assert.deepEqual(listSubfolders(raiz).map((s) => s.nome), ["Alfa", "beta", "gama"]);
+  assert.ok(folderRefused(tmp));
+  assert.ok(sandboxRoots(raiz).some((d) => path.resolve(d) === path.resolve(raiz)), "pasta do projeto é raiz liberada");
+  assert.ok(sandboxRoots(raiz).some((d) => path.resolve(d) === path.resolve(process.env.CENTRAL_REPO_DIR!)), "repositório continua acessível");
+});
+
+test("fora do repositório: segredo na pasta do projeto continua bloqueado", async () => {
+  const { pathBlocked, toolInputBlocked } = await import("../lib/guardrails");
+  const projeto = fs.mkdtempSync(path.join(os.tmpdir(), "central-proj-"));
+  assert.equal(pathBlocked(path.join(projeto, "site", "index.html"), projeto, tmp), null);
+  assert.ok(pathBlocked(path.join(projeto, ".env"), projeto, tmp));
+  assert.ok(toolInputBlocked("Read", { file_path: path.join(projeto, ".env.local") }, projeto, tmp));
+  assert.equal(toolInputBlocked("Read", { file_path: path.join(projeto, "README.md") }, projeto, tmp), null);
+  assert.ok(pathBlocked(path.join(tmp, "central.db"), projeto, tmp), "banco da Central fora de alcance");
 });
