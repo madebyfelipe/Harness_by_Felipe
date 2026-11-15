@@ -15,14 +15,17 @@ import { agentEnv } from "./guardrails";
  *  - claude-api: chave de API da Anthropic, guardada cifrada (chave mestra fora do banco).
  *  - codex:      ChatGPT pelo Codex CLI oficial (assinatura, login por código de
  *                dispositivo) ou chave da OpenAI; pasta própria (CODEX_HOME).
+ *  - deepseek:   chave de API da DeepSeek (deepseek-chat / deepseek-reasoner), chamada
+ *                direto pela Central no formato compatível com OpenAI (lib/openai.ts).
+ *                Não usa Codex: o Codex instalado só fala a API "responses".
  * Nenhum valor de login passa por arquivo do repositório. As pastas ficam na pasta de
  * dados, que os agentes não leem (lib/guardrails.ts).
  */
 
-export type ProviderKind = "claude" | "claude-api" | "codex";
+export type ProviderKind = "claude" | "claude-api" | "codex" | "deepseek";
 /** Última leitura de uma janela de uso da assinatura (vem do Claude Code durante uma execução). */
 export type UsageWindow = { status: string; usedPct?: number; resetsAt?: string; at: string };
-export type ProviderInfo = { loggedIn?: boolean; email?: string; plan?: string; detail?: string; checkedAt?: string; limitedUntil?: string; usage?: Record<string, UsageWindow> };
+export type ProviderInfo = { loggedIn?: boolean; email?: string; plan?: string; detail?: string; checkedAt?: string; limitedUntil?: string; usage?: Record<string, UsageWindow>; model?: string; baseUrl?: string };
 export type Provider = {
   id: string;
   kind: ProviderKind;
@@ -38,7 +41,20 @@ export type Provider = {
 type Row = { id: string; kind: ProviderKind; name: string; priority: number; enabled: number; home: string | null; secret_enc: string | null; info: string | null; created_at: string };
 
 export const MACHINE_ID = "maquina";
-export const KIND_LABEL: Record<ProviderKind, string> = { claude: "Claude · assinatura", "claude-api": "Claude · chave de API", codex: "ChatGPT · Codex" };
+export const KIND_LABEL: Record<ProviderKind, string> = { claude: "Claude · assinatura", "claude-api": "Claude · chave de API", codex: "ChatGPT · Codex", deepseek: "DeepSeek · chave de API" };
+
+/* ---------- DeepSeek ---------- */
+
+export const DEEPSEEK_MODELS = [
+  { id: "deepseek-chat", label: "DeepSeek Chat", note: "conversa e ferramentas" },
+  { id: "deepseek-reasoner", label: "DeepSeek Reasoner", note: "raciocínio, mais lento" }
+];
+
+/** Endereço da API: ambiente (teste), depois o que estiver salvo, depois o oficial. */
+export async function deepseekBase(): Promise<string> {
+  const salvo = await kvGet("deepseek.url");
+  return (process.env.CENTRAL_DEEPSEEK_URL || salvo || "https://api.deepseek.com/v1").replace(/\/$/, "");
+}
 
 const toProvider = (r: Row): Provider => ({
   id: r.id,
@@ -96,6 +112,11 @@ async function secretOf(id: string): Promise<string> {
   return r?.secret_enc ? decrypt(r.secret_enc) : "";
 }
 
+/** Chave de API de um provedor de chave (Anthropic ou DeepSeek), só para quem vai usar. */
+export async function apiKeyOf(id: string): Promise<string> {
+  return secretOf(id);
+}
+
 export async function createProvider(input: { kind: ProviderKind; name: string; apiKey?: string }): Promise<Provider> {
   const db = await getDb();
   const id = crypto.randomUUID();
@@ -106,14 +127,16 @@ export async function createProvider(input: { kind: ProviderKind; name: string; 
   if (home) fs.mkdirSync(home, { recursive: true, mode: 0o700 });
   const key = (input.apiKey ?? "").trim();
   if (input.kind === "claude-api" && !/^sk-ant-/.test(key)) throw new Error("Cole uma chave de API da Anthropic (começa com sk-ant-).");
+  if (input.kind === "deepseek" && !/^sk-[A-Za-z0-9]{16,}$/.test(key)) throw new Error("Cole uma chave de API da DeepSeek (começa com sk-, criada em platform.deepseek.com).");
   const max = await db.get<{ m: number | null }>("SELECT MAX(priority) AS m FROM providers");
-  await db.run("INSERT INTO providers (id, kind, name, priority, enabled, home, secret_enc, info, created_at) VALUES (?, ?, ?, ?, 1, ?, ?, '{}', ?)", [
+  await db.run("INSERT INTO providers (id, kind, name, priority, enabled, home, secret_enc, info, created_at) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)", [
     id,
     input.kind,
     name,
     Number(max?.m ?? 0) + 1,
     home,
-    input.kind === "claude-api" ? encrypt(key) : null,
+    input.kind === "claude-api" || input.kind === "deepseek" ? encrypt(key) : null,
+    input.kind === "deepseek" ? JSON.stringify({ model: "deepseek-chat", baseUrl: await deepseekBase() }) : "{}",
     nowIso()
   ]);
   // Chave da OpenAI: o próprio Codex guarda, na pasta dele (fluxo oficial `codex login --with-api-key`).
@@ -127,11 +150,18 @@ export async function createProvider(input: { kind: ProviderKind; name: string; 
   return (await getProvider(id))!;
 }
 
-export async function updateProvider(id: string, patch: { name?: string; enabled?: boolean; priority?: number }): Promise<void> {
+export async function updateProvider(id: string, patch: { name?: string; enabled?: boolean; priority?: number; model?: string; apiKey?: string }): Promise<void> {
   const db = await getDb();
   if (patch.name !== undefined) await db.run("UPDATE providers SET name = ? WHERE id = ?", [patch.name.trim().slice(0, 60), id]);
   if (patch.enabled !== undefined) await db.run("UPDATE providers SET enabled = ? WHERE id = ?", [patch.enabled ? 1 : 0, id]);
   if (patch.priority !== undefined) await db.run("UPDATE providers SET priority = ? WHERE id = ?", [patch.priority, id]);
+  if (patch.model !== undefined) {
+    const p = await getProvider(id);
+    if (!p) return;
+    if (!(DEEPSEEK_MODELS.some((m) => m.id === patch.model) || /^[\w.:-]{3,60}$/.test(patch.model))) throw new Error("Modelo inválido.");
+    await db.run("UPDATE providers SET info = ? WHERE id = ?", [JSON.stringify({ ...p.info, model: patch.model }), id]);
+  }
+  if (patch.apiKey?.trim()) await db.run("UPDATE providers SET secret_enc = ? WHERE id = ?", [encrypt(patch.apiKey.trim()), id]);
 }
 
 /** Sobe ou desce um provedor na ordem de uso, trocando de lugar com o vizinho do mesmo tipo de motor. */
@@ -262,7 +292,9 @@ export async function checkProvider(id: string): Promise<ProviderInfo> {
   const p = await getProvider(id);
   if (!p) throw new Error("Provedor não encontrado.");
   let info: ProviderInfo;
-  if (p.kind === "codex") {
+  if (p.kind === "deepseek") {
+    info = await deepseekInfo(p);
+  } else if (p.kind === "codex") {
     const r = await runCodexCli(p.home!, ["login", "status"]);
     const text = r.out.trim();
     const logged = /logged in/i.test(text) && !/not logged in/i.test(text);
@@ -272,6 +304,23 @@ export async function checkProvider(id: string): Promise<ProviderInfo> {
   }
   await saveInfo(id, { ...info, limitedUntil: p.info.limitedUntil });
   return info;
+}
+
+/** Confere a chave da DeepSeek sem gastar token: só lista os modelos. */
+async function deepseekInfo(p: Provider): Promise<ProviderInfo> {
+  const key = await secretOf(p.id);
+  const base = p.info.baseUrl || (await deepseekBase());
+  if (!key) return { loggedIn: false, detail: "falta a chave" };
+  try {
+    const res = await fetch(`${base}/models`, { headers: { authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(15_000) });
+    if (res.status === 401) return { loggedIn: false, detail: "chave recusada" };
+    if (!res.ok) return { loggedIn: false, detail: `HTTP ${res.status}` };
+    const data = (await res.json().catch(() => ({}))) as { data?: { id?: string }[] };
+    const modelos = (data.data ?? []).map((m) => m.id).filter(Boolean).slice(0, 6);
+    return { loggedIn: true, plan: p.info.model ?? "deepseek-chat", detail: modelos.length ? `modelos: ${modelos.join(", ")}` : "chave aceita" };
+  } catch (e) {
+    return { loggedIn: false, detail: e instanceof Error ? e.message.slice(0, 160) : "sem resposta" };
+  }
 }
 
 /** Lê a conta logada sem chamar o modelo (não gasta uso). */

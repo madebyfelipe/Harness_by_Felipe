@@ -12,10 +12,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!(await getProvider(id))) return fail("Provedor não encontrado.", 404);
   const body = await readJson(req);
   if (body.move === -1 || body.move === 1) await moveProvider(id, body.move);
-  await updateProvider(id, {
-    ...(typeof body.name === "string" && body.name.trim() ? { name: str(body.name, 60) } : {}),
-    ...(typeof body.enabled === "boolean" ? { enabled: body.enabled } : {})
-  });
+  try {
+    await updateProvider(id, {
+      ...(typeof body.name === "string" && body.name.trim() ? { name: str(body.name, 60) } : {}),
+      ...(typeof body.enabled === "boolean" ? { enabled: body.enabled } : {}),
+      ...(typeof body.model === "string" && body.model.trim() ? { model: str(body.model, 60) } : {}),
+      ...(typeof body.apiKey === "string" && body.apiKey.trim() ? { apiKey: str(body.apiKey, 400) } : {})
+    });
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Não foi possível salvar.");
+  }
+  await audit(g.user.name, "provedores.editar", id);
   return json({ ok: true });
 }
 

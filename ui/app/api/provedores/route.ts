@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     return json({ failover: body.failover });
   }
   const kind = str(body.kind, 20) as ProviderKind;
-  if (!["claude", "claude-api", "codex"].includes(kind)) return fail("Tipo de provedor desconhecido.");
+  if (!["claude", "claude-api", "codex", "deepseek"].includes(kind)) return fail("Tipo de provedor desconhecido.");
   try {
     const p = await createProvider({ kind, name: str(body.name, 60), apiKey: str(body.apiKey, 400) });
     await audit(g.user.name, "provedores.criar", `${kind} · ${p.name}`);

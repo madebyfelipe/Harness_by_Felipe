@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 
-type Info = { loggedIn?: boolean; email?: string; plan?: string; detail?: string; checkedAt?: string; limitedUntil?: string };
-type Provider = { id: string; kind: "claude" | "claude-api" | "codex"; name: string; priority: number; enabled: boolean; hasSecret: boolean; info: Info };
+type Info = { loggedIn?: boolean; email?: string; plan?: string; detail?: string; checkedAt?: string; limitedUntil?: string; model?: string; baseUrl?: string };
+type Provider = { id: string; kind: "claude" | "claude-api" | "codex" | "deepseek"; name: string; priority: number; enabled: boolean; hasSecret: boolean; info: Info };
 type Login = { status: "aguardando-link" | "aguardando-codigo" | "aguardando-site" | "conferindo" | "pronto" | "falhou"; url?: string; code?: string; message?: string };
 
-const KIND: Record<Provider["kind"], string> = { claude: "Claude · assinatura", "claude-api": "Claude · chave de API", codex: "ChatGPT · Codex" };
+const KIND: Record<Provider["kind"], string> = { claude: "Claude · assinatura", "claude-api": "Claude · chave de API", codex: "ChatGPT · Codex", deepseek: "DeepSeek · chave de API" };
+const DEEPSEEK_MODELS = [
+  { id: "deepseek-chat", label: "DeepSeek Chat" },
+  { id: "deepseek-reasoner", label: "DeepSeek Reasoner" }
+];
 const fmt = (iso?: string) =>
   iso ? new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)) : "";
 
@@ -147,6 +151,7 @@ export function ProvidersPanel() {
   const [kind, setKind] = useState("claude");
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
+  const [model, setModel] = useState("deepseek-chat");
 
   const load = useCallback(async () => {
     const r = await api<{ providers: Provider[]; failover: boolean; codexInstalled: boolean }>("/api/provedores");
@@ -175,13 +180,14 @@ export function ProvidersPanel() {
   async function add() {
     const apiKind = kind === "codex-key" ? "codex" : kind;
     await act("novo", "criar", async () => {
-      await api("/api/provedores", { body: { kind: apiKind, name, apiKey: kind.endsWith("api") || kind === "codex-key" ? key : "" } });
+      const r = await api<{ provider?: { id: string } }>("/api/provedores", { body: { kind: apiKind, name, apiKey: kind.endsWith("api") || kind === "codex-key" || kind === "deepseek" ? key : "" } });
+      if (kind === "deepseek" && r.provider?.id) await api(`/api/provedores/${r.provider.id}`, { method: "PATCH", body: { model } });
       setName("");
       setKey("");
     });
   }
 
-  const needsKey = kind === "claude-api" || kind === "codex-key";
+  const needsKey = kind === "claude-api" || kind === "codex-key" || kind === "deepseek";
 
   return (
     <div className="stack stack--lg">
@@ -237,14 +243,29 @@ export function ProvidersPanel() {
                   {p.info.checkedAt ? <span className="muted">· conferida {fmt(p.info.checkedAt)}</span> : null}
                 </p>
                 <div className="row" style={{ gap: 6 }}>
-                  {p.kind !== "claude-api" ? <LoginBox p={p} onDone={() => void load()} /> : null}
+                  {p.kind === "deepseek" ? (
+                    <select
+                      className="field field--sm"
+                      aria-label={`Modelo de ${p.name}`}
+                      value={p.info.model ?? "deepseek-chat"}
+                      disabled={!!busy}
+                      onChange={(e) => void act(p.id, "modelo", () => api(`/api/provedores/${p.id}`, { method: "PATCH", body: { model: e.target.value } }))}
+                    >
+                      {DEEPSEEK_MODELS.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                  {p.kind !== "claude-api" && p.kind !== "deepseek" ? <LoginBox p={p} onDone={() => void load()} /> : null}
                   <button type="button" className="btn btn--ghost btn--sm" disabled={!!busy} onClick={() => void act(p.id, "testar", () => api(`/api/provedores/${p.id}/testar`, { method: "POST" }))}>
                     {busy === `${p.id}:testar` ? "Conferindo…" : "Conferir"}
                   </button>
                   <button type="button" className="btn btn--ghost btn--sm" disabled={!!busy} onClick={() => void act(p.id, "ligar", () => api(`/api/provedores/${p.id}`, { method: "PATCH", body: { enabled: !p.enabled } }))}>
                     {p.enabled ? "Desligar" : "Ligar"}
                   </button>
-                  {p.id !== "maquina" && p.kind !== "claude-api" && p.info.loggedIn ? (
+                  {p.id !== "maquina" && p.kind !== "claude-api" && p.kind !== "deepseek" && p.info.loggedIn ? (
                     <button type="button" className="btn btn--ghost btn--sm" disabled={!!busy} onClick={() => void act(p.id, "sair", () => api(`/api/provedores/${p.id}/sair`, { method: "POST" }))}>
                       Sair da conta
                     </button>
@@ -290,6 +311,7 @@ export function ProvidersPanel() {
               ChatGPT (assinatura, pelo Codex){codexInstalled ? "" : " · Codex não instalado"}
             </option>
             <option value="claude-api">Chave de API da Anthropic</option>
+            <option value="deepseek">DeepSeek (chave de API)</option>
             <option value="codex-key" disabled={!codexInstalled}>
               Chave de API da OpenAI (pelo Codex)
             </option>
@@ -297,18 +319,33 @@ export function ProvidersPanel() {
           <label className="label" htmlFor="p-name">
             Nome
           </label>
-          <input id="p-name" className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={kind === "claude" ? "ex.: Claude · conta 2" : kind.startsWith("codex") ? "ex.: ChatGPT Plus" : "ex.: API Anthropic"} />
+          <input id="p-name" className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={kind === "claude" ? "ex.: Claude · conta 2" : kind.startsWith("codex") ? "ex.: ChatGPT Plus" : kind === "deepseek" ? "ex.: DeepSeek" : "ex.: API Anthropic"} />
           {needsKey ? (
             <>
               <label className="label" htmlFor="p-key">
                 Chave
               </label>
-              <input id="p-key" className="field" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder={kind === "claude-api" ? "sk-ant-…" : "sk-…"} />
+              <input id="p-key" className="field" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder={kind === "claude-api" ? "sk-ant-…" : kind === "deepseek" ? "sk-… (platform.deepseek.com)" : "sk-…"} />
               <p className="small muted">Fica cifrada nesta máquina e não aparece de novo depois de salva.</p>
             </>
           ) : (
             <p className="small muted">Depois de adicionar, toque em Entrar: o login é o oficial da {kind === "claude" ? "Anthropic" : "OpenAI"}.</p>
           )}
+          {kind === "deepseek" ? (
+            <>
+              <label className="label" htmlFor="p-model">
+                Modelo
+              </label>
+              <select id="p-model" className="field" value={model} onChange={(e) => setModel(e.target.value)}>
+                {DEEPSEEK_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <p className="small muted">Dá para trocar depois, na lista acima. A DeepSeek cobra por token: o saldo é o da sua conta em platform.deepseek.com.</p>
+            </>
+          ) : null}
           <button className="btn" disabled={busy === "novo:criar" || (needsKey && !key.trim())}>
             {busy === "novo:criar" ? "Adicionando…" : "Adicionar"}
           </button>
@@ -322,6 +359,11 @@ export function ProvidersPanel() {
           contexto no pedido); no desktop ele também lê a pasta.
         </p>
         <p>Cada conta Claude tem a própria janela de uso: com duas, a troca automática segura o trabalho quando uma acaba.</p>
+        <p>
+          <strong>DeepSeek.</strong> Roda quando você põe uma conversa nela (menu ⋯ do chat → Provedor). É cobrada por token na sua conta, não usa a assinatura Claude, e trabalha
+          com as mesmas ferramentas dos agentes: ler, listar, procurar e — com a sua aprovação no chat — escrever arquivo e rodar comando. A triagem e as rotinas continuam nas
+          contas Claude.
+        </p>
       </section>
     </div>
   );

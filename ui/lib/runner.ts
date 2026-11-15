@@ -11,7 +11,8 @@ import { agentEnv, toolInputBlocked } from "./guardrails";
 import { modelLabel } from "./models";
 import { getAgent, listAgents, ORCHESTRATOR, readContextFile, repoDir, type AgentDef } from "./repo";
 import { friendlyCodexError, runCodex } from "./codex";
-import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, type Provider } from "./providers";
+import { claudeChain, claudeEnvFor, failoverOn, getProvider, markLimited, apiKeyOf, deepseekBase, type Provider } from "./providers";
+import { runOpenAi } from "./openai";
 import { injectVault, loadVault, logUse, setSecret, vaultRefs } from "./vault";
 import { CENTRAL_AUTO, CENTRAL_SERVER, centralTools, type AskData, type AskReply } from "./agent-tools";
 import { saveUsage } from "./providers";
@@ -721,6 +722,50 @@ async function execute(run: ActiveRun, conversation: Conversation, agent: AgentD
   }
 
   const seenTools = new Set<string>();
+
+  /* ---------- DeepSeek (chave de API) quando a conversa foi posta nela ---------- */
+  if (chosen?.kind === "deepseek" && chosen.enabled && !skipExecutor) {
+    skipExecutor = true;
+    run.agent = "deepseek";
+    run.model = chosen.info.model ?? "deepseek-chat";
+    emit(run, "route", { agent: run.agent, model: run.model, modelLabel: `DeepSeek · ${run.model}` });
+    await (await getDb()).run("UPDATE runs SET agent = ?, model = ? WHERE id = ?", [run.agent, run.model, run.id]).catch(() => undefined);
+    try {
+      const key = await apiKeyOf(chosen.id);
+      if (!key) throw new Error("A chave da DeepSeek não está salva. Abra Configurações → Provedores de IA e cole de novo.");
+      const oa = await runOpenAi(
+        {
+          system: `${REGRAS_DA_CENTRAL}\n\n${ambiente()}\n\n# Banco de contexto (carregado em todo agente)\n${sharedContext()}`,
+          prompt,
+          model: run.model,
+          baseUrl: chosen.info.baseUrl || (await deepseekBase()),
+          apiKey: key,
+          cwd,
+          dataDir: c.dataDir,
+          allowDirs: extraDirs,
+          signal: run.abort.signal,
+          approve: async (tool, input) => ((await askFelipe(tool, input, run.agent, run.abort.signal)) === "deny" ? "deny" : "allow")
+        },
+        {
+          onText: (t) => {
+            run.text += t;
+            emit(run, "delta", { text: t });
+          },
+          onTool: (t) => {
+            if (seenTools.has(t.id)) return;
+            seenTools.add(t.id);
+            const tool: ToolUse = { id: t.id, name: t.name, summary: t.summary, agent: null };
+            run.tools.push(tool);
+            emit(run, "tool", tool);
+          }
+        }
+      );
+      result = { inTok: oa.inputTokens, outTok: oa.outputTokens };
+      if (oa.error) errorText = oa.error;
+    } catch (e) {
+      errorText = e instanceof Error ? e.message : String(e);
+    }
+  }
   try {
     if (skipExecutor) throw new SkipExecutor();
     for (let attempt = 0; ; attempt++) {
