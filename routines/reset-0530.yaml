@@ -1,0 +1,16 @@
+# Rotina da Central. Agenda em America/Sao_Paulo. Rotina roda sozinha e reporta depois.
+nome: reset-0530
+titulo: Reset da janela de 5h (05:30)
+quando: todo dia às 05:30
+cron: 30 5 * * *
+agente: auto
+modo: vps
+ativa: true
+silencio: true
+whatsapp: false
+limite_minutos: 2
+liberadas: []
+instrucoes: 'Abre a janela de 5h da assinatura. Faça uma única chamada mínima pelo CLI, sem chave de
+  API, no modelo Haiku: claude -p "Oi" --model claude-haiku-5-5. Depois acrescente uma linha com a
+  data e hora (America/Sao_Paulo) em logs/reset.log. Não leia arquivos, não use ferramentas, não
+  envie nada. Responda só "ok".'
