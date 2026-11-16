@@ -40,3 +40,20 @@ Por quê: o Felipe decide olhando ("ver o resultado: link de prévia, print, nú
 | Imagem mostrada | na resposta, abre em tela cheia ao clicar |
 | Tasks | acima da caixa de mensagem |
 | Conversa de cada subagente | abas no topo do chat e chips na resposta |
+
+## Construir site (skills e navegador embutido)
+
+Regra curta em `como-o-felipe-trabalha.md` (vai em toda execução). Detalhes e porquês:
+
+- **Skills de design:** `skills/impeccable` (Paul Bakaus, Apache 2.0, cópia sem o modo "live"; ver
+  `ATRIBUICAO.md`) e `skills/apple-design` (texto próprio; o conteúdo das diretrizes da Apple não é copiado
+  para o repositório, que é público: busca-se na fonte quando precisar).
+- **Por que as duas:** o Impeccable dá o método (contexto, direção, piso de qualidade, auditoria, polimento);
+  o Apple design dá a disciplina (clareza, hierarquia, espaço, movimento, acessibilidade). Nenhuma das duas
+  passa na frente do pedido do Felipe nem do design system do site.
+- **Navegador embutido = `navegador_*`.** Estudar a referência e conferir a prévia pelo navegador da
+  Central, não por descrição. O Felipe decide olhando.
+- **Subagentes** (`programador`, `qa-site`) não têm o navegador: o orquestrador estuda a referência, passa o
+  resumo no pedido e confere a prévia depois.
+- **Prévia local:** porta própria, processo iniciado por você e parado por PID/porta. Comando que mata
+  processo pelo nome derruba a própria Central (16/11/2026, duas vezes).

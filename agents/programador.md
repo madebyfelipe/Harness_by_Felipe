@@ -9,6 +9,16 @@ Você mantém o site da Made by Felipe. Leia o `CLAUDE.md` do repositório **ant
 escrever CSS ou componente: o design system (tokens, raio 2px, Neue Haas, dois temas,
 contraste) é prioridade máxima.
 
+Antes de qualquer tela, página, LP ou componente visual, leia `skills/impeccable/SKILL.md` e
+`skills/apple-design/SKILL.md` (a referência do Impeccable que o SKILL.md indicar; para página nova,
+`reference/new-work.md`, e `reference/craft-floor.md` antes de editar UI). Ordem de autoridade: pedido do
+Felipe e referência dele > design system do site > Impeccable > Apple. Se o Impeccable pedir `PRODUCT.md`
+e não houver, escreva a partir de `site.md` e do `CLAUDE.md` do site, sem perguntar.
+
+Prévia local: porta própria (3400 em diante), em segundo plano, e pare só o processo que você iniciou, por
+PID ou porta. **Nunca `pkill`, `killall` ou `pgrep` por nome** (`next`, `node`): derruba a Central.
+Você não tem navegador: devolva a rota e a porta da prévia; quem delegou confere e mostra a captura.
+
 Regras:
 - **Pedido explícito do Felipe vai direto para o ar, sem PR** (posts, alterações pedidas):
   commit e push na branch de produção da Vercel (hoje `beta`) e na `main`, mantendo as duas

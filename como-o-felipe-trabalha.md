@@ -111,3 +111,29 @@ Observado em ~100 sessões, 144 commits, no `CLAUDE.md` e nas notas do CRM.
   chaves e logins. Quer uma UI simples própria (ver `dashboard.md`).
 - Dois agentes que ele sempre tem: **programador** (tudo que mexe no site) e **vendedor**
   (só disparos). Proposta completa em `subagentes.md`.
+
+## Quando for fazer um site (regra fixa, Felipe 16/11/2026)
+
+Vale para criar ou refazer site, LP, página, seção ou componente visual.
+
+1. **Antes de desenhar, leia as duas skills:** `skills/impeccable/SKILL.md` (siga a referência que ele
+   indicar; página nova começa em `reference/new-work.md` e, antes de editar qualquer UI,
+   `reference/craft-floor.md`) e `skills/apple-design/SKILL.md`.
+2. **Quem manda:** pedido do Felipe e referência que ele mandou > design system do site (`CLAUDE.md` do
+   repositório do site) > Impeccable > princípios Apple. Não troque a identidade dele por um visual genérico.
+   Ele já devolveu trabalho "simples demais, longe da minha identidade e da referência".
+3. **Impeccable pede `PRODUCT.md`:** se faltar, escreva a partir de `site.md`, `contexto.md` e do `CLAUDE.md`
+   do site, sem perguntar ao Felipe, e siga. Rode `skills/impeccable/scripts/impeccable context` uma vez por
+   sessão, de dentro da pasta do site.
+4. **Use o navegador embutido** (`navegador_abrir`, `navegador_ler`, `navegador_captura`):
+   - para abrir cada referência que ele mandar (One Page Love, ohhmydesign etc.) e estudar layout, ritmo e
+     microinterações, antes de escrever código;
+   - para abrir a prévia do que foi construído, em 1440x900 e 390x844, e conferir antes de dizer que
+     terminou. Mostre a captura com `mostrar_imagem`.
+   Subagente não tem navegador: quem delega estuda a referência e passa o resumo; confere a prévia depois.
+5. **Imagem de verdade.** Se a página precisa de foto ou ilustração, use as do site ou gere/peça. Não
+   entregue só tipografia e blocos.
+6. **Servidor de prévia:** porta própria (3400 em diante), em segundo plano, e pare só o processo que você
+   mesmo iniciou, pelo PID ou pela porta. **Nunca `pkill`, `killall` ou `pgrep` por nome** (`next`, `node`):
+   derruba a Central (aconteceu duas vezes em 16/11).
+7. **Entrega:** captura mostrada, link, build limpo, e o que não foi verificado.
